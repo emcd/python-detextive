@@ -60,12 +60,13 @@ The main Python package follows the standard ``sources/`` directory pattern:
     ├── detextive/          # Main Python package
     │   ├── __/                      # Centralized import hub
     │   │   ├── __init__.py          # Re-exports core utilities
-    │   │   ├── imports.py           # External library imports
+    │   │   ├── imports.py           # External library imports and ddoc alias
     │   │   └── nomina.py            # python-detextive-specific naming constants
     │   ├── __init__.py              # Package entry point
     │   ├── py.typed                 # Type checking marker
+    │   ├── detection.py             # Core detection function implementations
     │   ├── exceptions.py            # Package exception hierarchy
-    │   └── [modules].py             # Feature-specific modules
+    │   └── lineseparators.py        # LineSeparators enum and utilities
     
 
 All package modules use the standard ``__`` import pattern as documented
