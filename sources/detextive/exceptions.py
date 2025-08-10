@@ -34,3 +34,30 @@ class Omniexception( BaseException ):
 
 class Omnierror( Omniexception, Exception ):
     ''' Base for error exceptions raised by package API. '''
+
+
+class CharsetDetectFailure( Omnierror, RuntimeError ):
+    ''' Character encoding detection fails. '''
+
+    def __init__( self, location: str ) -> None:
+        super( ).__init__(
+            f"Character encoding detection failed for content at "
+            f"'{location}'." )
+
+
+class ContentDecodeFailure( Omnierror, UnicodeError ):
+    ''' Content cannot be decoded with detected charset. '''
+
+    def __init__( self, location: str, charset: str ) -> None:
+        super( ).__init__(
+            f"Content at '{location}' cannot be decoded using charset "
+            f"'{charset}'." )
+
+
+class TextualMimetypeInvalidity( Omnierror, ValueError ):
+    ''' MIME type is invalid for textual content processing. '''
+
+    def __init__( self, location: str, mimetype: str ) -> None:
+        super( ).__init__(
+            f"MIME type '{mimetype}' is not textual for content at "
+            f"'{location}'." )

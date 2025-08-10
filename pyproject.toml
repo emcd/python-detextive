@@ -17,6 +17,7 @@ requires-python = '>= 3.10'
 dependencies = [
   'absence~=1.1',
   'chardet',
+  'dynadoc~=1.4',
   'frigid~=4.1',
   'puremagic',
   'typing-extensions',

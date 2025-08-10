@@ -22,10 +22,20 @@
 
 # ruff: noqa: F401
 
+import collections.abc as   cabc
+import                      enum
+import                      mimetypes
+import                      os
+import                      types
 
-import collections.abc as cabc
-import types
+from pathlib import Path
 
+import                      chardet
+import dynadoc as           ddoc
+import                      puremagic
 import typing_extensions as typx
+
+from absence import Absential, absent, is_absent
+
 # --- BEGIN: Injected by Copier ---
 # --- END: Injected by Copier ---
