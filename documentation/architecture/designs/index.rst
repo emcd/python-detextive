@@ -24,5 +24,4 @@ Designs
 .. toctree::
    :maxdepth: 2
 
-
-.. todo:: Add design documents to toctree.
+   001-python-api-design

@@ -24,8 +24,8 @@ Architectural Decision Records
 .. toctree::
    :maxdepth: 2
 
-
-.. todo:: Add architectural decision records to toctree.
+   001-faithful-functional-reproduction
+   002-deferred-extensibility-architecture
 
 For ADR format and guidance, see the `architecture documentation guide
 <https://emcd.github.io/python-project-common/stable/sphinx-html/common/architecture.html>`_.
