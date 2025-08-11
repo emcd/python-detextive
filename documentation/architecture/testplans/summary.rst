@@ -21,6 +21,42 @@
 Test Organization Summary
 *******************************************************************************
 
+Overview
+===============================================================================
+
+This section contains comprehensive test planning documentation, including test
+organization conventions, coverage strategies, and detailed implementation
+plans for achieving systematic test coverage.
+
+Test plans follow project testing principles described in the `common test
+development guidelines
+<https://raw.githubusercontent.com/emcd/python-project-common/refs/tags/docs-1/documentation/common/tests.rst>`_.
+Key principles include:
+
+- **Dependency injection over monkey-patching** for testable code architecture
+- **Systematic coverage analysis** with clear gap identification
+- **Performance-conscious resource use** with appropriate testing strategies
+- **Organized test structure** with numbered modules and functions
+
+Test Planning Process
+===============================================================================
+
+The test planning process systematically addresses:
+
+**Coverage Gap Analysis**
+  Identification of all uncovered lines and untested functionality across modules
+
+**Test Strategy Development**
+  Comprehensive approaches for testing each function, class, and method with
+  appropriate test data strategies
+
+**Implementation Guidance**
+  Detailed plans for achieving coverage while following project testing principles
+
+**Architectural Considerations**
+  Analysis of testability constraints and recommendations for maintaining
+  clean, testable code
+
 Test Module Numbering Scheme
 ===============================================================================
 
@@ -68,36 +104,8 @@ Example from ``test_200_detection.py``::
 Project-Specific Testing Conventions
 ===============================================================================
 
-Dependency Injection Preferred
--------------------------------------------------------------------------------
-
-This codebase uses immutable objects that prevent monkey-patching. Use dependency injection patterns instead of patching internal code.
-
 Test Data Organization
 -------------------------------------------------------------------------------
 
 - **Inline byte arrays preferred**: Most test data as inline ``b"content"`` in test code
 - ``tests/data/samples/`` - Minimal binary fixtures only for complex cases (JPEG samples, etc.)
-
-Coverage Goals
--------------------------------------------------------------------------------
-
-- Target: 100% line and branch coverage
-- Use ``# pragma: no cover`` only as last resort for untestable defensive code
-- All public functions must have comprehensive test coverage
-
-Performance Considerations
--------------------------------------------------------------------------------
-
-- Use pyfakefs for filesystem operations when needed
-- Prefer in-memory test data over file-based fixtures for simple cases
-- Keep full test suite execution under 2 seconds
-
-Rationale for Test Organization
-===============================================================================
-
-**Exception handling (100s)** gets lowest numbering as foundational error handling that all other components depend on.
-
-**Core detection (200s)** for detection.py and lineseparators.py reflects their role as fundamental text processing utilities.
-
-**Future higher numbering** (300s+) reserved for integration tests and higher-level functionality that builds on these core detection capabilities.
