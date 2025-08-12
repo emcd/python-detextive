@@ -95,8 +95,7 @@ determine appropriate content handling strategies.
 - Detect MIME types using content-based analysis (magic bytes)
 - Fall back to file extension-based detection when content detection fails
 - Support both file paths and raw byte content as input
-- Return standardized MIME type strings (e.g., "text/plain",
-  "application/json")
+- Return standardized MIME type strings (e.g., "text/plain", "application/json")
 
 **REQ-002: Charset Detection API** *(Critical)*
 
@@ -128,8 +127,7 @@ that I can avoid processing binary data as text.
 *Acceptance Criteria*:
 - Classify MIME types as textual or non-textual
 - Support extensible patterns for textual MIME type detection
-- Validate decoded text content using heuristics (control character ratios,
-  printable character ratios)
+- Validate decoded text content using heuristics (control character ratios, printable character ratios)
 - Handle edge cases like empty content and single-character repetition
 
 **REQ-005: Drop-in Replacement Interface** *(High)*
@@ -148,14 +146,12 @@ Non-Functional Requirements
 
 **Performance Requirements**:
 - MIME type detection should complete within 100ms for files up to 1MB
-- Charset detection should analyze sufficient content sample (default 1KB) for
-  accuracy
+- Charset detection should analyze sufficient content sample (default 1KB) for accuracy
 - Memory usage should remain proportional to sample size, not full file size
 
 **Reliability Requirements**:
 - Library should handle malformed or unusual content without crashing
-- Error conditions should be clearly communicated through appropriate
-  exceptions
+- Error conditions should be clearly communicated through appropriate exceptions
 - Detection accuracy should be >= 95% for common text formats
 
 **Compatibility Requirements**:
@@ -168,8 +164,7 @@ Constraints and Assumptions
 
 **Technical Constraints**:
 - Must integrate with existing package dependency management
-- Limited to detection libraries already used in the ecosystem (chardet,
-  puremagic)
+- Limited to detection libraries already used in the ecosystem (chardet, puremagic)
 - Cannot introduce breaking changes to existing public APIs during migration
 
 **Dependencies**:

@@ -60,6 +60,7 @@ without architectural changes.
 Core components:
 
 **Direct Function Consolidation:**
+
 * ``detect_charset(content)`` - Consolidates charset detection with UTF-8 bias
 * ``detect_mimetype(content, location)`` - Consolidates MIME detection with 
   fallback chains
