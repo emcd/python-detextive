@@ -17,7 +17,7 @@
    +--------------------------------------------------------------------------+
 
 *******************************************************************************
-                                   detextive                                   
+                                   detextive
 *******************************************************************************
 
 .. image:: https://img.shields.io/pypi/v/detextive
@@ -45,7 +45,29 @@
    :target: https://pypi.org/project/detextive/
 
 
-.. todo:: Provide project description and key features.
+🔍 Python library which provides consolidated text detection and processing
+capabilities for reliable content analysis. Offers MIME type detection,
+character encoding detection, and line separator processing with consistent
+APIs for textual content analysis.
+
+Key Features ⭐
+===============================================================================
+
+🔍 **MIME Type Detection**
+  Intelligent content-based detection using magic bytes with file extension
+  fallback for comprehensive format identification.
+
+📝 **Character Encoding Detection**
+  Statistical analysis with UTF-8 optimization and validation through decode
+  operations for reliable text processing.
+
+📄 **Line Separator Processing**
+  Cross-platform line ending detection and normalization supporting CR, LF,
+  and CRLF formats with mixed-content handling.
+
+✅ **Textual Content Validation**
+  Smart classification of MIME types and content reasonableness assessment
+  using control character and printability heuristics.
 
 
 Installation 📦
@@ -68,7 +90,59 @@ Or, install via ``pip``:
     pip install detextive
 
 
-.. todo:: Provide usage examples and additional content.
+Examples 💡
+===============================================================================
+
+Basic Usage
+-------------------------------------------------------------------------------
+
+**MIME Type and Charset Detection**:
+
+.. code-block:: python
+
+    import detextive
+
+    with open( 'document.txt', 'rb' ) as file:
+        content = file.read( )
+
+    # Individual detection
+    mimetype = detextive.detect_mimetype( content, 'document.txt' )
+    charset = detextive.detect_charset( content )
+
+    # Combined detection
+    mimetype, charset = detextive.detect_mimetype_and_charset(
+        content, 'document.txt' )
+    print( "Detected: {mimetype} with {charset} encoding".format(
+        mimetype = mimetype, charset = charset ) )
+
+**Line Separator Processing**:
+
+.. code-block:: python
+
+    import detextive
+
+    content = 'Line 1\r\nLine 2\rLine 3\n'
+    separator = detextive.LineSeparators.detect_bytes( content.encode( ) )
+
+    # Normalize line separators to Python standard.
+    normalized = detextive.LineSeparators.normalize_universal( content )
+
+    # Convert to specific line separators.
+    native = detextive.LineSeparators.CRLF.nativize( normalized )
+
+**Content Classification**:
+
+.. code-block:: python
+
+    import detextive
+
+    # Check if MIME type represents textual content
+    detextive.is_textual_mimetype( 'application/json' )  # True
+    detextive.is_textual_mimetype( 'image/jpeg' )        # False
+
+    # Validate text content quality
+    detextive.is_reasonable_text_content( 'Hello world!' )  # True
+    detextive.is_reasonable_text_content( '\x01\x02\x03' )  # False
 
 
 Contribution 🤝
@@ -128,27 +202,27 @@ Other Projects by This Author 🌟
 ===============================================================================
 
 
-* `python-absence <https://github.com/emcd/python-absence>`_ (`absence <https://pypi.org/project/absence/>`_ on PyPI) 
+* `python-absence <https://github.com/emcd/python-absence>`_ (`absence <https://pypi.org/project/absence/>`_ on PyPI)
 
   🕳️ A Python library package which provides a **sentinel for absent values** - a falsey, immutable singleton that represents the absence of a value in contexts where ``None`` or ``False`` may be valid values.
-* `python-accretive <https://github.com/emcd/python-accretive>`_ (`accretive <https://pypi.org/project/accretive/>`_ on PyPI) 
+* `python-accretive <https://github.com/emcd/python-accretive>`_ (`accretive <https://pypi.org/project/accretive/>`_ on PyPI)
 
   🌌 A Python library package which provides **accretive data structures** - collections which can grow but never shrink.
-* `python-classcore <https://github.com/emcd/python-classcore>`_ (`classcore <https://pypi.org/project/classcore/>`_ on PyPI) 
+* `python-classcore <https://github.com/emcd/python-classcore>`_ (`classcore <https://pypi.org/project/classcore/>`_ on PyPI)
 
   🏭 A Python library package which provides **foundational class factories and decorators** for providing classes with attributes immutability and concealment and other custom behaviors.
-* `python-dynadoc <https://github.com/emcd/python-dynadoc>`_ (`dynadoc <https://pypi.org/project/dynadoc/>`_ on PyPI) 
+* `python-dynadoc <https://github.com/emcd/python-dynadoc>`_ (`dynadoc <https://pypi.org/project/dynadoc/>`_ on PyPI)
 
   📝 A Python library package which bridges the gap between **rich annotations** and **automatic documentation generation** with configurable renderers and support for reusable fragments.
-* `python-falsifier <https://github.com/emcd/python-falsifier>`_ (`falsifier <https://pypi.org/project/falsifier/>`_ on PyPI) 
+* `python-falsifier <https://github.com/emcd/python-falsifier>`_ (`falsifier <https://pypi.org/project/falsifier/>`_ on PyPI)
 
   🎭 A very simple Python library package which provides a **base class for falsey objects** - objects that evaluate to ``False`` in boolean contexts.
-* `python-frigid <https://github.com/emcd/python-frigid>`_ (`frigid <https://pypi.org/project/frigid/>`_ on PyPI) 
+* `python-frigid <https://github.com/emcd/python-frigid>`_ (`frigid <https://pypi.org/project/frigid/>`_ on PyPI)
 
   🔒 A Python library package which provides **immutable data structures** - collections which cannot be modified after creation.
-* `python-icecream-truck <https://github.com/emcd/python-icecream-truck>`_ (`icecream-truck <https://pypi.org/project/icecream-truck/>`_ on PyPI) 
+* `python-icecream-truck <https://github.com/emcd/python-icecream-truck>`_ (`icecream-truck <https://pypi.org/project/icecream-truck/>`_ on PyPI)
 
   🍦 **Flavorful Debugging** - A Python library which enhances the powerful and well-known ``icecream`` package with flavored traces, configuration hierarchies, customized outputs, ready-made recipes, and more.
-* `python-mimeogram <https://github.com/emcd/python-mimeogram>`_ (`mimeogram <https://pypi.org/project/mimeogram/>`_ on PyPI) 
+* `python-mimeogram <https://github.com/emcd/python-mimeogram>`_ (`mimeogram <https://pypi.org/project/mimeogram/>`_ on PyPI)
 
   📨 A command-line tool for **exchanging collections of files with Large Language Models** - bundle multiple files into a single clipboard-ready document while preserving directory structure and metadata... good for code reviews, project sharing, and LLM interactions.
