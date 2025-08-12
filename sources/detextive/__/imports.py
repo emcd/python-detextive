@@ -32,6 +32,7 @@ from pathlib import Path
 
 import                      chardet
 import dynadoc as           ddoc
+import frigid as            immut
 import                      puremagic
 import typing_extensions as typx
 

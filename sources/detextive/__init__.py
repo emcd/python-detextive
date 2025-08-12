@@ -40,4 +40,4 @@ from . import exceptions
 __version__ = '1.0a0'
 
 
-# TODO: Reclassify package modules as immutable and concealed.
+__.immut.finalize_module( __name__, recursive = True )

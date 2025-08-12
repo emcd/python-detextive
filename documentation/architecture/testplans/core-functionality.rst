@@ -29,18 +29,50 @@ Coverage Analysis Summary
 detection.py
 -------------------------------------------------------------------------------
 
-- Current coverage: 13%
-- Target coverage: 100%
-- Uncovered lines: 75-85, 96-98, 113-132, 145-147, 160-173, 183-187
-- Missing functionality tests: All 6 functions completely untested
+- Current coverage: 77%
+- Target coverage: 95%+ (focused on critical paths)
+- Remaining uncovered lines: 77-81, 111, 121, 124-128, 173-174, 176
+- Critical gaps: ASCII charset fallback, parameter overrides, exception paths
 
 lineseparators.py
 -------------------------------------------------------------------------------
 
-- Current coverage: 24%
-- Target coverage: 100%
-- Uncovered lines: 44-56, 61, 65-66, 70-71
-- Missing functionality tests: All 4 methods of LineSeparators enum completely untested
+- Current coverage: 91%
+- Target coverage: 95%+ (focused on critical paths)  
+- Remaining uncovered branches: 4 exit conditions in enum methods
+- Status: Good coverage, mainly missing edge case branches
+
+Focused Test Cases for Remaining Coverage Gaps
+===============================================================================
+
+Priority Test Cases to Close Critical Coverage Gaps
+-------------------------------------------------------------------------------
+
+**ASCII Charset Detection (Lines 77-81)**
+
+- Test content that chardet detects as 'ascii' → should return 'utf-8'
+- Test content that chardet detects as 'MacRoman' but decodes as UTF-8 → should return 'utf-8'
+- Test content that chardet detects as 'iso-8859-1' and fails UTF-8 decode → should return 'iso-8859-1'
+
+**Parameter Override Cases (Line 111)**
+
+- Test ``detect_mimetype_and_charset()`` with explicit mimetype override
+- Test with both mimetype and charset overrides
+
+**Fallback to Octet-Stream (Line 121)** 
+
+- Test with binary content that has no detectable mimetype or charset
+
+**Exception Path Testing (Lines 124-128, 173-174, 176)**
+
+- Test non-textual mimetype (e.g., 'image/jpeg') with detected charset but no reasonable text content
+- Test invalid charset name (LookupError) in validation
+- Test content that can't be decoded with detected charset (UnicodeDecodeError)
+- Test decoded content that fails reasonableness checks
+
+**Exception Constructor Coverage (exceptions.py Lines 43, 52, 61)**
+
+- Raise each exception type to test constructor message formatting
 
 Test Strategy
 ===============================================================================
@@ -65,7 +97,7 @@ Function: detect_mimetype (Tests 200-299)
 - **Extension fallback**: Files without magic numbers falling back to mimetypes.guess_type
 - **PureError handling**: Content that triggers puremagic.PureError
 - **ValueError handling**: Malformed content triggering ValueError
-- **Location parameter variations**: str, Path, and sequence inputs
+- **Location parameter variations**: str and Path inputs
 
 Function: detect_mimetype_and_charset (Tests 300-399)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -92,7 +124,6 @@ Function: is_reasonable_text_content (Tests 500-599)
 
 - **Valid text content**: Normal readable text with proper character distribution
 - **Empty content rejection**: Empty strings should return False
-- **Single character repetition**: Strings with only one repeated character
 - **Control character limits**: Content with >10% control characters (excluding \\t\\n\\r)
 - **Printable character ratio**: Content with <80% printable characters
 - **Common whitespace handling**: Content with tabs, newlines, carriage returns
@@ -178,16 +209,14 @@ External services requiring mocking: None
 Test data strategy
 -------------------------------------------------------------------------------
 
-- **Primary approach**: Inline byte arrays in test code (90% of tests)
+- **Primary approach**: Inline byte arrays in test code (100% of tests)
 
   - ``b"Hello \\xc3\\xa9 world"`` for UTF-8 content
-  - ``b"Simple ASCII text"`` for ASCII content
+  - ``b"Simple ASCII text"`` for ASCII content  
   - ``b"Line 1\\r\\nLine 2\\r\\nLine 3"`` for line ending tests
+  - ``b'\\xff\\xd8\\xff\\xe0\\x00\\x10JFIF'`` for JPEG magic number testing
 
-- **Minimal file fixtures**: Only for complex binary content that would be unreadable as literals
-
-  - ``tests/data/samples/photo.jpg`` - for JPEG magic number testing
-  - ``tests/data/samples/large_text.txt`` - for statistical detection edge cases (if needed)
+- **No file fixtures needed**: All test data can be represented as byte literals
 
 Private functions/methods testable via public API
 -------------------------------------------------------------------------------
@@ -210,9 +239,14 @@ Third-party testing patterns to research
 Test module numbering
 -------------------------------------------------------------------------------
 
+Current test structure:
+- ``test_000_package.py`` - package sanity checks (existing)
+- ``test_010_base.py`` - imports testing (existing)
+
+Needed test modules for 100% coverage:
 - ``test_100_exceptions.py`` - exception classes testing
-- ``test_200_detection.py`` - detection module testing
-- ``test_210_lineseparators.py`` - line separators enum testing
+- ``test_200_detection.py`` - detection module functional testing
+- ``test_210_lineseparators.py`` - line separators enum functional testing
 
 Anti-patterns to avoid
 -------------------------------------------------------------------------------
@@ -224,6 +258,15 @@ Anti-patterns to avoid
 Success Metrics
 ===============================================================================
 
-- Target line coverage: 100% for both modules
-- Branch coverage goals: 100% for both modules
-- Specific gaps to close: All identified uncovered lines (detection.py: 75-85, 96-98, 113-132, 145-147, 160-173, 183-187; lineseparators.py: 44-56, 61, 65-66, 70-71)
+- Target line coverage: 100% for both detection.py and lineseparators.py
+- Target branch coverage: 100% for both modules
+- Specific gaps to close: Lines 77-81, 111, 121, 124-128, 173-174, 176 in detection.py
+- Exception testing: Ensure all 3 exception classes are instantiated and tested
+
+**100% Coverage Approach**
+
+Since all uncovered lines are testable without complex mocking:
+- Target: 100% line and branch coverage
+- Estimated: 15-20 focused test cases across 3 new test modules
+- Strategy: Direct testing of edge cases and error paths
+- No `#pragma: no cover` needed - all code paths are legitimately testable

@@ -31,6 +31,18 @@ Package ``detextive``
 .. automodule:: detextive
 
 
+Module ``detextive.detection``
+-------------------------------------------------------------------------------
+
+.. automodule:: detextive.detection
+
+
+Module ``detextive.lineseparators``
+-------------------------------------------------------------------------------
+
+.. automodule:: detextive.lineseparators
+
+
 Module ``detextive.exceptions``
 -------------------------------------------------------------------------------
 
