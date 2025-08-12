@@ -25,18 +25,15 @@ from . import __
 from .exceptions import TextualMimetypeInvalidity
 
 
-# Type aliases with documentation
 Content: __.typx.TypeAlias = __.typx.Annotated[
-    bytes, 
+    bytes,
     __.ddoc.Doc( "Raw byte content for analysis." )
 ]
-
 Location: __.typx.TypeAlias = __.typx.Annotated[
-    __.typx.Union[ str, __.Path, __.cabc.Sequence[ str ] ],
+    str | __.Path,
     __.ddoc.Doc( "File path, URL, or path components for context." )
 ]
 
-# Textual MIME type patterns consolidated from all sources
 _TEXTUAL_MIME_TYPES = frozenset( (
     'application/ecmascript',
     'application/graphql',
@@ -58,18 +55,17 @@ _TEXTUAL_MIME_TYPES = frozenset( (
     'application/yaml',
     'image/svg+xml',
 ) )
-
 _TEXTUAL_SUFFIXES = ( '+xml', '+json', '+yaml', '+toml' )
 
 
 def detect_charset( content: Content ) -> __.typx.Optional[ str ]:
     ''' Detects character encoding with UTF-8 preference and validation.
-    
-        Applies statistical analysis using chardet library with UTF-8 bias.
-        Validates detected encodings through trial decoding to eliminate
-        false positives like 'MacRoman'. Returns encoding names compatible 
-        with Python's codec system.
-        
+
+        Applies statistical analysis with UTF-8 bias. Validates detected
+        encodings through trial decoding to eliminate false positives like
+        'MacRoman'. Returns encoding names compatible with Python's codec
+        system.
+
         Returns None if no reliable encoding can be determined.
     '''
     result = __.chardet.detect( content )
@@ -90,7 +86,7 @@ def detect_mimetype(
     location: Location
 ) -> __.typx.Optional[ str ]:
     ''' Detects MIME type using content analysis and extension fallback.
-        
+
         Returns standardized MIME type strings or None if detection fails.
     '''
     try: return __.puremagic.from_string( content, mime = True )
@@ -105,9 +101,9 @@ def detect_mimetype_and_charset(
     charset: __.Absential[ str ] = __.absent,
 ) -> tuple[ str, __.typx.Optional[ str ] ]:
     ''' Detects MIME type and charset with optional parameter overrides.
-        
-        Returns tuple of (mimetype, charset). MIME type defaults to 
-        'text/plain' if charset detected but MIME type unknown, or 
+
+        Returns tuple of (mimetype, charset). MIME type defaults to
+        'text/plain' if charset detected but MIME type unknown, or
         'application/octet-stream' if neither detected.
     '''
     if __.is_absent( mimetype ):
@@ -134,12 +130,12 @@ def detect_mimetype_and_charset(
 
 def is_textual_mimetype( mimetype: str ) -> bool:
     ''' Validates if MIME type represents textual content.
-    
-        Consolidates textual MIME type patterns from all source 
+
+        Consolidates textual MIME type patterns from all source
         implementations. Supports text/* prefix, specific application
         types (JSON, XML, JavaScript, etc.), and textual suffixes
         (+xml, +json, +yaml, +toml).
-        
+
         Returns True for MIME types representing textual content.
     '''
     if mimetype.startswith( ( 'text/', 'text/x-' ) ): return True
@@ -149,18 +145,14 @@ def is_textual_mimetype( mimetype: str ) -> bool:
 
 def is_reasonable_text_content( content: str ) -> bool:
     ''' Validates decoded content using heuristic analysis.
-    
+
         Applies heuristics to detect meaningful text vs binary data:
-        - Rejects empty content and single-character repetition
         - Limits control characters to <10% (excluding common whitespace)
         - Requires >=80% printable characters
-        
+
         Returns True for content likely to be meaningful text.
     '''
     if not content: return False
-    # Check for excessive repetition of single characters (likely binary)
-    if len( set( content ) ) == 1: return False
-    # Check for excessive control characters (excluding common whitespace)
     common_whitespace = '\t\n\r'
     ascii_control_limit = 32
     control_chars = sum(
@@ -168,16 +160,13 @@ def is_reasonable_text_content( content: str ) -> bool:
         if ord( c ) < ascii_control_limit and c not in common_whitespace )
     if control_chars > len( content ) * 0.1: return False
     printable_chars = sum(
-        1 for c in content 
+        1 for c in content
         if c.isprintable( ) or c in common_whitespace )
     return printable_chars >= len( content ) * 0.8
 
 
 def _validate_mimetype_with_trial_decode(
-    content: bytes, 
-    location: __.typx.Union[ str, __.Path ],
-    mimetype: str, 
-    charset: str
+    content: bytes, location: Location, mimetype: str, charset: str
 ) -> None:
     ''' Validates charset fallback and returns appropriate MIME type. '''
     try: text = content.decode( charset )
