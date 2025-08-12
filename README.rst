@@ -45,10 +45,9 @@
    :target: https://pypi.org/project/detextive/
 
 
-🔍 Python library which provides consolidated text detection and processing
+🕵️ A Python library which provides consolidated text detection
 capabilities for reliable content analysis. Offers MIME type detection,
-character encoding detection, and line separator processing with consistent
-APIs for textual content analysis.
+character set detection, and line separator processing.
 
 Key Features ⭐
 ===============================================================================
@@ -141,7 +140,7 @@ Basic Usage
     detextive.is_textual_mimetype( 'image/jpeg' )        # False
 
     # Validate text content from bytes
-    detextive.is_textual_content( b'Hello world!' )  # True
+    detextive.is_textual_content( b'Hello world!' )      # True
     detextive.is_textual_content( b'\x00\x01\x02\x03' )  # False
 
 
