@@ -27,7 +27,7 @@ from .detection import (
     detect_charset,
     detect_mimetype,
     detect_mimetype_and_charset,
-    is_reasonable_text_content,
+    is_textual_content,
     is_textual_mimetype,
 )
 from .lineseparators import LineSeparators

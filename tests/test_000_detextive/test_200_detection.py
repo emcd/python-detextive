@@ -246,36 +246,66 @@ def test_440_empty_and_invalid_mimetypes( detection_module ):
     assert detection_module.is_textual_mimetype( 'invalid' ) is False
 
 
-# is_reasonable_text_content tests (500-599)
+# is_textual_content tests (500-599)
 
-def test_500_reasonable_text_content( detection_module ):
-    ''' Normal text content is identified as reasonable. '''
-    content = 'This is normal readable text with proper formatting.'
-    assert detection_module.is_reasonable_text_content( content ) is True
+def test_500_textual_content_valid( detection_module ):
+    ''' Valid textual content is identified as textual. '''
+    content = b'This is normal readable text with proper formatting.'
+    assert detection_module.is_textual_content( content ) is True
 
 
 def test_510_empty_content_rejection( detection_module ):
-    ''' Empty content is rejected as unreasonable. '''
-    assert detection_module.is_reasonable_text_content( '' ) is False
+    ''' Empty content is rejected as non-textual. '''
+    assert detection_module.is_textual_content( b'' ) is False
 
 
-def test_520_excessive_control_characters( detection_module ):
-    ''' Content with >10% control characters is rejected. '''
-    content = '\x01\x02\x03text\x04\x05\x06'  # 6 control, 4 text = 60%
-    assert detection_module.is_reasonable_text_content( content ) is False
+def test_520_binary_content_rejection( detection_module ):
+    ''' Binary content is rejected as non-textual. '''
+    content = b'\x00\x01\x02\x03\x04\x05\x06\x07'  # Binary data
+    assert detection_module.is_textual_content( content ) is False
 
 
-def test_530_acceptable_whitespace( detection_module ):
-    ''' Common whitespace characters are accepted. '''
-    content = 'Line 1\n\tIndented line\rCarriage return line'
-    assert detection_module.is_reasonable_text_content( content ) is True
+def test_530_whitespace_content_accepted( detection_module ):
+    ''' Content with common whitespace is accepted. '''
+    content = b'Line 1\n\tIndented line\rCarriage return line'
+    assert detection_module.is_textual_content( content ) is True
 
 
-def test_540_insufficient_printable_characters( detection_module ):
-    ''' Content with <80% printable characters is rejected. '''
-    # Create content with low printable ratio
-    content = 'text' + '\x7f' * 20  # 4 printable, 20 non-printable = 17%
-    assert detection_module.is_reasonable_text_content( content ) is False
+def test_540_no_charset_detection( detection_module ):
+    ''' Content where charset detection fails is rejected. '''
+    # Content that chardet will fail to detect charset for
+    with patch( 'chardet.detect' ) as mock_chardet:
+        mock_chardet.return_value = { 'encoding': None }
+        content = b'some content'
+        assert detection_module.is_textual_content( content ) is False
+
+
+def test_550_json_content_accepted( detection_module ):
+    ''' JSON content is accepted as textual. '''
+    content = b'{"key": "value", "number": 42}'
+    assert detection_module.is_textual_content( content ) is True
+
+
+def test_560_image_content_rejected( detection_module ):
+    ''' Image content is rejected as non-textual. '''
+    # JPEG magic bytes
+    content = bytes( [ 0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10 ] ) + b'JFIF'
+    assert detection_module.is_textual_content( content ) is False
+
+
+# Test coverage for private validation via detect_mimetype_and_charset (570)
+
+def test_570_empty_content_non_textual_with_charset( 
+        detection_module, exceptions_module ):
+    ''' Empty content with non-textual mimetype and charset raises error. '''
+    # This triggers validation path at line 125 in detect_mimetype_and_charset
+    with pytest.raises( exceptions_module.TextualMimetypeInvalidity ):
+        detection_module.detect_mimetype_and_charset(
+            b'',  # Empty content that decodes to empty string
+            'test.bin',
+            mimetype='application/octet-stream',  # Non-textual mimetype
+            charset='utf-8'                       # But explicit charset
+        )
 
 
 # _validate_mimetype_with_trial_decode tests (600-699)

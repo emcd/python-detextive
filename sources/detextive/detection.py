@@ -61,11 +61,6 @@ _TEXTUAL_SUFFIXES = ( '+xml', '+json', '+yaml', '+toml' )
 def detect_charset( content: Content ) -> __.typx.Optional[ str ]:
     ''' Detects character encoding with UTF-8 preference and validation.
 
-        Applies statistical analysis with UTF-8 bias. Validates detected
-        encodings through trial decoding to eliminate false positives like
-        'MacRoman'. Returns encoding names compatible with Python's codec
-        system.
-
         Returns None if no reliable encoding can be determined.
     '''
     result = __.chardet.detect( content )
@@ -143,7 +138,16 @@ def is_textual_mimetype( mimetype: str ) -> bool:
     return mimetype.endswith( _TEXTUAL_SUFFIXES )
 
 
-def is_reasonable_text_content( content: str ) -> bool:
+def is_textual_content( content: bytes ) -> bool:
+    ''' Determines if byte content represents textual data.
+
+        Returns True for content that can be reliably processed as text.
+    '''
+    mimetype, charset = detect_mimetype_and_charset( content, 'unknown' )
+    return charset is not None and is_textual_mimetype( mimetype )
+
+
+def _is_probable_textual_content( content: str ) -> bool:
     ''' Validates decoded content using heuristic analysis.
 
         Applies heuristics to detect meaningful text vs binary data:
@@ -173,6 +177,6 @@ def _validate_mimetype_with_trial_decode(
     except ( UnicodeDecodeError, LookupError ) as exc:
         raise _exceptions.TextualMimetypeInvalidity(
             str( location ), mimetype ) from exc
-    if not is_reasonable_text_content( text ):
+    if not _is_probable_textual_content( text ):
         raise _exceptions.TextualMimetypeInvalidity(
             str( location ), mimetype )

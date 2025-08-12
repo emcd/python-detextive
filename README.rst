@@ -140,9 +140,9 @@ Basic Usage
     detextive.is_textual_mimetype( 'application/json' )  # True
     detextive.is_textual_mimetype( 'image/jpeg' )        # False
 
-    # Validate text content quality
-    detextive.is_reasonable_text_content( 'Hello world!' )  # True
-    detextive.is_reasonable_text_content( '\x01\x02\x03' )  # False
+    # Validate text content from bytes
+    detextive.is_textual_content( b'Hello world!' )  # True
+    detextive.is_textual_content( b'\x00\x01\x02\x03' )  # False
 
 
 Contribution 🤝

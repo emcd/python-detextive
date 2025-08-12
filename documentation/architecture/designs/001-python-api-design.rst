@@ -45,12 +45,7 @@ Core Detection Functions
 
     def detect_charset( content: bytes ) -> __.typx.Optional[ str ]:
         ''' Detects character encoding with UTF-8 preference and validation.
-        
-            Applies statistical analysis using chardet library with UTF-8 bias.
-            Validates detected encodings through trial decoding to eliminate
-            false positives like 'MacRoman'. Returns encoding names compatible 
-            with Python's codec system.
-            
+
             Returns None if no reliable encoding can be determined.
         '''
 
@@ -63,7 +58,7 @@ Core Detection Functions
         location: __.cabc.Sequence[ str ] | __.Path | str
     ) -> __.typx.Optional[ str ]:
         ''' Detects MIME type using content analysis and extension fallback.
-            
+
             Returns standardized MIME type strings or None if detection fails.
         '''
 
@@ -78,9 +73,9 @@ Core Detection Functions
         charset: __.Absential[ str ] = __.absent,
     ) -> tuple[ str, __.typx.Optional[ str ] ]:
         ''' Detects MIME type and charset with optional parameter overrides.
-            
-            Returns tuple of (mimetype, charset). MIME type defaults to 
-            'text/plain' if charset detected but MIME type unknown, or 
+
+            Returns tuple of (mimetype, charset). MIME type defaults to
+            'text/plain' if charset detected but MIME type unknown, or
             'application/octet-stream' if neither detected.
         '''
 
@@ -90,24 +85,19 @@ Core Detection Functions
 
     def is_textual_mimetype( mimetype: str ) -> bool:
         ''' Validates if MIME type represents textual content.
-        
-            Consolidates textual MIME type patterns from all source 
+
+            Consolidates textual MIME type patterns from all source
             implementations. Supports text/* prefix, specific application
             types (JSON, XML, JavaScript, etc.), and textual suffixes
             (+xml, +json, +yaml, +toml).
-            
+
             Returns True for MIME types representing textual content.
         '''
 
-    def is_reasonable_text_content( content: str ) -> bool:
-        ''' Validates decoded content using heuristic analysis.
-        
-            Applies heuristics to detect meaningful text vs binary data:
-            - Rejects empty content and single-character repetition
-            - Limits control characters to <10% (excluding common whitespace)
-            - Requires >=80% printable characters
-            
-            Returns True for content likely to be meaningful text.
+    def is_textual_content( content: bytes ) -> bool:
+        ''' Determines if byte content represents textual data.
+
+            Returns True for content that can be reliably processed as text.
         '''
 
 Line Separator Processing
@@ -119,11 +109,11 @@ Line Separator Processing
 
     class LineSeparators( __.enum.Enum ):
         ''' Line separators for cross-platform text processing. '''
-        
+
         CR = '\r'     # Classic MacOS (0xD)
         CRLF = '\r\n' # DOS/Windows (0xD 0xA)
         LF = '\n'     # Unix/Linux (0xA)
-        
+
         @classmethod
         def detect_bytes(
             selfclass,
@@ -131,19 +121,19 @@ Line Separator Processing
             limit: int = 1024
         ) -> __.typx.Optional[ 'LineSeparators' ]:
             ''' Detects line separator from byte content sample.
-            
+
                 Returns detected LineSeparators enum member or None.
             '''
-        
+
         @classmethod
         def normalize_universal( selfclass, content: str ) -> str:
             ''' Normalizes all line separators to Unix LF format.
             '''
-        
+
         def normalize( self, content: str ) -> str:
             ''' Normalizes specific line separator to Unix LF format.
             '''
-        
+
         def nativize( self, content: str ) -> str:
             ''' Converts Unix LF to this platform's line separator.
             '''
@@ -171,7 +161,7 @@ Wide Parameters, Narrow Returns
     # Wide parameters: accept any sequence-like or path-like input
     location: __.cabc.Sequence[ str ] | __.Path | str
     content: __.cabc.Sequence[ int ] | bytes
-    
+
     # Narrow returns: specific immutable types
     -> __.typx.Optional[ str ]                        # Explicit None for "not detected"
     -> tuple[ str, __.typx.Optional[ str ] ]          # Immutable tuple with concrete types
@@ -186,15 +176,15 @@ Type Annotation Patterns
 
     # Use Annotated for documented parameter types
     Content: __.typx.TypeAlias = __.typx.Annotated[
-        bytes, 
+        bytes,
         __.ddoc.Doc( "Raw byte content for analysis." )
     ]
-    
+
     Location: __.typx.TypeAlias = __.typx.Annotated[
         __.typx.Union[ str, __.Path, __.cabc.Sequence[ str ] ],
         __.ddoc.Doc( "File path, URL, or path components for context." )
     ]
-    
+
     # Comprehensive annotations with Absential pattern
     def detect_mimetype_and_charset(
         content: Content,
@@ -204,7 +194,7 @@ Type Annotation Patterns
     ) -> tuple[ str, __.typx.Optional[ str ] ]:
 
 **Absential Pattern Usage:**
-- Distinguish "not provided" (absent) from "explicitly None" 
+- Distinguish "not provided" (absent) from "explicitly None"
 - Enable three-state parameters: absent | None | value
 - Preserve complex parameter handling from mimeogram
 
@@ -237,7 +227,8 @@ Package Structure
 
 **`detection.py`:**
 - Core detection function implementations: `detect_charset`, `detect_mimetype`, `detect_mimetype_and_charset`
-- Textual content validation: `is_textual_mimetype`, `is_reasonable_text_content`
+- Textual content validation: `is_textual_mimetype`, `is_textual_content`
+- Private heuristic functions: `_is_probable_textual_content` (used internally by validation logic)
 - Consolidates detection logic from all source implementations
 
 **`lineseparators.py`:**
@@ -260,7 +251,7 @@ The implementation will require imports for `chardet`, `mimetypes`, `puremagic` 
     # Textual MIME type patterns (consolidated from all sources)
     _TEXTUAL_MIME_TYPES = frozenset((
         'application/json',
-        'application/xml', 
+        'application/xml',
         'application/javascript',
         'application/ecmascript',
         'application/graphql',          # From ai-experiments
@@ -276,10 +267,10 @@ The implementation will require imports for `chardet`, `mimetypes`, `puremagic` 
         'application/yaml',             # From cache proxy
         'image/svg+xml',
     ))
-    
+
     _TEXTUAL_SUFFIXES = ('+xml', '+json', '+yaml', '+toml')
 
-Exception Hierarchy Design  
+Exception Hierarchy Design
 ===============================================================================
 
 Following Omniexception → Omnierror Pattern
@@ -289,17 +280,17 @@ Following Omniexception → Omnierror Pattern
 
     class Omniexception(__.immut.Object, BaseException):
         ''' Base for all exceptions raised by detextive package. '''
-    
+
     class Omnierror(Omniexception, Exception):
         ''' Base for error exceptions raised by detextive package. '''
-    
+
     # Specific exceptions following nomenclature patterns
     class CharsetDetectFailure( Omnierror, RuntimeError ):
         ''' Raised when character encoding detection fails. '''
-    
+
     class ContentDecodeFailure( Omnierror, UnicodeError ):
         ''' Raised when content cannot be decoded with detected charset. '''
-    
+
     class TextualMimetypeInvalidity( Omnierror, ValueError ):
         ''' Raised when MIME type is invalid for textual content processing. '''
 

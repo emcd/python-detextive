@@ -219,40 +219,40 @@ Empty and malformed MIME types:
 Text Reasonableness Testing
 -------------------------------------------------------------------------------
 
-Validate that decoded content represents meaningful text:
+Validate that byte content represents textual data:
 
 .. doctest:: Validation
 
     >>> import detextive
     >>>
-    >>> content = 'This is readable text with proper formatting.'
-    >>> print( detextive.is_reasonable_text_content( content ) )
+    >>> content = b'This is readable text with proper formatting.'
+    >>> print( detextive.is_textual_content( content ) )
     True
 
 Content with acceptable whitespace:
 
 .. doctest:: Validation
 
-    >>> content = 'Line 1\n\tIndented line\nLast line'
-    >>> print( detextive.is_reasonable_text_content( content ) )
+    >>> content = b'Line 1\n\tIndented line\nLast line'
+    >>> print( detextive.is_textual_content( content ) )
     True
 
-Rejecting Poor Quality Content
+Rejecting Non-Textual Content
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Empty content is rejected:
 
 .. doctest:: Validation
 
-    >>> print( detextive.is_reasonable_text_content( '' ) )
+    >>> print( detextive.is_textual_content( b'' ) )
     False
 
-Content with excessive control characters:
+Non-textual content is rejected:
 
 .. doctest:: Validation
 
-    >>> content = '\x01\x02\x03text\x04\x05\x06'
-    >>> print( detextive.is_reasonable_text_content( content ) )
+    >>> content = b'\x00\x01\x02\x03\x04\x05'
+    >>> print( detextive.is_textual_content( content ) )
     False
 
 Line Separator Detection
