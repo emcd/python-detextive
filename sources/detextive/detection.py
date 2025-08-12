@@ -22,7 +22,7 @@
 
 
 from . import __
-from .exceptions import TextualMimetypeInvalidity
+from . import exceptions as _exceptions
 
 
 Content: __.typx.TypeAlias = __.typx.Annotated[
@@ -106,26 +106,26 @@ def detect_mimetype_and_charset(
         'text/plain' if charset detected but MIME type unknown, or
         'application/octet-stream' if neither detected.
     '''
-    if __.is_absent( mimetype ):
-        mimetype_ = detect_mimetype( content, location )
-    else: mimetype_ = mimetype
-    if __.is_absent( charset ):  # noqa: SIM108
-        charset_ = detect_charset( content )
-    else: charset_ = charset
+    mimetype_ = (
+        detect_mimetype( content, location )
+        if __.is_absent( mimetype ) else mimetype )
+    charset_ = (
+        detect_charset( content ) if __.is_absent( charset ) else charset )
     if not mimetype_:
         if charset_:
             mimetype_ = 'text/plain'
-            _validate_mimetype_with_trial_decode(
-                content, str( location ), mimetype_, charset_ )
-            return mimetype_, charset_
+            try:
+                _validate_mimetype_with_trial_decode(
+                    content, str( location ), mimetype_, charset_ )
+            except _exceptions.TextualMimetypeInvalidity: pass
+            else: return mimetype_, charset_
         mimetype_ = 'application/octet-stream'
-    if is_textual_mimetype( mimetype_ ):
-        return mimetype_, charset_
-    if charset_ is None:
-        raise TextualMimetypeInvalidity( str( location ), mimetype_ )
-    _validate_mimetype_with_trial_decode(
-        content, str( location ), mimetype_, charset_ )
-    return mimetype_, charset_
+    if is_textual_mimetype( mimetype_ ): return mimetype_, charset_
+    if not __.is_absent( charset ):
+        _validate_mimetype_with_trial_decode(
+            content, str( location ), mimetype_, charset )
+        return mimetype_, charset
+    return mimetype_, None  # no charset for non-textual content
 
 
 def is_textual_mimetype( mimetype: str ) -> bool:
@@ -171,6 +171,8 @@ def _validate_mimetype_with_trial_decode(
     ''' Validates charset fallback and returns appropriate MIME type. '''
     try: text = content.decode( charset )
     except ( UnicodeDecodeError, LookupError ) as exc:
-        raise TextualMimetypeInvalidity( str( location ), mimetype ) from exc
+        raise _exceptions.TextualMimetypeInvalidity(
+            str( location ), mimetype ) from exc
     if not is_reasonable_text_content( text ):
-        raise TextualMimetypeInvalidity( str( location ), mimetype )
+        raise _exceptions.TextualMimetypeInvalidity(
+            str( location ), mimetype )
