@@ -21,5 +21,16 @@
 Release Notes
 *******************************************************************************
 
-
 .. towncrier release notes start
+
+Detextive 1.0 (2025-08-12)
+==========================
+
+Enhancements
+------------
+
+- Provide ``LineSeparators`` enum with detection, normalization, and nativization
+  methods.
+- Provide ``detect_charset``, ``detect_mimetype``,
+  ``detect_charset_and_mimetype``, ``is_textual_mimetype``, and
+  ``is_textual_content``.
