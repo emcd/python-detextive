@@ -26,7 +26,7 @@ from unittest.mock import patch
 
 import pytest
 
-from . import PACKAGE_NAME, cache_import_module
+from .__ import PACKAGE_NAME, cache_import_module
 
 
 @pytest.fixture
@@ -155,11 +155,9 @@ def test_330_octet_stream_fallback( detection_module ):
     with patch( 'puremagic.from_string' ) as mock_puremagic, \
          patch( 'mimetypes.guess_type' ) as mock_mimetypes, \
          patch( 'chardet.detect' ) as mock_chardet:
-
         mock_puremagic.side_effect = ValueError( "No magic" )
         mock_mimetypes.return_value = ( None, None )
         mock_chardet.return_value = { 'encoding': None }
-
         content = b'\x00\x01\x02\x03'
         mimetype, charset = detection_module.detect_mimetype_and_charset(
             content, 'binary_file' )
@@ -171,10 +169,8 @@ def test_340_text_plain_fallback_with_charset( detection_module ):
     ''' Charset detected but no MIME type defaults to text/plain. '''
     with patch( 'puremagic.from_string' ) as mock_puremagic, \
          patch( 'mimetypes.guess_type' ) as mock_mimetypes:
-
         mock_puremagic.side_effect = ValueError( "No magic" )
         mock_mimetypes.return_value = ( None, None )
-
         content = b'Plain text without clear extension'
         mimetype, charset = detection_module.detect_mimetype_and_charset(
             content, 'unknown_file' )
@@ -186,9 +182,7 @@ def test_350_non_textual_mimetype_returns_without_charset( detection_module ):
     ''' Non-textual MIME type returns without charset. '''
     with patch( 'puremagic.from_string' ) as mock_puremagic:
         mock_puremagic.return_value = 'image/jpeg'
-
         content = b'\x00\x01\x02\x03'  # Binary content
-
         mimetype, charset = detection_module.detect_mimetype_and_charset(
             content, 'test.jpg' )
         assert mimetype == 'image/jpeg'
@@ -295,7 +289,7 @@ def test_560_image_content_rejected( detection_module ):
 
 # Test coverage for private validation via detect_mimetype_and_charset (570)
 
-def test_570_empty_content_non_textual_with_charset( 
+def test_570_empty_content_non_textual_with_charset(
         detection_module, exceptions_module ):
     ''' Empty content with non-textual mimetype and charset raises error. '''
     # This triggers validation path at line 125 in detect_mimetype_and_charset
