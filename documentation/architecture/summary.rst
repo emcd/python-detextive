@@ -120,9 +120,17 @@ Architectural Patterns
   * **mimetypes**: Standard library extension-based fallback
   * **LineSeparators**: Byte-level line ending detection and normalization
 
-**Future Extensibility**
-  ADR-002 documents deferred architectural enhancements for future iterations:
+**v2.0 Evolution**
+  ADR-003, ADR-004, and ADR-005 document the context-aware detection architecture 
+  for v2.0 that addresses real-world integration challenges:
   
-  * Internal detector classes for configuration and testing
-  * Consolidated result objects for multi-value operations
+  * Context-driven detection utilizing HTTP headers, location, and content analysis
+  * Error class provider pattern eliminating exception translation overhead
+  * Configurable validation behaviors for performance and security requirements
+  * Enhanced function interfaces maintaining backward compatibility
+
+**Future Extensibility**
+  ADR-002 documents potential future architectural enhancements:
+  
   * Plugin architecture for alternative detection backends
+  * Internal detector classes for advanced configuration and testing
