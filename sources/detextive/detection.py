@@ -31,10 +31,10 @@ Content: __.typx.TypeAlias = __.typx.Annotated[
 ]
 Location: __.typx.TypeAlias = __.typx.Annotated[
     str | __.Path,
-    __.ddoc.Doc( "File path, URL, or path components for context." )
+    __.ddoc.Doc( "Local filesystem location or URL for context." )
 ]
 
-_TEXTUAL_MIME_TYPES = frozenset( (
+_TEXTUAL_MIMETYPES = frozenset( (
     'application/ecmascript',
     'application/graphql',
     'application/javascript',
@@ -55,7 +55,7 @@ _TEXTUAL_MIME_TYPES = frozenset( (
     'application/yaml',
     'image/svg+xml',
 ) )
-_TEXTUAL_SUFFIXES = ( '+xml', '+json', '+yaml', '+toml' )
+_TEXTUAL_MIMETYPE_SUFFIXES = ( '+json', '+toml', '+xml', '+yaml' )
 
 
 def detect_charset( content: Content ) -> __.typx.Optional[ str ]:
@@ -134,8 +134,8 @@ def is_textual_mimetype( mimetype: str ) -> bool:
         Returns True for MIME types representing textual content.
     '''
     if mimetype.startswith( ( 'text/', 'text/x-' ) ): return True
-    if mimetype in _TEXTUAL_MIME_TYPES: return True
-    return mimetype.endswith( _TEXTUAL_SUFFIXES )
+    if mimetype in _TEXTUAL_MIMETYPES: return True
+    return mimetype.endswith( _TEXTUAL_MIMETYPE_SUFFIXES )
 
 
 def is_textual_content( content: bytes ) -> bool:
@@ -167,6 +167,22 @@ def _is_probable_textual_content( content: str ) -> bool:
         1 for c in content
         if c.isprintable( ) or c in common_whitespace )
     return printable_chars >= len( content ) * 0.8
+
+
+def is_valid_text(
+    text: str,
+    # TODO: text validation profile DTO
+) -> bool:
+    ''' Is text valid? '''
+    # TODO: Check according to profile.
+    #       (TEXTUAL, TERMINAL_SAFE, TERMINAL_SAFE_NOANSI, PRINTER_SAFE)
+    #       Or custom profile.
+    #       TEXTUAL should exclude C0 and C1, minus whitespace.
+    #       Consider BIDI markers.
+    #       Consider Unicode categories.
+    if not text: return False
+    # TODO: Implement.
+    return False
 
 
 def _validate_mimetype_with_trial_decode(
