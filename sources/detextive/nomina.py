@@ -18,26 +18,17 @@
 #============================================================================#
 
 
-''' Common imports used throughout the package. '''
+''' Common names and type aliases. '''
 
-# ruff: noqa: F401
 
-import collections.abc as   cabc
-import                      enum
-import                      locale
-import                      mimetypes
-import                      os
-import                      types
+from . import __
 
-from pathlib import Path
 
-import                      chardet
-import dynadoc as           ddoc
-import frigid as            immut
-import                      puremagic
-import typing_extensions as typx
-
-from absence import Absential, absent, is_absent
-
-# --- BEGIN: Injected by Copier ---
-# --- END: Injected by Copier ---
+Content: __.typx.TypeAlias = __.typx.Annotated[
+    bytes,
+    __.ddoc.Doc( "Raw byte content for analysis." ),
+]
+Location: __.typx.TypeAlias = __.typx.Annotated[
+    str | __.os.PathLike[ str ],
+    __.ddoc.Doc( "Local filesystem location or URL for context." ),
+]

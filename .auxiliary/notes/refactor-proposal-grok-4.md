@@ -1,18 +1,43 @@
 ### Interface Structure and Call Hierarchy
 
-Based on the provided release 2.0 interface architecture document, the current source code (e.g., `detection.py` and `__init__.py`), and the suggestions from GPT-5 and Opus 4.1, I'll outline a refined structure for the `detextive` package's interface. The goal is to maintain functional simplicity while addressing pain points like redundant detection, context loss, and rigid validation. The architecture doc's layered approach (Primitive Detectors → Validation Functions → Public API) is a strong foundation, but we can enhance it for better modularity, especially around text validation (e.g., integrating `is_valid_text` as a key validator).
+Based on the provided release 2.0 interface architecture document, the current
+source code (e.g., `detection.py` and `__init__.py`), and the suggestions from
+GPT-5 and Opus 4.1, I'll outline a refined structure for the `detextive`
+package's interface. The goal is to maintain functional simplicity while
+addressing pain points like redundant detection, context loss, and rigid
+validation. The architecture doc's layered approach (Primitive Detectors →
+Validation Functions → Public API) is a strong foundation, but we can enhance
+it for better modularity, especially around text validation (e.g., integrating
+`is_valid_text` as a key validator).
 
 #### Key Principles Guiding the Design
-- **Modularity and Reusability**: Primitives should be low-level and independent, validators composable, and public APIs opinionated wrappers that orchestrate them based on context (e.g., content bytes, location, HTTP headers).
-- **Context-Aware Execution**: Prioritize available hints (e.g., Content-Type header) before falling back to expensive analysis (e.g., magic bytes or full content scans).
-- **Configurability Without Complexity**: Use DTOs (dataclasses) for behaviors and profiles to allow customization while providing sensible defaults and predefined options.
-- **Error Handling Flexibility**: Support the error class provider pattern from the doc to eliminate boilerplate in downstream integrations.
-- **Performance**: Single-pass where possible (e.g., in validation), conditional execution (skip validators if not needed), and early exits.
-- **Backwards Compatibility**: Enhance existing functions (e.g., `detect_mimetype_and_charset`) with new optional parameters without breaking signatures.
-- **Integration with Validation**: `is_valid_text` fits as a Layer 2 validator, called conditionally during MIME/charset detection (e.g., in trial decodes) or standalone for decoded text.
+- **Modularity and Reusability**: Primitives should be low-level and
+  independent, validators composable, and public APIs opinionated wrappers that
+  orchestrate them based on context (e.g., content bytes, location, HTTP
+  headers).
+- **Context-Aware Execution**: Prioritize available hints (e.g., Content-Type
+  header) before falling back to expensive analysis (e.g., magic bytes or full
+  content scans).
+- **Configurability Without Complexity**: Use DTOs (dataclasses) for behaviors
+  and profiles to allow customization while providing sensible defaults and
+  predefined options.
+- **Error Handling Flexibility**: Support the error class provider pattern from
+  the doc to eliminate boilerplate in downstream integrations.
+- **Performance**: Single-pass where possible (e.g., in validation),
+  conditional execution (skip validators if not needed), and early exits.
+- **Backwards Compatibility**: Enhance existing functions (e.g.,
+  `detect_mimetype_and_charset`) with new optional parameters without breaking
+  signatures.
+- **Integration with Validation**: `is_valid_text` fits as a Layer 2 validator,
+  called conditionally during MIME/charset detection (e.g., in trial decodes)
+  or standalone for decoded text.
 
 #### Proposed Call Hierarchy
-The hierarchy follows the architecture doc's layers but expands Layer 2 to include text validation explicitly. Public APIs (Layer 3) orchestrate calls to Layers 1-2 based on a `Behaviors` DTO (from the doc) and a new `TextValidationProfile` DTO (for `is_valid_text`). Arrows indicate call flow; dashed lines show optional/configurable paths.
+The hierarchy follows the architecture doc's layers but expands Layer 2 to
+include text validation explicitly. Public APIs (Layer 3) orchestrate calls to
+Layers 1-2 based on a `Behaviors` DTO (from the doc) and a new
+`TextValidationProfile` DTO (for `is_valid_text`). Arrows indicate call flow;
+dashed lines show optional/configurable paths.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -51,42 +76,77 @@ The hierarchy follows the architecture doc's layers but expands Layer 2 to inclu
 └─────────────────────────────────────────────────────────────┘
 ```
 
-- **Layer 1 (Primitives)**: Pure detection without validation or orchestration. These are internal but could be exposed if needed. They return `Absential[str]` (e.g., absent if undetectable) to avoid exceptions at this level.
-  - Called conditionally: E.g., if `content_type` is provided, prefer header-based detectors over magic/content analysis.
-  - Enhancements: Add optional libmagic support (via `python-magic` as an extra dependency) as a fallback to `puremagic` for better coverage.
+- **Layer 1 (Primitives)**: Pure detection without validation or orchestration.
+  These are internal but could be exposed if needed. They return
+  `Absential[str]` (e.g., absent if undetectable) to avoid exceptions at this
+  level.
+  - Called conditionally: E.g., if `content_type` is provided, prefer
+    header-based detectors over magic/content analysis.
+  - Enhancements: Add optional libmagic support (via `python-magic` as an extra
+    dependency) as a fallback to `puremagic` for better coverage.
 
-- **Layer 2 (Validators)**: Focus on post-detection checks. `is_valid_text` lives here as a public wrapper around `_validate_printable_content`, which implements the heuristic logic. Validators raise specific exceptions (e.g., `TextualMimetypeInvalidity`) unless suppressed via `Behaviors`.
-  - Integration: During a trial decode in Layer 3 (e.g., `detect_mimetype_charset`), call `_validate_charset_with_trial_decode` which decodes and then calls `is_valid_text` if `behaviors.validate_printable == 'always'` or `'as-needed'`.
+- **Layer 2 (Validators)**: Focus on post-detection checks. `is_valid_text`
+  lives here as a public wrapper around `_validate_printable_content`, which
+  implements the heuristic logic. Validators raise specific exceptions (e.g.,
+  `TextualMimetypeInvalidity`) unless suppressed via `Behaviors`.
+  - Integration: During a trial decode in Layer 3 (e.g.,
+    `detect_mimetype_charset`), call `_validate_charset_with_trial_decode`
+    which decodes and then calls `is_valid_text` if
+    `behaviors.validate_printable == 'always'` or `'as-needed'`.
   - Configurability: Driven by `TextValidationProfile` (see DTOs below).
 
-- **Layer 3 (Public API)**: High-level functions that fuse context, apply behaviors, and orchestrate lower layers. These are the main entry points.
+- **Layer 3 (Public API)**: High-level functions that fuse context, apply
+  behaviors, and orchestrate lower layers. These are the main entry points.
   - Example Flow in `detect_mimetype_charset`:
-    1. If `content_type` present: Call Layer 1 header primitives for mimetype/charset.
+    1. If `content_type` present: Call Layer 1 header primitives for
+       mimetype/charset.
     2. Fallback to location/extension if absent.
     3. Final fallback to content/magic.
-    4. If textual mimetype detected and `behaviors.trial_decode == 'as-needed'`: Call Layer 2 trial decode + validation.
-    5. Handle errors via `error_class_provider` (e.g., map to downstream exceptions or return absent).
-  - Enhancements to Existing Functions: Add optional `content_type`, `behaviors`, and `error_class_provider` kwargs to functions like `detect_mimetype_and_charset` without changing required args.
+    4. If textual mimetype detected and `behaviors.trial_decode ==
+       'as-needed'`: Call Layer 2 trial decode + validation.
+    5. Handle errors via `error_class_provider` (e.g., map to downstream
+       exceptions or return absent).
+  - Enhancements to Existing Functions: Add optional `content_type`,
+    `behaviors`, and `error_class_provider` kwargs to functions like
+    `detect_mimetype_and_charset` without changing required args.
 
-This hierarchy reduces redundancy (e.g., no repeated content scans) and allows conditional skipping (e.g., no validation for non-textual content unless forced).
+This hierarchy reduces redundancy (e.g., no repeated content scans) and allows
+conditional skipping (e.g., no validation for non-textual content unless
+forced).
 
 ### Structuring `is_valid_text`
-The current `_is_probable_textual_content` is a good starting heuristic but has issues noted in our discussion and the LLM responses: redundant passes, ASCII-only control checks, incomplete Unicode handling (e.g., misses U+2028 'Zl' category, which is non-printable and often renders as garbage in terminals), and lack of configurability. GPT-5 and Opus 4.1 both recommend a single-pass, Unicode-aware approach with early exits, hard bans (e.g., on ESC for terminal safety), and configurable thresholds.
+The current `_is_probable_textual_content` is a good starting heuristic but has
+issues noted in our discussion and the LLM responses: redundant passes,
+ASCII-only control checks, incomplete Unicode handling (e.g., misses U+2028
+'Zl' category, which is non-printable and often renders as garbage in
+terminals), and lack of configurability. GPT-5 and Opus 4.1 both recommend a
+single-pass, Unicode-aware approach with early exits, hard bans (e.g., on ESC
+for terminal safety), and configurable thresholds.
 
-We'll replace/augment `_is_probable_textual_content` with `is_valid_text` as a more robust validator. It will:
+We'll replace/augment `_is_probable_textual_content` with `is_valid_text` as a
+more robust validator. It will:
 - Use a single pass over the string.
-- Leverage `unicodedata.category` for consistent Unicode classification (better than `isprintable()` alone, as it catches all 'C*' categories: Cc controls, Cf formats like bidi, Cs surrogates, etc.).
+- Leverage `unicodedata.category` for consistent Unicode classification (better
+  than `isprintable()` alone, as it catches all 'C*' categories: Cc controls,
+  Cf formats like bidi, Cs surrogates, etc.).
 - Support profiles (as per your TODO: TEXTUAL, TERMINAL_SAFE, etc.) via a DTO.
-- Hard-ban disruptive chars (e.g., ESC `\x1b` to prevent ANSI sequences) by default for safety.
+- Hard-ban disruptive chars (e.g., ESC `\x1b` to prevent ANSI sequences) by
+  default for safety.
 - Allow common whitespace (`\t\n\r`) but configurable.
 - Early-exit if thresholds exceeded.
-- Optionally scan for full ANSI sequences (e.g., via regex) if `allow_ansi=False`.
+- Optionally scan for full ANSI sequences (e.g., via regex) if
+  `allow_ansi=False`.
 - Thresholds configurable (e.g., max 5% controls for strict profiles).
 
-This addresses terminal/printer safety: No garbage from controls, no bidi spoofing (ban 'Cf' by default), no escape sequences. For U+2028 specifically: It's 'Zl', fails `isprintable()`, and counts as a control unless explicitly allowed—leading to failure in strict profiles, which is desirable as it doesn't reliably break lines in terminals.
+This addresses terminal/printer safety: No garbage from controls, no bidi
+spoofing (ban 'Cf' by default), no escape sequences. For U+2028 specifically:
+It's 'Zl', fails `isprintable()`, and counts as a control unless explicitly
+allowed—leading to failure in strict profiles, which is desirable as it doesn't
+reliably break lines in terminals.
 
 #### Proposed Implementation for `is_valid_text`
-Add this to `detection.py` (replacing `_is_probable_textual_content` usage in `_validate_mimetype_with_trial_decode`).
+Add this to `detection.py` (replacing `_is_probable_textual_content` usage in
+`_validate_mimetype_with_trial_decode`).
 
 ```python
 import re
@@ -195,9 +255,16 @@ def is_valid_text(
     return True
 ```
 
-- **Why This Structure?** Combines best ideas: Single pass (efficiency), Unicode categories (comprehensive), configurable via DTO (flexible), hard bans/ANSI check (safety). Profiles allow easy switching (e.g., TEXTUAL is lenient on line separators like U+2028; TERMINAL_SAFE bans them).
-- **Integration**: In `_validate_mimetype_with_trial_decode`, decode then call `is_valid_text(text, profile=behaviors.text_profile)` (extend `Behaviors` DTO with a `text_profile` field).
-- **Custom Profiles**: Users can create their own, e.g., `TextValidationProfile(min_printable_ratio=0.9, ban_categories={'Cf'})` for bidi-sensitive apps.
+- **Why This Structure?** Combines best ideas: Single pass (efficiency),
+  Unicode categories (comprehensive), configurable via DTO (flexible), hard
+  bans/ANSI check (safety). Profiles allow easy switching (e.g., TEXTUAL is
+  lenient on line separators like U+2028; TERMINAL_SAFE bans them).
+- **Integration**: In `_validate_mimetype_with_trial_decode`, decode then call
+  `is_valid_text(text, profile=behaviors.text_profile)` (extend `Behaviors` DTO
+  with a `text_profile` field).
+- **Custom Profiles**: Users can create their own, e.g.,
+  `TextValidationProfile(min_printable_ratio=0.9, ban_categories={'Cf'})` for
+  bidi-sensitive apps.
 
 ### Function Signatures and DTOs
 
@@ -232,4 +299,8 @@ Similar for other publics like `detect_charset` (as in arch doc).
 - **TextValidationProfile**: As above; serves as DTO for validation config.
 - **ErrorClassProvider**: As in arch doc (callable mapping names to exceptions).
 
-This setup allows seamless integration: Public APIs use `Behaviors` to control orchestration/validation, while `is_valid_text` uses its profile DTO for fine-grained text checks. If needed, add a `DetectionResult` DTO for returning structured data (e.g., dataclass with mimetype, charset, linesep, validity: bool).
+This setup allows seamless integration: Public APIs use `Behaviors` to control
+orchestration/validation, while `is_valid_text` uses its profile DTO for
+fine-grained text checks. If needed, add a `DetectionResult` DTO for returning
+structured data (e.g., dataclass with mimetype, charset, linesep, validity:
+bool).

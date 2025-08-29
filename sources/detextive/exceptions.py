@@ -22,42 +22,79 @@
 
 
 from . import __
+from . import nomina as _nomina
 
 
-class Omniexception( BaseException ):
+class Omniexception(
+    __.immut.Object, BaseException,
+    instances_visibles = (
+        '__cause__', '__context__', __.is_public_identifier ),
+):
     ''' Base for all exceptions raised by package API. '''
-    # TODO: Class and instance attribute concealment and immutability.
-
-    _attribute_visibility_includes_: __.cabc.Collection[ str ] = (
-        frozenset( ( '__cause__', '__context__', ) ) )
 
 
 class Omnierror( Omniexception, Exception ):
     ''' Base for error exceptions raised by package API. '''
 
 
-class CharsetDetectFailure( Omnierror, RuntimeError ):
-    ''' Character encoding detection fails. '''
+class CharsetInferFailure( Omnierror, TypeError, ValueError ):
 
-    def __init__( self, location: str ) -> None:
-        super( ).__init__(
-            f"Character encoding detection failed for content at "
-            f"'{location}'." )
+    def __init__(
+        self, location: __.Absential[ _nomina.Location ] = __.absent
+    ) -> None:
+        message = "Could not infer character set for content"
+        if not __.is_absent( location ):
+            message = f"{message} at '{location}'"
+        super( ).__init__( f"{message}." )
 
 
 class ContentDecodeFailure( Omnierror, UnicodeError ):
-    ''' Content cannot be decoded with detected charset. '''
 
-    def __init__( self, location: str, charset: str ) -> None:
-        super( ).__init__(
-            f"Content at '{location}' cannot be decoded using charset "
-            f"'{charset}'." )
+    def __init__(
+        self,
+        charset: str | __.cabc.Sequence[ str ],
+        location: __.Absential[ _nomina.Location ] = __.absent,
+    ) -> None:
+        message = "Could not decode content"
+        if not __.is_absent( location ):
+            message = f"{message} at '{location}'"
+        if isinstance( charset, str ): charset = ( charset, )
+        charsets = ', '.join( f"'{charset_}'" for charset_ in charset )
+        message = f"{message} with character sets {charsets}"
+        super( ).__init__( f"{message}." )
+
+
+class MimetypeInferFailure( Omnierror, TypeError, ValueError ):
+
+    def __init__(
+        self, location: __.Absential[ _nomina.Location ] = __.absent
+    ) -> None:
+        message = "Could not infer MIME type for content"
+        if not __.is_absent( location ):
+            message = f"{message} at '{location}'"
+        super( ).__init__( f"{message}." )
+
+
+class MimetypeDetectFailure( Omnierror, TypeError, ValueError ):
+
+    def __init__(
+        self, location: __.Absential[ _nomina.Location ] = __.absent
+    ) -> None:
+        # TODO: Add 'reason' argument.
+        message = "Could not detect MIME type for content"
+        if not __.is_absent( location ):
+            message = f"{message} at '{location}'"
+        super( ).__init__( f"{message}." )
 
 
 class TextualMimetypeInvalidity( Omnierror, ValueError ):
-    ''' MIME type is invalid for textual content processing. '''
 
-    def __init__( self, location: str, mimetype: str ) -> None:
-        super( ).__init__(
-            f"MIME type '{mimetype}' is not textual for content at "
-            f"'{location}'." )
+    def __init__(
+        self,
+        mimetype: str,
+        location: __.Absential[ _nomina.Location ] = __.absent,
+    ) -> None:
+        message = "MIME type '{mimetype}' is not textual for content"
+        if not __.is_absent( location ):
+            message = f"{message} at '{location}'"
+        super( ).__init__( f"{message}." )
