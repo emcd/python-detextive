@@ -25,7 +25,7 @@ from . import __
 from . import exceptions as _exceptions
 from . import nomina as _nomina
 
-from .interfaces import (
+from .interfaces import ( # isort: skip
     BehaviorTristate as             _BehaviorTristate,
     Behaviors as                    _Behaviors,
     CodecSpecifiers as              _CodecSpecifiers,

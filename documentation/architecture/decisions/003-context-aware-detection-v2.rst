@@ -65,20 +65,15 @@ compatibility with enhanced function implementations.
 **Core Architectural Components:**
 
 **Enhanced Function Interface:**
-* ``detect_charset(content, content_type=absent)`` - Optimized for decoding workflows
-* ``detect_mimetype_charset(content, location=absent, *, content_type=absent, behaviors=absent, error_class_provider=absent)`` - Primary combined detection
-* ``detect_mimetype_charset_linesep(...)`` - Comprehensive text processing workflows
+* ``detect_charset(content, /, *, behaviors=default, default=absent, mimetype=absent, location=absent)`` - Enhanced charset detection with configurable behaviors
+* ``infer_mimetype_charset(content, /, *, behaviors=default, http_content_type=absent, location=absent, ...)`` - Primary combined detection with HTTP context support
+* ``detect_mimetype(content, /, *, behaviors=default, charset=absent, location=absent)`` - Focused MIME type detection
 
 **Context-Driven Detection Strategy:**
-* HTTP Content-Type headers processed first when available
+* HTTP Content-Type headers processed first when available via ``http_content_type`` parameter
 * Location/filename extension analysis as secondary fallback  
 * Magic bytes content analysis as final fallback
-* Detection methods selected automatically based on available context
-
-**Error Class Provider Pattern:**
-* ``error_class_provider`` parameter enables zero-boilerplate exception translation
-* Three-way semantics: None (return absent), absent (native exceptions), Callable (custom mapping)
-* Eliminates exception translation tax through provider delegation
+* Detection methods selected automatically based on available context and ``Behaviors`` configuration
 
 **Configurable Validation Behaviors:**
 * ``Behaviors`` dataclass controls validation execution (trial_decode, validate_printable)

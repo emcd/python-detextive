@@ -24,7 +24,11 @@
 Status
 ===============================================================================
 
-Accepted
+Superseded
+
+**Superseded By:** Implementation experience revealed that the error class provider 
+pattern added excessive complexity without sufficient benefit. The approach was 
+abandoned in favor of simpler exception handling patterns.
 
 Context
 ===============================================================================

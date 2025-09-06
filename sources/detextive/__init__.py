@@ -23,11 +23,10 @@
 
 from . import __
 
-from .detection import (
+from .inference import (
     detect_charset,
     detect_mimetype,
-    detect_mimetype_and_charset,
-    is_textual_content,
+    infer_mimetype_charset,
     is_textual_mimetype,
 )
 from .lineseparators import LineSeparators

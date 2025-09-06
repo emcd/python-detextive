@@ -66,38 +66,43 @@ We will implement a **Behaviors Configuration Pattern** that provides
 fine-grained control over validation execution through a structured 
 configuration object.
 
-**Core Configuration Design:**
+**Evolved Configuration Design:**
 
 .. code-block:: python
 
-    TriState: TypeAlias = Literal['never', 'as-needed', 'always']
+    class BehaviorTristate(enum.Enum):
+        Never = enum.auto()
+        AsNeeded = enum.auto()  
+        Always = enum.auto()
 
-    class Behaviors(DataclassObject):
-        # Validation controls
-        trial_decode: TriState = 'as-needed'
-        validate_printable: TriState = 'as-needed'
+    class Behaviors(immut.Dataclass):
+        # Core detection controls
+        charset_detect: BehaviorTristate = BehaviorTristate.AsNeeded
+        mimetype_detect: BehaviorTristate = BehaviorTristate.AsNeeded
         
-        # Character validation
-        printable_threshold: float = 0.0
-        
-        # Fallback behavior  
-        assume_utf8_superset: bool = True
+        # Charset handling sophistication
+        charset_promotions: Mapping[str, str] = {'ascii': 'utf-8'}
+        charset_trial_codecs: Sequence[str | CodecSpecifiers] = (
+            CodecSpecifiers.Inference, CodecSpecifiers.UserDefault)
+        charset_trial_decode: BehaviorTristate = BehaviorTristate.AsNeeded
 
-**TriState Validation Control:**
+**BehaviorTristate Control:**
 
-* **'never'**: Skip validation entirely for maximum performance
-* **'as-needed'**: Apply validation based on detection confidence and context (default)
-* **'always'**: Force validation regardless of confidence or context
+* **Never**: Skip behavior entirely for maximum performance
+* **AsNeeded**: Apply behavior based on detection confidence and context (default)
+* **Always**: Force behavior regardless of confidence or context
 
-**Threshold Configuration:**
+**Advanced Charset Handling:**
 
-* **printable_threshold**: Maximum fraction of non-printable characters allowed (0.0-1.0)
-* Enables adjustment for different content types (code vs. prose vs. data)
+* **charset_promotions**: Mapping for upgrading detected charsets (e.g., ASCII→UTF-8)
+* **charset_trial_codecs**: Sequence of codecs to try during trial decoding
+* **CodecSpecifiers**: Enum for dynamic codec resolution (Inference, OsDefault, UserDefault)
 
-**UTF-8 Handling:**
+**Sophisticated Detection Control:**
 
-* **assume_utf8_superset**: Controls ASCII→UTF-8 promotion and suspected UTF-8 correction
-* Addresses MacRoman false positive issues from chardet
+* **charset_detect**: Controls when charset detection from content occurs
+* **mimetype_detect**: Controls when MIME type detection from content occurs
+* **charset_trial_decode**: Controls when trial decoding validation occurs
 
 **Integration Pattern:**
 
