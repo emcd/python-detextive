@@ -28,6 +28,7 @@ import                      locale
 import                      mimetypes
 import                      os
 import                      types
+import                      unicodedata
 
 from pathlib import Path
 
