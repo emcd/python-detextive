@@ -48,6 +48,17 @@ class CharsetInferFailure( Omnierror, TypeError, ValueError ):
         super( ).__init__( f"{message}." )
 
 
+class ContentDecodeImpossibility( Omnierror, TypeError, ValueError ):
+
+    def __init__(
+        self, location: __.Absential[ _nomina.Location ] = __.absent
+    ) -> None:
+        message = "Could not decode probable non-textual content"
+        if not __.is_absent( location ):
+            message = f"{message} at '{location}'"
+        super( ).__init__( f"{message}." )
+
+
 class ContentDecodeFailure( Omnierror, UnicodeError ):
 
     def __init__(
@@ -64,6 +75,18 @@ class ContentDecodeFailure( Omnierror, UnicodeError ):
         super( ).__init__( f"{message}." )
 
 
+class MimetypeDetectFailure( Omnierror, TypeError, ValueError ):
+
+    def __init__(
+        self, location: __.Absential[ _nomina.Location ] = __.absent
+    ) -> None:
+        # TODO: Add 'reason' argument.
+        message = "Could not detect MIME type for content"
+        if not __.is_absent( location ):
+            message = f"{message} at '{location}'"
+        super( ).__init__( f"{message}." )
+
+
 class MimetypeInferFailure( Omnierror, TypeError, ValueError ):
 
     def __init__(
@@ -75,13 +98,13 @@ class MimetypeInferFailure( Omnierror, TypeError, ValueError ):
         super( ).__init__( f"{message}." )
 
 
-class MimetypeDetectFailure( Omnierror, TypeError, ValueError ):
+class TextInvalidity( Omnierror, TypeError, ValueError ):
 
     def __init__(
         self, location: __.Absential[ _nomina.Location ] = __.absent
     ) -> None:
         # TODO: Add 'reason' argument.
-        message = "Could not detect MIME type for content"
+        message = "Text is not valid"
         if not __.is_absent( location ):
             message = f"{message} at '{location}'"
         super( ).__init__( f"{message}." )

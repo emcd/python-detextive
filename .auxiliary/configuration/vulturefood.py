@@ -9,7 +9,7 @@ Omnierror              # unused base exception class for derivation
 
 # Refactor 2.0 - public API functions not yet exposed in __init__.py
 detect_charset          # public API function
-detect_mimetype         # public API function  
+detect_mimetype         # public API function
 infer_charset           # public API function
 infer_mimetype_charset  # public API function
 is_valid_text           # public API function
@@ -23,8 +23,10 @@ normalize_universal     # LineSeparators class method
 normalize               # LineSeparators instance method
 nativize                # LineSeparators instance method
 
-# Internal functions - keep for potential future use
-_is_probable_textual_content  # legacy heuristic function
-
 # Function parameters - used in signatures
 mimetype_default        # function parameter
+
+# Validation profiles - public API constants
+PROFILE_PRINTER_SAFE    # public validation profile
+PROFILE_TERMINAL_SAFE   # public validation profile  
+PROFILE_TERMINAL_SAFE_ANSI  # public validation profile

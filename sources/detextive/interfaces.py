@@ -35,18 +35,30 @@ class BehaviorTristate( __.enum.Enum ):
 class CodecSpecifiers( __.enum.Enum ):
     ''' Specifiers for dynamic codecs. '''
 
-    Inference   = __.enum.auto( )
-    OsDefault   = __.enum.auto( )
-    UserDefault = __.enum.auto( )
+    FromInference   = __.enum.auto( )
+    OsDefault       = __.enum.auto( )
+    PythonDefault   = __.enum.auto( )
+    UserDefault     = __.enum.auto( )
 
 
-class Behaviors( __.immut.Dataclass ):
+class Behaviors( __.immut.DataclassObject ):
     ''' How functions behave. '''
 
     charset_detect: __.typx.Annotated[
         BehaviorTristate,
         __.ddoc.Doc( ''' When to detect charset from content. ''' ),
     ] = BehaviorTristate.AsNeeded
+    charset_on_decode_error: __.typx.Annotated[
+        str,
+        __.ddoc.Doc(
+            ''' Response to charset decoding errors.
+
+                Standard values are 'ignore', 'replace', and 'strict'.
+                Can also be any other name which has been registered via
+                the 'register_error' function in the Python standard library
+                'codecs' module.
+            ''' ),
+    ] = 'strict'
     charset_promotions: __.typx.Annotated[
         __.cabc.Mapping[ str, str ],
         __.ddoc.Doc(
@@ -58,7 +70,7 @@ class Behaviors( __.immut.Dataclass ):
     charset_trial_codecs: __.typx.Annotated[
         __.cabc.Sequence[ str | CodecSpecifiers ],
         __.ddoc.Doc( ''' Sequence of codec names or specifiers. ''' ),
-    ] = ( CodecSpecifiers.Inference, CodecSpecifiers.UserDefault )
+    ] = ( CodecSpecifiers.FromInference, CodecSpecifiers.UserDefault )
     charset_trial_decode: __.typx.Annotated[
         BehaviorTristate,
         __.ddoc.Doc(
@@ -68,3 +80,10 @@ class Behaviors( __.immut.Dataclass ):
         BehaviorTristate,
         __.ddoc.Doc( ''' When to detect MIME type from content. ''' ),
     ] = BehaviorTristate.AsNeeded
+    text_validate: __.typx.Annotated[
+        BehaviorTristate,
+        __.ddoc.Doc( ''' When to validate text. ''' ),
+    ] = BehaviorTristate.AsNeeded
+
+
+BEHAVIORS_DEFAULT = Behaviors( )

@@ -26,7 +26,6 @@ from . import __
 
 _HYPERCATEGORIES_PRINTABLE = frozenset( ( 'L', 'M', 'N', 'P', 'S', 'Z' ) )
 
-BELL_CHARACTER = '\x07'         # BEL
 BOM_CHARACTER = '\ufeff'        # UTF Byte-Ordering Mark
 DELETE_CHARACTER = '\x7F'       # DEL
 ESCAPE_CHARACTER = '\x1B'       # ESC
@@ -66,7 +65,7 @@ CONTROL_CHARACTERS_TEXTUAL = (
     |   ZERO_WIDTH_CHARACTERS )
 
 
-class TextValidationProfile( __.immut.Dataclass ):
+class Profile( __.immut.DataclassObject ):
     ''' Configuration for text validation heuristics. '''
 
     acceptable_characters: __.typx.Annotated[
@@ -94,7 +93,7 @@ class TextValidationProfile( __.immut.Dataclass ):
         __.ddoc.Doc(
             ''' Set of Unicode categories which are always considered invalid.
             ''' ),
-    ] = frozenset( ( 'Cc', 'Cf', 'Cs', 'Co' ) )
+    ] = frozenset( ( 'Cc', 'Cf', 'Co', 'Cs' ) )
     rejectables_ratio_max: __.typx.Annotated[
         float,
         __.ddoc.Doc(
@@ -107,35 +106,64 @@ class TextValidationProfile( __.immut.Dataclass ):
     ] = 8192
     # TODO: check_bidi_safety: validate bidirectional text safety
     # TODO: normalize_unicode: apply NFC normalization before validation
-    # TODO: permit_ansi_sequences: allow ANSI SGR and other C0/C1 sequences?
+    # TODO: permit_ansi_sequences: allow ANSI SGR and other CSI/OSC sequences?
 
     def __call__( self, text: str ) -> bool:
         ''' Is text valid against this profile? '''
         return is_valid_text( text, profile = self )
 
 
-PROFILE_PRINTER = TextValidationProfile(
+PROFILE_PRINTER_SAFE: __.typx.Annotated[
+    Profile, __.ddoc.Doc( ''' Is text safe to send to a printer? ''' ),
+] = Profile(
     acceptable_characters = (
         CONTROL_CHARACTERS_TEXTUAL | { FORMFEED_CHARACTER } ),
     check_bom = False,
-    rejectable_families = frozenset( ( 'Cc', 'Cf', 'Cs', 'Co', 'Zl', 'Zp' ) ) )
+    rejectable_families = frozenset( ( 'Cc', 'Cf', 'Co', 'Cs', 'Zl', 'Zp' ) ) )
 
-PROFILE_TEXTUAL = TextValidationProfile( )
+PROFILE_TEXTUAL: __.typx.Annotated[
+    Profile,
+    __.ddoc.Doc(
+        ''' Is text likely from a true textual source?
 
-PROFILE_TERMINAL = TextValidationProfile(
+            I.e., is there a high probability that it is not non-textual
+            data which was able to be successfully decoded as a Unicode string?
+
+            Must contain a sufficient ratio of printable characters to total
+            characters in sample.
+        ''' ),
+] = Profile( )
+
+PROFILE_TERMINAL_SAFE: __.typx.Annotated[
+    Profile,
+    __.ddoc.Doc(
+        ''' Is text safe to display on most terminals?
+
+            The BEL (alert/bell) and ESC (escape) characters are not permitted
+            by this conservative profile.
+        ''' ),
+] = Profile(
     check_bom = False,
-    rejectable_families = frozenset( ( 'Cc', 'Cf', 'Cs', 'Co', 'Zl', 'Zp' ) ) )
+    rejectable_families = frozenset( ( 'Cc', 'Cf', 'Co', 'Cs', 'Zl', 'Zp' ) ) )
 
-PROFILE_TERMINAL_ANSI = TextValidationProfile(
+PROFILE_TERMINAL_SAFE_ANSI: __.typx.Annotated[
+    Profile,
+    __.ddoc.Doc(
+        ''' Is text safe to display on terminals with ANSI escapes?
+
+            I.e., text with ANSI CSI/OSC sequences starting with the escape
+            character is permitted by this profile.
+
+            The BEL (alert/bell) character is not permitted.
+        ''' ),
+] = Profile(
     acceptable_characters = (
         CONTROL_CHARACTERS_TEXTUAL | { ESCAPE_CHARACTER } ),
     check_bom = False,
-    rejectable_families = frozenset( ( 'Cc', 'Cf', 'Cs', 'Co', 'Zl', 'Zp' ) ) )
+    rejectable_families = frozenset( ( 'Cc', 'Cf', 'Co', 'Cs', 'Zl', 'Zp' ) ) )
 
 
-def is_valid_text(
-    text: str, /, profile: TextValidationProfile = PROFILE_TEXTUAL
-) -> bool:
+def is_valid_text( text: str, /, profile: Profile = PROFILE_TEXTUAL ) -> bool:
     ''' Is content valid against profile? '''
     if not text: return False
     index_i = 1 if profile.check_bom and text[ 0 ] == BOM_CHARACTER else 0

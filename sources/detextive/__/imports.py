@@ -23,10 +23,12 @@
 # ruff: noqa: F401
 
 import collections.abc as   cabc
+import dataclasses as       dcls
 import                      enum
 import                      locale
 import                      mimetypes
 import                      os
+import                      sys
 import                      types
 import                      unicodedata
 
