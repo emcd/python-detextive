@@ -28,7 +28,7 @@ from . import inference as _inference
 from . import nomina as _nomina
 from . import validation as _validation
 
-from .interfaces import ( # isort: skip
+from .behaviors import ( # isort: skip
     BEHAVIORS_DEFAULT as            _BEHAVIORS_DEFAULT,
     BehaviorTristate as             _BehaviorTristate,
     Behaviors as                    _Behaviors,

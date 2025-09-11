@@ -26,10 +26,9 @@ from . import __
 
 _HYPERCATEGORIES_PRINTABLE = frozenset( ( 'L', 'M', 'N', 'P', 'S', 'Z' ) )
 
-BOM_CHARACTER = '\ufeff'        # UTF Byte-Ordering Mark
-DELETE_CHARACTER = '\x7F'       # DEL
-ESCAPE_CHARACTER = '\x1B'       # ESC
-FORMFEED_CHARACTER = '\x0C'     # FF
+BOM_CHARACTER = '\ufeff'    # UTF Byte-Ordering Mark
+DELETE_CHARACTER = '\x7f'
+ESCAPE_CHARACTER = '\x1b'
 
 BIDI_ISOLATE_CHARACTERS = frozenset( (
     # Bidi isolates (Unicode 6.3, recommended)
@@ -116,8 +115,7 @@ class Profile( __.immut.DataclassObject ):
 PROFILE_PRINTER_SAFE: __.typx.Annotated[
     Profile, __.ddoc.Doc( ''' Is text safe to send to a printer? ''' ),
 ] = Profile(
-    acceptable_characters = (
-        CONTROL_CHARACTERS_TEXTUAL | { FORMFEED_CHARACTER } ),
+    acceptable_characters = ( CONTROL_CHARACTERS_TEXTUAL | { '\f' } ),
     check_bom = False,
     rejectable_families = frozenset( ( 'Cc', 'Cf', 'Co', 'Cs', 'Zl', 'Zp' ) ) )
 

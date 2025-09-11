@@ -25,8 +25,9 @@ from . import __
 from . import exceptions as _exceptions
 from . import nomina as _nomina
 
-from .interfaces import ( # isort: skip
+from .behaviors import ( # isort: skip
     BEHAVIORS_DEFAULT as    _BEHAVIORS_DEFAULT,
+    BehaviorTristate as     _BehaviorTristate,
     Behaviors as            _Behaviors,
     CodecSpecifiers as      _CodecSpecifiers,
 )
@@ -67,3 +68,43 @@ def discover_os_charset_default( ) -> str:
     discoverer = getattr(
         __.locale, 'getencoding', __.sys.getfilesystemencoding )
     return discoverer( )
+
+
+def trial_decode_as_mandatory(
+    content: _nomina.Content, /,
+    behaviors: _Behaviors, *,
+    charset_inference: __.Absential[ __.typx.Optional[ str ] ] = __.absent,
+    charset_default: __.Absential[ str ] = __.absent,
+    location: __.Absential[ _nomina.Location ] = __.absent,
+) -> __.Absential[ __.typx.Optional[ str ] ]:
+    nomargs: __.NominativeArguments = dict(
+        behaviors = behaviors,
+        charset_default = charset_default,
+        location = location )
+    if charset_inference is not None:
+        nomargs[ 'charset_inference' ] = charset_inference
+    match behaviors.charset_trial_decode:
+        case _BehaviorTristate.Always:
+            _, charset = attempt_decodes( content, **nomargs )
+            return charset
+        case _: return charset_inference
+
+
+def trial_decode_as_necessary(
+    content: _nomina.Content, /,
+    behaviors: _Behaviors, *,
+    charset_inference: __.Absential[ __.typx.Optional[ str ] ] = __.absent,
+    charset_default: __.Absential[ str ] = __.absent,
+    location: __.Absential[ _nomina.Location ] = __.absent,
+) -> __.Absential[ __.typx.Optional[ str ] ]:
+    nomargs: __.NominativeArguments = dict(
+        behaviors = behaviors,
+        charset_default = charset_default,
+        location = location )
+    if charset_inference is not None:
+        nomargs[ 'charset_inference' ] = charset_inference
+    match behaviors.charset_trial_decode:
+        case _BehaviorTristate.Never: return charset_inference
+        case _:
+            _, charset = attempt_decodes( content, **nomargs )
+            return charset

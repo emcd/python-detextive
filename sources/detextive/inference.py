@@ -23,62 +23,16 @@
 
 from . import __
 from . import charsets as _charsets
+from . import detectors as _detectors
 from . import exceptions as _exceptions
+from . import mimetypes as _mimetypes
 from . import nomina as _nomina
 
-from .interfaces import ( # isort: skip
-    BEHAVIORS_DEFAULT as            _BEHAVIORS_DEFAULT,
-    BehaviorTristate as             _BehaviorTristate,
-    Behaviors as                    _Behaviors,
+from .behaviors import ( # isort: skip
+    BEHAVIORS_DEFAULT as    _BEHAVIORS_DEFAULT,
+    BehaviorTristate as     _BehaviorTristate,
+    Behaviors as            _Behaviors,
 )
-
-
-_TEXTUAL_MIMETYPE_SUFFIXES = ( '+json', '+toml', '+xml', '+yaml' )
-_TEXTUAL_MIMETYPES = frozenset( (
-    'application/ecmascript',
-    'application/graphql',
-    'application/javascript',
-    'application/json',
-    'application/ld+json',
-    'application/x-httpd-php',
-    'application/x-javascript',
-    'application/x-latex',
-    'application/x-perl',
-    'application/x-php',
-    'application/x-python',
-    'application/x-ruby',
-    'application/x-shell',
-    'application/x-tex',
-    'application/x-yaml',
-    'application/xhtml+xml',
-    'application/xml',
-    'application/yaml',
-    'image/svg+xml',
-) )
-
-
-def detect_charset(
-    content: _nomina.Content, /, *,
-    behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
-    default: __.Absential[ str ] = __.absent,
-    mimetype: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
-) -> __.typx.Optional[ str ]:
-    ''' Detects character set. '''
-    return _detect_charset(
-        content, behaviors,
-        default = default, location = location, mimetype = mimetype )
-
-
-def detect_mimetype(
-    content: _nomina.Content, /, *,
-    behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
-    charset: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
-) -> str:
-    ''' Detects MIME type. '''
-    return _detect_mimetype(
-        content, behaviors, charset = charset, location = location )
 
 
 def infer_charset(
@@ -102,9 +56,9 @@ def infer_charset(
             charset_default = default,
             charset_inference = charset,
             location = location )
-        charset = _trial_decode_as_mandatory( content, **nomargs )
+        charset = _charsets.trial_decode_as_mandatory( content, **nomargs )
     if __.is_absent( charset ) and should_detect:
-        charset = _detect_charset( content, behaviors, mimetype = mimetype )
+        charset = _detectors.detect_charset( content, mimetype = mimetype )
     if __.is_absent( charset ):
         raise _exceptions.CharsetInferFailure( location = location )
     return charset
@@ -124,6 +78,8 @@ def infer_mimetype_charset( # noqa: PLR0913
     should_parse, should_detect_mimetype = (
         _determine_parse_detect(
             behaviors.mimetype_detect, should_parse = should_parse ) )
+    nomargs: __.NominativeArguments = dict(
+        behaviors = behaviors, location = location )
     charset = __.absent
     mimetype = __.absent
     http_content_type = (
@@ -131,44 +87,26 @@ def infer_mimetype_charset( # noqa: PLR0913
     if should_parse:
         if http_content_type:
             mimetype, charset = parse_http_content_type( http_content_type )
-        nomargs: __.NominativeArguments = dict(
-            behaviors = behaviors,
+        nomargs_: __.NominativeArguments = dict(
             charset_default = charset_default,
             charset_inference = charset,
-            location = location )
-        charset = _trial_decode_as_mandatory( content, **nomargs )
+            **nomargs )
+        charset = _charsets.trial_decode_as_mandatory( content, **nomargs_ )
         if __.is_absent( mimetype ) and not __.is_absent( location ):
-            mimetype = mimetype_from_location( location )
+            mimetype = _mimetypes.mimetype_from_location( location )
     if __.is_absent( mimetype ) and should_detect_mimetype:
-        nomargs: __.NominativeArguments = dict( location = location )
-        if not __.is_absent( charset ): nomargs[ 'charset' ] = charset
-        mimetype = _detect_mimetype( content, behaviors, **nomargs )
+        nomargs_: __.NominativeArguments = dict( **nomargs )
+        if not __.is_absent( charset ): nomargs_[ 'charset' ] = charset
+        mimetype = _detectors.detect_mimetype( content, **nomargs_ )
     if __.is_absent( charset ) and should_detect_charset:
-        nomargs: __.NominativeArguments = dict( location = location )
-        if not __.is_absent( mimetype ): nomargs[ 'mimetype' ] = mimetype
-        charset = _detect_charset( content, behaviors, **nomargs )
+        nomargs_: __.NominativeArguments = dict( **nomargs )
+        if not __.is_absent( mimetype ): nomargs_[ 'mimetype' ] = mimetype
+        charset = _detectors.detect_charset( content, **nomargs_ )
     if __.is_absent( charset ):
         raise _exceptions.CharsetInferFailure( location = location )
     if __.is_absent( mimetype ):
         raise _exceptions.MimetypeInferFailure( location = location )
     return mimetype, charset
-
-
-def is_textual_mimetype( mimetype: str ) -> bool:
-    ''' Checks if MIME type represents textual content. '''
-    if mimetype.startswith( ( 'text/', 'text/x-' ) ): return True
-    if mimetype in _TEXTUAL_MIMETYPES: return True
-    return mimetype.endswith( _TEXTUAL_MIMETYPE_SUFFIXES )
-
-
-def mimetype_from_location(
-    location: _nomina.Location
-) -> __.Absential[ str ]:
-    ''' Determines MIME type from file location. '''
-    # TODO: Python 3.13: Use __.mimetypes.guess_file_type for fs paths.
-    mimetype, _ = __.mimetypes.guess_type( location )
-    if mimetype: return mimetype
-    return __.absent
 
 
 def parse_http_content_type(
@@ -182,7 +120,7 @@ def parse_http_content_type(
     mimetype, *params = http_content_type.split( ';' )
     if mimetype:
         mimetype = mimetype.strip( ).lower( )
-        if is_textual_mimetype( mimetype ):
+        if _mimetypes.is_textual_mimetype( mimetype ):
             for param in params:
                 name, value = param.split( '=' )
                 if 'charset' == name.strip( ).lower( ):
@@ -190,70 +128,6 @@ def parse_http_content_type(
             return mimetype, __.absent
         return mimetype, None  # non-textual type, charset irrelevant
     return __.absent, __.absent
-
-
-def _detect_charset( # noqa: PLR0911
-    content: _nomina.Content,
-    behaviors: _Behaviors, /, *,
-    default: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
-    mimetype: __.Absential[ str ] = __.absent,
-) -> __.typx.Optional[ str ]:
-    # TODO: Use 'charset-normalizer', if available.
-    # TODO? Return confidence from detector.
-    ''' Detects character set. '''
-    result = __.chardet.detect( content )
-    charset = result[ 'encoding' ]
-    nomargs: __.NominativeArguments = dict(
-        behaviors = behaviors, charset_default = default, location = location )
-    if charset is None:
-        if __.is_absent( mimetype ): return None
-        if is_textual_mimetype( mimetype ):
-            charset = _trial_decode_as_necessary( content, **nomargs )
-            if __.is_absent( charset ): return None
-            return charset
-        return None
-    charset = behaviors.charset_promotions.get( charset, charset )
-    nomargs_: __.NominativeArguments = dict(
-        charset_inference = charset, **nomargs )
-    if charset.startswith( 'utf-' ):
-        charset = _trial_decode_as_mandatory( content, **nomargs_ )
-        return __.typx.cast( str, charset )
-    match behaviors.charset_trial_decode:
-        case _BehaviorTristate.Never: return charset
-        # Shake out false positives, like 'MacRoman'.
-        case _:
-            if charset == _charsets.discover_os_charset_default( ):
-                # Allow 'windows-1252', etc..., as appropriate.
-                return charset
-            try: _, charset_ = _charsets.attempt_decodes( content, **nomargs )
-            except _exceptions.ContentDecodeFailure: return charset
-            return charset_
-
-
-def _detect_mimetype(
-    content: _nomina.Content,
-    behaviors: _Behaviors, /, *,
-    charset: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
-) -> str:
-    # TODO: Use 'magic', if available.
-    # TODO? Return confidence, based on content length.
-    ''' Detects MIME type. '''
-    try: return __.puremagic.from_string( content, mime = True )
-    except ( __.puremagic.PureError, ValueError ) as exc_magic:
-        Error = _exceptions.MimetypeDetectFailure
-        # If content is textual, then we can at least return 'text/plain'.
-        if not __.is_absent( charset ):
-            nomargs: __.NominativeArguments = dict(
-                behaviors = behaviors,
-                charset_inference = charset,
-                location = location )
-            try: charset_ = _trial_decode_as_necessary( content, **nomargs )
-            except _exceptions.ContentDecodeFailure:
-                raise Error( location = location ) from None
-            if not __.is_absent( charset_ ): return 'text/plain'
-        raise Error( location = location ) from exc_magic
 
 
 def _determine_parse_detect(
@@ -270,43 +144,3 @@ def _determine_parse_detect(
             should_parse = should_parse or True
             should_detect = False
     return should_parse, should_detect
-
-
-def _trial_decode_as_mandatory(
-    content: _nomina.Content, /,
-    behaviors: _Behaviors, *,
-    charset_inference: __.Absential[ __.typx.Optional[ str ] ] = __.absent,
-    charset_default: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
-) -> __.Absential[ __.typx.Optional[ str ] ]:
-    nomargs: __.NominativeArguments = dict(
-        behaviors = behaviors,
-        charset_default = charset_default,
-        location = location )
-    if charset_inference is not None:
-        nomargs[ 'charset_inference' ] = charset_inference
-    match behaviors.charset_trial_decode:
-        case _BehaviorTristate.Always:
-            _, charset = _charsets.attempt_decodes( content, **nomargs )
-            return charset
-        case _: return charset_inference
-
-
-def _trial_decode_as_necessary(
-    content: _nomina.Content, /,
-    behaviors: _Behaviors, *,
-    charset_inference: __.Absential[ __.typx.Optional[ str ] ] = __.absent,
-    charset_default: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
-) -> __.Absential[ __.typx.Optional[ str ] ]:
-    nomargs: __.NominativeArguments = dict(
-        behaviors = behaviors,
-        charset_default = charset_default,
-        location = location )
-    if charset_inference is not None:
-        nomargs[ 'charset_inference' ] = charset_inference
-    match behaviors.charset_trial_decode:
-        case _BehaviorTristate.Never: return charset_inference
-        case _:
-            _, charset = _charsets.attempt_decodes( content, **nomargs )
-            return charset
