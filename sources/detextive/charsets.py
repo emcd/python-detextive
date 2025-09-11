@@ -25,7 +25,7 @@ from . import __
 from . import exceptions as _exceptions
 from . import nomina as _nomina
 
-from .behaviors import ( # isort: skip
+from .core import ( # isort: skip
     BEHAVIORS_DEFAULT as    _BEHAVIORS_DEFAULT,
     BehaviorTristate as     _BehaviorTristate,
     Behaviors as            _Behaviors,
@@ -36,25 +36,26 @@ from .behaviors import ( # isort: skip
 def attempt_decodes(
     content: _nomina.Content, /, *,
     behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
-    charset_inference: __.Absential[ str ] = __.absent,
-    charset_default: __.Absential[ str ] = __.absent,
+    inference: __.Absential[ str ] = __.absent,
+    default: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
 ) -> tuple[ str, str ]:
-    on_decode_error = behaviors.charset_on_decode_error
+    on_decode_error = behaviors.on_decode_error
     trials: list[ str ] = [ ]
-    for codec in behaviors.charset_trial_codecs:
+    for codec in behaviors.trial_codecs:
         match codec:
             case _CodecSpecifiers.FromInference:
-                if __.is_absent( charset_inference ): continue
-                charset = charset_inference
+                if __.is_absent( inference ): continue
+                charset = inference
             case _CodecSpecifiers.OsDefault:
                 charset = discover_os_charset_default( )
             case _CodecSpecifiers.PythonDefault:
                 charset = __.locale.getpreferredencoding( )
             case _CodecSpecifiers.UserDefault:
-                if __.is_absent( charset_default ): continue
-                charset = charset_default
+                if __.is_absent( default ): continue
+                charset = default
             case str( ): charset = codec
+            case _: continue
         try: text = content.decode( charset, errors = on_decode_error )
         except UnicodeDecodeError:
             trials.append( charset )
@@ -70,41 +71,27 @@ def discover_os_charset_default( ) -> str:
     return discoverer( )
 
 
-def trial_decode_as_mandatory(
+def trial_decode_as_confident( # noqa: PLR0913
     content: _nomina.Content, /,
     behaviors: _Behaviors, *,
-    charset_inference: __.Absential[ __.typx.Optional[ str ] ] = __.absent,
-    charset_default: __.Absential[ str ] = __.absent,
+    inference: __.Absential[ str ] = __.absent,
+    confidence: float = 1.0,
+    default: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
-) -> __.Absential[ __.typx.Optional[ str ] ]:
+) -> str:
     nomargs: __.NominativeArguments = dict(
         behaviors = behaviors,
-        charset_default = charset_default,
+        default = default, inference = inference,
         location = location )
-    if charset_inference is not None:
-        nomargs[ 'charset_inference' ] = charset_inference
-    match behaviors.charset_trial_decode:
-        case _BehaviorTristate.Always:
-            _, charset = attempt_decodes( content, **nomargs )
-            return charset
-        case _: return charset_inference
-
-
-def trial_decode_as_necessary(
-    content: _nomina.Content, /,
-    behaviors: _Behaviors, *,
-    charset_inference: __.Absential[ __.typx.Optional[ str ] ] = __.absent,
-    charset_default: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
-) -> __.Absential[ __.typx.Optional[ str ] ]:
-    nomargs: __.NominativeArguments = dict(
-        behaviors = behaviors,
-        charset_default = charset_default,
-        location = location )
-    if charset_inference is not None:
-        nomargs[ 'charset_inference' ] = charset_inference
-    match behaviors.charset_trial_decode:
-        case _BehaviorTristate.Never: return charset_inference
-        case _:
-            _, charset = attempt_decodes( content, **nomargs )
-            return charset
+    should_decode = False
+    match behaviors.trial_decode:
+        case _BehaviorTristate.Always: should_decode = True
+        case _BehaviorTristate.AsNeeded:
+            should_decode = confidence < behaviors.trial_decode_confidence
+        case _BehaviorTristate.Never: pass
+    if should_decode:
+        _, charset = attempt_decodes( content, **nomargs )
+        return charset
+    if __.is_absent( inference ):
+        raise _exceptions.CharsetDetectFailure( location = location )
+    return inference

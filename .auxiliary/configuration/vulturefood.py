@@ -30,3 +30,12 @@ mimetype_default        # function parameter
 PROFILE_PRINTER_SAFE    # public validation profile
 PROFILE_TERMINAL_SAFE   # public validation profile  
 PROFILE_TERMINAL_SAFE_ANSI  # public validation profile
+
+# Confidence system - planned for v2.0
+DetectionResult         # confidence result dataclass
+confidence              # DetectionResult field
+detect_charset_candidates   # public API function for confidence-based detection
+detect_mimetype_candidates  # public API function for confidence-based detection
+text_validate_confidence # Behaviors field for confidence thresholds
+trial_codecs            # Behaviors field (renamed from charset_trial_codecs)  
+trial_decode_confidence # Behaviors field for confidence thresholds

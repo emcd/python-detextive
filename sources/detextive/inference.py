@@ -28,40 +28,61 @@ from . import exceptions as _exceptions
 from . import mimetypes as _mimetypes
 from . import nomina as _nomina
 
-from .behaviors import ( # isort: skip
+from .core import ( # isort: skip
     BEHAVIORS_DEFAULT as    _BEHAVIORS_DEFAULT,
     BehaviorTristate as     _BehaviorTristate,
     Behaviors as            _Behaviors,
+    Result as               _Result,
 )
 
 
-def infer_charset(
+def infer_charset( # noqa: PLR0913
     content: _nomina.Content, /, *,
     behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
     http_content_type: __.Absential[ str ] = __.absent,
-    default: __.Absential[ str ] = __.absent,
+    charset_default: __.Absential[ str ] = __.absent,
+    mimetype_default: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
 ) -> __.typx.Optional[ str ]:
     ''' Infers charset through various means. '''
+    result = infer_charset_confidence(
+        content,
+        behaviors = behaviors,
+        http_content_type = http_content_type,
+        charset_default = charset_default,
+        mimetype_default = mimetype_default,
+        location = location )
+    if result is None: return None
+    return result.value
+
+
+def infer_charset_confidence( # noqa: PLR0913
+    content: _nomina.Content, /, *,
+    behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
+    http_content_type: __.Absential[ str ] = __.absent,
+    charset_default: __.Absential[ str ] = __.absent,
+    mimetype_default: __.Absential[ str ] = __.absent,
+    location: __.Absential[ _nomina.Location ] = __.absent,
+) -> __.typx.Optional[ _Result ]:
+    ''' Infers charset with confidence level through various means. '''
     should_parse, should_detect = (
         _determine_parse_detect( behaviors.charset_detect ) )
-    charset = __.absent
-    mimetype = __.absent
+    detection = __.absent
+    mimetype = mimetype_default
     http_content_type = (
         '' if __.is_absent( http_content_type ) else http_content_type )
     if should_parse and http_content_type:
-        mimetype, charset = parse_http_content_type( http_content_type )
-        nomargs: __.NominativeArguments = dict(
-            behaviors = behaviors,
-            charset_default = default,
-            charset_inference = charset,
-            location = location )
-        charset = _charsets.trial_decode_as_mandatory( content, **nomargs )
-    if __.is_absent( charset ) and should_detect:
-        charset = _detectors.detect_charset( content, mimetype = mimetype )
-    if __.is_absent( charset ):
+        mimetype, charset = _validate_http_content_type(
+            content, behaviors, http_content_type,
+            charset_default = charset_default, location = location )
+        if charset is not None and not __.is_absent( charset ):
+            return _Result( value = charset, confidence = 1.0 )
+    if __.is_absent( detection ) and should_detect:
+        detection = _detectors.detect_charset_confidence(
+            content, mimetype = mimetype )
+    if __.is_absent( detection ):
         raise _exceptions.CharsetInferFailure( location = location )
-    return charset
+    return detection
 
 
 def infer_mimetype_charset( # noqa: PLR0913
@@ -86,12 +107,9 @@ def infer_mimetype_charset( # noqa: PLR0913
         '' if __.is_absent( http_content_type ) else http_content_type )
     if should_parse:
         if http_content_type:
-            mimetype, charset = parse_http_content_type( http_content_type )
-        nomargs_: __.NominativeArguments = dict(
-            charset_default = charset_default,
-            charset_inference = charset,
-            **nomargs )
-        charset = _charsets.trial_decode_as_mandatory( content, **nomargs_ )
+            mimetype, charset = _validate_http_content_type(
+                content, behaviors, http_content_type,
+                charset_default = charset_default, location = location )
         if __.is_absent( mimetype ) and not __.is_absent( location ):
             mimetype = _mimetypes.mimetype_from_location( location )
     if __.is_absent( mimetype ) and should_detect_mimetype:
@@ -144,3 +162,18 @@ def _determine_parse_detect(
             should_parse = should_parse or True
             should_detect = False
     return should_parse, should_detect
+
+
+def _validate_http_content_type(
+    content: _nomina.Content,
+    behaviors: _Behaviors,
+    http_content_type: str, /, *,
+    charset_default: __.Absential[ str ] = __.absent,
+    location: __.Absential[ _nomina.Location ] = __.absent,
+) -> tuple[ __.Absential[ str ], __.Absential[ __.typx.Optional[ str ] ] ]:
+    mimetype, charset = parse_http_content_type( http_content_type )
+    if charset is not None and not __.is_absent( charset ):
+        nomargs: __.NominativeArguments = dict(
+            inference = charset, confidence = 1.0, default = charset_default )
+        charset = _charsets.trial_decode_as_confident( content, **nomargs )
+    return mimetype, charset

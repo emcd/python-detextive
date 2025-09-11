@@ -37,6 +37,17 @@ class Omnierror( Omniexception, Exception ):
     ''' Base for error exceptions raised by package API. '''
 
 
+class CharsetDetectFailure( Omnierror, TypeError, ValueError ):
+
+    def __init__(
+        self, location: __.Absential[ _nomina.Location ] = __.absent
+    ) -> None:
+        message = "Could not detect character set for content"
+        if not __.is_absent( location ):
+            message = f"{message} at '{location}'"
+        super( ).__init__( f"{message}." )
+
+
 class CharsetInferFailure( Omnierror, TypeError, ValueError ):
 
     def __init__(

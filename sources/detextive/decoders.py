@@ -28,7 +28,7 @@ from . import inference as _inference
 from . import nomina as _nomina
 from . import validation as _validation
 
-from .behaviors import ( # isort: skip
+from .core import ( # isort: skip
     BEHAVIORS_DEFAULT as            _BEHAVIORS_DEFAULT,
     BehaviorTristate as             _BehaviorTristate,
     Behaviors as                    _Behaviors,
@@ -42,28 +42,33 @@ def decode( # noqa: PLR0913
     http_content_type: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
     charset_default: __.Absential[ str ] = __.absent,
-    # mimetype_default: __.Absential[ str ] = __.absent,
+    mimetype_default: __.Absential[ str ] = __.absent,
 ) -> str:
     ''' Decodes bytes array to Unicode text. '''
     behaviors_ = __.dcls.replace(
-        behaviors, charset_trial_decode = _BehaviorTristate.Never )
-    charset = _inference.infer_charset(
+        behaviors, trial_decode = _BehaviorTristate.Never )
+    detection = _inference.infer_charset_confidence(
         content,
         behaviors = behaviors_,
         http_content_type = http_content_type,
+        mimetype_default = mimetype_default,
         location = location )
-    if charset is None:
+    if detection is None:
         raise _exceptions.ContentDecodeImpossibility( location = location )
     text, _ = _charsets.attempt_decodes(
         content,
         behaviors = behaviors,
-        charset_default = charset_default,
-        charset_inference = charset,
+        inference = detection.value,
+        default = charset_default,
         location = location )
+    should_validate = False
     match behaviors.text_validate:
         case _BehaviorTristate.Always:
-            if not profile( text ):
-                raise _exceptions.TextInvalidity( location = location )
-        # TODO: Handle 'AsNeeded' case based on confidence.
-        case _: pass
+            should_validate = True
+        case _BehaviorTristate.AsNeeded:
+            should_validate = (
+                detection.confidence < behaviors.text_validate_confidence )
+        case _BehaviorTristate.Never: pass
+    if should_validate and not profile( text ):
+        raise _exceptions.TextInvalidity( location = location )
     return text
