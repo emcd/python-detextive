@@ -70,10 +70,7 @@ def detect_charset_confidence(
     if charset is None:
         if __.is_absent( mimetype ): return None
         if _mimetypes.is_textual_mimetype( mimetype ):
-            charset = _charsets.trial_decode_as_confident( content, **nomargs )
-            confidence = _confidence_from_quantity(
-                content, behaviors = behaviors )
-            return _Result( value = charset, confidence = confidence )
+            return _charsets.trial_decode_as_confident( content, **nomargs )
         return None
     charset = behaviors.charset_promotions.get( charset, charset )
     detection = _Result( value = charset, confidence = confidence )
@@ -126,8 +123,7 @@ def _confirm_charset_detection(
         confidence = detection.confidence,
         location = location )
     if charset.startswith( 'utf-' ):
-        charset = _charsets.trial_decode_as_confident( content, **nomargs )
-        return _Result( value  = charset, confidence = 1.0 )
+        return _charsets.trial_decode_as_confident( content, **nomargs )
     nomargs.pop( 'inference' )
     match behaviors.trial_decode:
         case _BehaviorTristate.Never: return detection
@@ -136,10 +132,10 @@ def _confirm_charset_detection(
             if charset == _charsets.discover_os_charset_default( ):
                 # Allow 'windows-1252', etc..., as appropriate.
                 return detection
-            try: _, charset_ = _charsets.attempt_decodes( content, **nomargs )
+            try: _, result_ = _charsets.attempt_decodes( content, **nomargs )
             except _exceptions.ContentDecodeFailure: return detection
-            if charset == charset_: return detection
-            return _Result( value = charset_, confidence = 1.0 )
+            if charset == result_.value: return detection
+            return result_
 
 
 def _detect_mimetype_from_charset(

@@ -175,5 +175,6 @@ def _validate_http_content_type(
     if charset is not None and not __.is_absent( charset ):
         nomargs: __.NominativeArguments = dict(
             inference = charset, confidence = 1.0, default = charset_default )
-        charset = _charsets.trial_decode_as_confident( content, **nomargs )
+        result = _charsets.trial_decode_as_confident( content, **nomargs )
+        charset = result.value
     return mimetype, charset

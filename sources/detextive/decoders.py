@@ -47,18 +47,18 @@ def decode( # noqa: PLR0913
     ''' Decodes bytes array to Unicode text. '''
     behaviors_ = __.dcls.replace(
         behaviors, trial_decode = _BehaviorTristate.Never )
-    detection = _inference.infer_charset_confidence(
+    result = _inference.infer_charset_confidence(
         content,
         behaviors = behaviors_,
         http_content_type = http_content_type,
         mimetype_default = mimetype_default,
         location = location )
-    if detection is None:
+    if result is None:
         raise _exceptions.ContentDecodeImpossibility( location = location )
-    text, _ = _charsets.attempt_decodes(
+    text, result = _charsets.attempt_decodes(
         content,
         behaviors = behaviors,
-        inference = detection.value,
+        inference = result.value,
         default = charset_default,
         location = location )
     should_validate = False
@@ -67,7 +67,7 @@ def decode( # noqa: PLR0913
             should_validate = True
         case _BehaviorTristate.AsNeeded:
             should_validate = (
-                detection.confidence < behaviors.text_validate_confidence )
+                result.confidence < behaviors.text_validate_confidence )
         case _BehaviorTristate.Never: pass
     if should_validate and not profile( text ):
         raise _exceptions.TextInvalidity( location = location )

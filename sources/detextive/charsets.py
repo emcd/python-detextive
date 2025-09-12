@@ -26,10 +26,12 @@ from . import exceptions as _exceptions
 from . import nomina as _nomina
 
 from .core import ( # isort: skip
-    BEHAVIORS_DEFAULT as    _BEHAVIORS_DEFAULT,
-    BehaviorTristate as     _BehaviorTristate,
-    Behaviors as            _Behaviors,
-    CodecSpecifiers as      _CodecSpecifiers,
+    BEHAVIORS_DEFAULT as        _BEHAVIORS_DEFAULT,
+    BehaviorTristate as         _BehaviorTristate,
+    Behaviors as                _Behaviors,
+    CodecSpecifiers as          _CodecSpecifiers,
+    Result as                   _Result,
+    confidence_from_quantity as _confidence_from_quantity,
 )
 
 
@@ -39,7 +41,8 @@ def attempt_decodes(
     inference: __.Absential[ str ] = __.absent,
     default: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
-) -> tuple[ str, str ]:
+) -> tuple[ str, _Result ]:
+    confidence = _confidence_from_quantity( content, behaviors = behaviors )
     on_decode_error = behaviors.on_decode_error
     trials: list[ str ] = [ ]
     for codec in behaviors.trial_codecs:
@@ -60,7 +63,7 @@ def attempt_decodes(
         except UnicodeDecodeError:
             trials.append( charset )
             continue
-        return text, charset
+        return text, _Result( value = charset, confidence = confidence )
     raise _exceptions.ContentDecodeFailure(
         charset = trials, location = location )
 
@@ -78,7 +81,7 @@ def trial_decode_as_confident( # noqa: PLR0913
     confidence: float = 1.0,
     default: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
-) -> str:
+) -> _Result:
     nomargs: __.NominativeArguments = dict(
         behaviors = behaviors,
         default = default, inference = inference,
@@ -90,8 +93,8 @@ def trial_decode_as_confident( # noqa: PLR0913
             should_decode = confidence < behaviors.trial_decode_confidence
         case _BehaviorTristate.Never: pass
     if should_decode:
-        _, charset = attempt_decodes( content, **nomargs )
-        return charset
+        _, result = attempt_decodes( content, **nomargs )
+        return result
     if __.is_absent( inference ):
         raise _exceptions.CharsetDetectFailure( location = location )
-    return inference
+    return _Result( value = inference, confidence = confidence )
