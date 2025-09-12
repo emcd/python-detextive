@@ -24,6 +24,7 @@
 from . import __
 
 from .charsets import *
+from .decoders import *
 from .detectors import *
 from .inference import *
 from .lineseparators import *

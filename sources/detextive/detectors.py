@@ -99,12 +99,13 @@ def detect_mimetype_confidence(
 ) -> _Result:
     ''' Detects MIME type candidates with confidence scores. '''
     # TODO: Use 'magic', if available.
+    error = _exceptions.MimetypeDetectFailure( location = location )
     try: mimetype = __.puremagic.from_string( content, mime = True )
     except ( __.puremagic.PureError, ValueError ):
-        if not __.is_absent( charset ):
-            mimetype = _detect_mimetype_from_charset(
-                content, behaviors, charset, location = location )
-            return _Result( value = mimetype, confidence = 1.0 )
+        if __.is_absent( charset ): raise error from None
+        mimetype = _detect_mimetype_from_charset(
+            content, behaviors, charset, location = location )
+        return _Result( value = mimetype, confidence = 1.0 )
     confidence = _confidence_from_quantity( content, behaviors = behaviors )
     return _Result( value = mimetype, confidence = confidence )
 
@@ -118,6 +119,7 @@ def _confirm_charset_detection(
 ) -> _Result:
     charset = detection.value
     nomargs: __.NominativeArguments = dict(
+        behaviors = behaviors,
         default = default,
         inference = charset,
         confidence = detection.confidence,

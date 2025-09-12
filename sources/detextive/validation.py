@@ -161,9 +161,11 @@ PROFILE_TERMINAL_SAFE_ANSI: __.typx.Annotated[
     rejectable_families = frozenset( ( 'Cc', 'Cf', 'Co', 'Cs', 'Zl', 'Zp' ) ) )
 
 
-def is_valid_text( text: str, /, profile: Profile = PROFILE_TEXTUAL ) -> bool:
+def is_valid_text(
+    text: str, /, profile: Profile = PROFILE_TEXTUAL
+) -> bool:
     ''' Is content valid against profile? '''
-    if not text: return False
+    if not text: return True
     index_i = 1 if profile.check_bom and text[ 0 ] == BOM_CHARACTER else 0
     index_f = len( text )
     if profile.sample_quantity is not None:
@@ -181,7 +183,9 @@ def is_valid_text( text: str, /, profile: Profile = PROFILE_TEXTUAL ) -> bool:
     printables_count = 0
     rejectables_count = 0
     for c in sample:
-        if c in acceptables: continue
+        if c in acceptables:
+            if c in C0_WHITESPACE_CHARACTERS: printables_count += 1
+            continue
         if c in rejectables: rejectables_count += 1
         else:
             ucat = __.unicodedata.category( c )

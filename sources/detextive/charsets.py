@@ -75,8 +75,8 @@ def discover_os_charset_default( ) -> str:
 
 
 def trial_decode_as_confident( # noqa: PLR0913
-    content: _nomina.Content, /,
-    behaviors: _Behaviors, *,
+    content: _nomina.Content, /, *,
+    behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
     inference: __.Absential[ str ] = __.absent,
     confidence: float = 1.0,
     default: __.Absential[ str ] = __.absent,
