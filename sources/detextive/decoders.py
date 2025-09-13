@@ -41,25 +41,28 @@ def decode( # noqa: PLR0913
     profile: _validation.Profile = _validation.PROFILE_TEXTUAL,
     http_content_type: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
-    charset_default: __.Absential[ str ] = __.absent,
-    mimetype_default: __.Absential[ str ] = __.absent,
+    charset_supplement: __.Absential[ str ] = __.absent,
+    mimetype_supplement: __.Absential[ str ] = __.absent,
 ) -> str:
     ''' Decodes bytes array to Unicode text. '''
+    if content == b'': return ''
     behaviors_ = __.dcls.replace(
         behaviors, trial_decode = _BehaviorTristate.Never )
     result = _inference.infer_charset_confidence(
         content,
         behaviors = behaviors_,
         http_content_type = http_content_type,
-        mimetype_default = mimetype_default,
+        mimetype_supplement = mimetype_supplement,
         location = location )
+    # TODO: Get results from 'infer_mimetype_charset_confidence'.
+    #       If charset is None and MIME type is textual, then attempt decodes.
     if result is None:
         raise _exceptions.ContentDecodeImpossibility( location = location )
     text, result = _charsets.attempt_decodes(
         content,
         behaviors = behaviors,
         inference = result.value,
-        default = charset_default,
+        supplement = charset_supplement,
         location = location )
     should_validate = False
     match behaviors.text_validate:

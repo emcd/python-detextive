@@ -36,10 +36,13 @@ from .core import ( # isort: skip
 )
 
 
+_BOM_BYTES = b'\xef\xbb\xbf'
+
+
 def detect_charset(
     content: _nomina.Content, /, *,
     behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
-    default: __.Absential[ str ] = __.absent,
+    supplement: __.Absential[ str ] = __.absent,
     mimetype: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
 ) -> __.typx.Optional[ str ]:
@@ -47,7 +50,7 @@ def detect_charset(
     result = detect_charset_confidence(
         content,
         behaviors = behaviors,
-        default = default,
+        supplement = supplement,
         mimetype = mimetype,
         location = location )
     if result is None: return None
@@ -57,25 +60,31 @@ def detect_charset(
 def detect_charset_confidence(
     content: _nomina.Content, /, *,
     behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
-    default: __.Absential[ str ] = __.absent,
+    supplement: __.Absential[ str ] = __.absent,
     mimetype: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
 ) -> __.typx.Optional[ _Result ]:
     ''' Detects character set candidates with confidence scores. '''
+    if b'' == content: return _Result( value = 'utf-8', confidence = 1.0 )
     # TODO: Use 'charset-normalizer', if available.
     result = __.chardet.detect( content )
     charset, confidence = result[ 'encoding' ], result[ 'confidence' ]
     nomargs: __.NominativeArguments = dict(
-        behaviors = behaviors, default = default, location = location )
+        behaviors = behaviors,
+        confidence = confidence,
+        supplement = supplement,
+        location = location )
     if charset is None:
         if __.is_absent( mimetype ): return None
         if _mimetypes.is_textual_mimetype( mimetype ):
-            return _charsets.trial_decode_as_confident( content, **nomargs )
+            result = _charsets.trial_decode_as_necessary( content, **nomargs )
+            return _normalize_charset_detection( content, behaviors, result )
         return None
     charset = behaviors.charset_promotions.get( charset, charset )
-    detection = _Result( value = charset, confidence = confidence )
-    return _confirm_charset_detection(
-        content, behaviors, detection, default = default, location = location )
+    result = _confirm_charset_detection(
+        content, behaviors, charset,
+        confidence = confidence, supplement = supplement, location = location )
+    return _normalize_charset_detection( content, behaviors, result )
 
 
 def detect_mimetype(
@@ -110,33 +119,38 @@ def detect_mimetype_confidence(
     return _Result( value = mimetype, confidence = confidence )
 
 
-def _confirm_charset_detection(
+def _confirm_charset_detection( # noqa: PLR0913
     content: _nomina.Content,
     behaviors: _Behaviors,
-    detection: _Result, /, *,
-    default: __.Absential[ str ] = __.absent,
+    charset: str, /, *,
+    confidence: float = 1.0,
+    supplement: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
 ) -> _Result:
-    charset = detection.value
     nomargs: __.NominativeArguments = dict(
         behaviors = behaviors,
-        default = default,
+        supplement = supplement,
         inference = charset,
-        confidence = detection.confidence,
+        confidence = confidence,
         location = location )
     if charset.startswith( 'utf-' ):
         return _charsets.trial_decode_as_confident( content, **nomargs )
-    nomargs.pop( 'inference' )
+    nomargs: __.NominativeArguments = dict(
+        behaviors = behaviors,
+        inference = 'utf-8-sig',
+        supplement = supplement,
+        location = location )
+    result = _Result( value = charset, confidence = confidence )
     match behaviors.trial_decode:
-        case _BehaviorTristate.Never: return detection
+        case _BehaviorTristate.Never: return result
         # Shake out false positives, like 'MacRoman'.
         case _:
             if charset == _charsets.discover_os_charset_default( ):
                 # Allow 'windows-1252', etc..., as appropriate.
-                return detection
+                return result
             try: _, result_ = _charsets.attempt_decodes( content, **nomargs )
-            except _exceptions.ContentDecodeFailure: return detection
-            if charset == result_.value: return detection
+            except _exceptions.ContentDecodeFailure: return result
+            if charset == result_.value: return result
             return result_
 
 
@@ -153,3 +167,12 @@ def _detect_mimetype_from_charset(
     except _exceptions.ContentDecodeFailure:
         raise Error( location = location ) from None
     return 'text/plain'
+
+
+def _normalize_charset_detection(
+    content: _nomina.Content, behaviors: _Behaviors, result: _Result
+) -> _Result:
+    charset = result.value
+    if charset == 'utf-8-sig' and not content.startswith( _BOM_BYTES ):
+        charset = 'utf-8'
+    return _Result( value = charset, confidence = result.confidence )

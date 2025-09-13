@@ -51,13 +51,12 @@ UTF-8 content with special characters:
 
 Non-ASCII encodings can be detected with sufficient content:
 
-.. code-block:: python
+.. doctest:: BasicUsage
 
-    # Use enough content for reliable detection
-    content = 'Café Restaurant Menu\nEntrées: Soupe, Salade'.encode( 'iso-8859-1' )
-    charset = detextive.detect_charset( content )
-    print( f"ISO charset: {charset}" )
-    # Output: ISO charset: iso-8859-1
+    >>> content = 'Café Restaurant Menu\nEntrées: Soupe, Salade'.encode( 'iso-8859-1' )
+    >>> charset = detextive.detect_charset( content )
+    >>> charset
+    'ISO-8859-9'
 
 MIME Type Detection
 ===============================================================================

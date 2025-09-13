@@ -32,54 +32,59 @@ Confidence Thresholds
 
 Control detection confidence requirements through custom behaviors:
 
-.. code-block:: python
+.. doctest:: AdvancedConfiguration
 
-    import detextive
-    from detextive.core import Behaviors
-    
-    # Create custom behavior configuration
-    strict_behaviors = Behaviors( 
-        charset_confidence_minimum = 80,
-        mimetype_confidence_minimum = 90
-    )
-    
-    content = b'Potentially ambiguous content'
-    
-    # Use strict confidence requirements
-    result = detextive.detect_charset_confidence( 
-        content, 
-        behaviors = strict_behaviors 
-    )
-    
-    if result.confidence >= 80:
-        print( f"High-confidence charset: {result.value}" )
-    else:
-        print( "Insufficient confidence in charset detection" )
+    >>> import detextive
+    >>> from detextive import Behaviors
+
+Create custom behavior configuration with confidence-related parameters:
+
+.. doctest:: AdvancedConfiguration
+
+    >>> strict_behaviors = Behaviors(
+    ...     bytes_quantity_confidence_divisor = 512,
+    ...     trial_decode_confidence = 0.9 )
+    >>> content = b'Hello, world!' * 50
+
+Use custom behaviors for detection:
+
+.. doctest:: AdvancedConfiguration
+
+    >>> result = detextive.detect_charset_confidence(
+    ...     content,
+    ...     behaviors = strict_behaviors )
+    >>> result.confidence > 0.8
+    True
+    >>> result.value
+    'utf-8'
 
 Trial Decode Configuration
 -------------------------------------------------------------------------------
 
 Configure how trial decoding validates detected charsets:
 
-.. code-block:: python
+.. doctest:: AdvancedConfiguration
 
-    import detextive
-    from detextive.core import Behaviors, BehaviorTristate
-    
-    # Always perform trial decodes for validation
-    validation_behaviors = Behaviors( 
-        trial_decode = BehaviorTristate.Always,
-        trial_decode_quantity_maximum = 2048
-    )
-    
-    content = b'Content to validate through decoding'
-    
-    charset = detextive.detect_charset( 
-        content, 
-        behaviors = validation_behaviors 
-    )
-    
-    print( f"Validated charset: {charset}" )
+    >>> from detextive import BehaviorTristate
+
+Always perform trial decodes for validation. The `bytes_quantity_confidence_divisor` parameter affects confidence scoring for detection:
+
+.. doctest:: AdvancedConfiguration
+
+    >>> validation_behaviors = Behaviors(
+    ...     trial_decode = BehaviorTristate.Always,
+    ...     bytes_quantity_confidence_divisor = 256 )
+    >>> content = b'Content to validate through decoding'
+
+Detect charset with validation through trial decoding:
+
+.. doctest:: AdvancedConfiguration
+
+    >>> charset = detextive.detect_charset(
+    ...     content,
+    ...     behaviors = validation_behaviors )
+    >>> charset
+    'utf-8'
 
 HTTP Content-Type Parsing
 ===============================================================================
@@ -89,38 +94,46 @@ Content-Type Header Processing
 
 Parse HTTP Content-Type headers to extract MIME type and charset:
 
-.. code-block:: python
+.. doctest:: AdvancedConfiguration
 
-    import detextive
-    
-    # Parse complete Content-Type header
-    content_type = "application/json; charset=utf-8; boundary=something"
-    
-    result = detextive.parse_http_content_type( content_type )
-    
-    print( f"MIME type: {result.mimetype}" )
-    print( f"Charset: {result.charset}" )
-    print( f"Parameters: {result.parameters}" )
+    >>> content_type = "application/json; charset=utf-8"
+    >>> mimetype, charset = detextive.parse_http_content_type( content_type )
+    >>> mimetype
+    'application/json'
+    >>> charset
+    'utf-8'
+
+Content-Type headers without charset return absent for charset:
+
+.. doctest:: AdvancedConfiguration
+
+    >>> mimetype, charset = detextive.parse_http_content_type( "application/json" )
+    >>> mimetype
+    'application/json'
+    >>> type( charset ).__name__
+    'AbsentSingleton'
 
 Integration with Detection
 -------------------------------------------------------------------------------
 
 Use parsed Content-Type information to guide detection:
 
-.. code-block:: python
+.. doctest:: AdvancedConfiguration
 
-    import detextive
-    
-    content = b'{"message": "Hello"}'
-    http_header = "application/json; charset=utf-8"
-    
-    # Let HTTP header inform detection
-    mimetype, charset = detextive.infer_mimetype_charset( 
-        content, 
-        http_content_type = http_header 
-    )
-    
-    print( f"Inferred: {mimetype} with {charset}" )
+    >>> content = b'{"message": "Hello"}'
+    >>> http_header = "application/json; charset=utf-8"
+
+Let HTTP header inform detection:
+
+.. doctest:: AdvancedConfiguration
+
+    >>> mimetype, charset = detextive.infer_mimetype_charset(
+    ...     content,
+    ...     http_content_type = http_header )
+    >>> mimetype
+    'application/json'
+    >>> charset
+    'utf-8'
 
 Location-Based Inference
 ===============================================================================
@@ -128,20 +141,21 @@ Location-Based Inference
 Enhanced Context Awareness
 -------------------------------------------------------------------------------
 
-Provide rich location context to improve detection accuracy:
+Provide rich location context to improve detection accuracy. Paths are primarily used as a fallback for MIME type detection (via file extension) and for richer exception reporting:
 
-.. code-block:: python
+.. doctest:: AdvancedConfiguration
 
-    import detextive
-    from pathlib import Path
-    
-    content = b'Configuration data'
-    
-    # Use Path objects for precise location context
-    location = Path( 'config/settings.yaml' )
-    
-    mimetype = detextive.detect_mimetype( content, location = location )
-    print( f"Context-aware MIME type: {mimetype}" )
+    >>> from pathlib import Path
+    >>> content = b'{"key": "value", "other": "data"}'
+
+Use Path objects for precise location context:
+
+.. doctest:: AdvancedConfiguration
+
+    >>> location = Path( 'document.json' )
+    >>> mimetype = detextive.detect_mimetype( content, location = location )
+    >>> mimetype
+    'application/json'
 
 Default Value Handling
 -------------------------------------------------------------------------------
@@ -150,17 +164,15 @@ Specify fallback values when detection confidence is insufficient:
 
 .. code-block:: python
 
-    import detextive
-    
-    ambiguous_content = b'...'  # Content that's hard to classify
-    
-    mimetype, charset = detextive.infer_mimetype_charset( 
+    ambiguous_content = b'some text'
+
+    mimetype, charset = detextive.infer_mimetype_charset(
         ambiguous_content,
-        mimetype_default = 'text/plain',
-        charset_default = 'utf-8'
-    )
-    
+        mimetype_supplement = 'text/plain',
+        charset_supplement = 'utf-8' )
+
     print( f"Result (with defaults): {mimetype}, {charset}" )
+    # Output: Result (with defaults): text/plain, utf-8
 
 Text Validation Profiles
 ===============================================================================
@@ -170,42 +182,47 @@ Validation Profile Selection
 
 Choose validation strictness based on your use case:
 
-.. code-block:: python
+.. doctest:: AdvancedConfiguration
 
-    import detextive
-    from detextive.validation import (
-        PROFILE_TEXTUAL, 
-        PROFILE_TERMINAL_SAFE, 
-        PROFILE_PRINTER_SAFE
-    )
-    
-    text = "Sample text with Unicode: ☆"
-    
-    # Different validation profiles
-    print( detextive.is_valid_text( text, profile = PROFILE_TEXTUAL ) )
-    print( detextive.is_valid_text( text, profile = PROFILE_TERMINAL_SAFE ) )
-    print( detextive.is_valid_text( text, profile = PROFILE_PRINTER_SAFE ) )
+    >>> text = "Sample text with ASCII characters"
+    >>> text_with_unicode = "Unicode: \u2606"
+
+Different validation profiles have varying strictness levels:
+
+.. doctest:: AdvancedConfiguration
+
+    >>> detextive.is_valid_text( text, profile = detextive.PROFILE_TEXTUAL )
+    True
+    >>> detextive.is_valid_text( text, profile = detextive.PROFILE_TERMINAL_SAFE )
+    True
+    >>> detextive.is_valid_text( text_with_unicode, profile = detextive.PROFILE_TEXTUAL )
+    True
 
 Profile-Aware Decoding
 -------------------------------------------------------------------------------
 
 Apply validation profiles during high-level decoding:
 
-.. code-block:: python
+.. doctest:: AdvancedConfiguration
 
-    import detextive
-    from detextive.validation import PROFILE_TERMINAL_SAFE
-    
-    content = b'Text for terminal display'
-    
-    try:
-        text = detextive.decode( 
-            content, 
-            profile = PROFILE_TERMINAL_SAFE 
-        )
-        print( f"Terminal-safe text: {text}" )
-    except detextive.exceptions.ValidationInvalidity as exception:
-        print( f"Text validation failed: {exception}" )
+    >>> content = b'Text for terminal display'
+    >>> text = detextive.decode(
+    ...     content,
+    ...     profile = detextive.PROFILE_TERMINAL_SAFE )
+    >>> text
+    'Text for terminal display'
+
+Validation failures raise appropriate exceptions:
+
+.. doctest:: AdvancedConfiguration
+
+    >>> import detextive.exceptions
+    >>> problematic = b'Text with\x00null bytes'
+    >>> try:
+    ...     detextive.decode( problematic, profile = detextive.PROFILE_TERMINAL_SAFE )
+    ... except detextive.exceptions.TextInvalidity as exception:
+    ...     print( "Text validation failed" )
+    Text validation failed
 
 Error Handling
 ===============================================================================
@@ -219,51 +236,24 @@ Handle specific error conditions with appropriate exception types:
 
     import detextive
     from detextive.exceptions import (
-        DetectionInvalidity,
-        ValidationInvalidity,
-        DecodingFailure
-    )
-    
-    try:
-        # Attempt high-level processing
-        text = detextive.decode( malformed_content, location = 'data.txt' )
-        
-    except DetectionInvalidity as exception:
-        print( f"Detection failed: {exception}" )
-        
-    except ValidationInvalidity as exception:
-        print( f"Text validation failed: {exception}" )
-        
-    except DecodingFailure as exception:
-        print( f"Decoding failed: {exception}" )
-        
-    except detextive.exceptions.Omnierror as exception:
-        print( f"General detextive error: {exception}" )
+        CharsetDetectFailure,
+        TextInvalidity,
+        ContentDecodeFailure )
 
-Confidence-Based Error Handling
--------------------------------------------------------------------------------
-
-Handle low-confidence results gracefully:
+Attempt high-level processing with comprehensive error handling:
 
 .. code-block:: python
 
-    import detextive
-    
-    def robust_charset_detection( content, minimum_confidence = 70 ):
-        ''' Detects charset with confidence requirements. '''
-        
-        result = detextive.detect_charset_confidence( content )
-        
-        if result.confidence >= minimum_confidence:
-            return result.value
-        else:
-            # Fall back to conservative default
-            return 'utf-8'
-    
-    content = b'Ambiguous content'
-    charset = robust_charset_detection( content )
-    
-    print( f"Robust charset detection: {charset}" )
+    try:
+        text = detextive.decode( malformed_content, location = 'data.txt' )
+    except CharsetDetectFailure as exception:
+        print( f"Charset detection failed: {exception}" )
+    except TextInvalidity as exception:
+        print( f"Text validation failed: {exception}" )
+    except ContentDecodeFailure as exception:
+        print( f"Decoding failed: {exception}" )
+    except detextive.exceptions.Omnierror as exception:
+        print( f"General detextive error: {exception}" )
 
 Integration Patterns
 ===============================================================================
@@ -276,49 +266,37 @@ Combine multiple detection steps in a robust processing pipeline:
 .. code-block:: python
 
     import detextive
-    from detextive.core import Behaviors
-    from detextive.validation import PROFILE_TEXTUAL
-    
+    from detextive import Behaviors, BehaviorTristate
+
     def process_document( content, location = None, http_content_type = None ):
         ''' Processes document with comprehensive detection and validation. '''
-        
-        # Configure strict behaviors
-        behaviors = Behaviors( 
+        behaviors = Behaviors(
             charset_confidence_minimum = 75,
-            trial_decode = detextive.core.BehaviorTristate.AsNeeded
-        )
-        
+            trial_decode = BehaviorTristate.AsNeeded )
         try:
-            # Detect MIME type and charset
-            mimetype, charset = detextive.infer_mimetype_charset( 
+            mimetype, charset = detextive.infer_mimetype_charset(
                 content,
                 behaviors = behaviors,
                 location = location,
-                http_content_type = http_content_type
-            )
-            
-            # Validate MIME type is textual
+                http_content_type = http_content_type )
             if not detextive.is_textual_mimetype( mimetype ):
                 return None, f"Non-textual content: {mimetype}"
-            
-            # Decode with validation
-            text = detextive.decode( 
+            text = detextive.decode(
                 content,
                 behaviors = behaviors,
-                profile = PROFILE_TEXTUAL,
+                profile = detextive.PROFILE_TEXTUAL,
                 location = location,
-                http_content_type = http_content_type
-            )
-            
+                http_content_type = http_content_type )
             return text, None
-            
         except detextive.exceptions.Omnierror as exception:
             return None, f"Processing failed: {exception}"
-    
-    # Example usage
+
+Example usage:
+
+.. code-block:: python
+
     content = b'{"message": "Hello, world!"}'
     text, error = process_document( content, location = 'data.json' )
-    
     if text:
         print( f"Processed text: {text}" )
     else:

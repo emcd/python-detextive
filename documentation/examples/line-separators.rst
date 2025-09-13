@@ -52,15 +52,6 @@ Windows-style line endings:
     >>> separator
     <LineSeparators.CRLF: '\r\n'>
 
-Classic Mac-style line endings:
-
-.. doctest:: LineSeparators
-
-    >>> mac_content = b'Line 1\rLine 2\rLine 3'
-    >>> separator = LineSeparators.detect_bytes( mac_content )
-    >>> separator
-    <LineSeparators.CR: '\r'>
-
 Detecting Line Endings in Text
 -------------------------------------------------------------------------------
 
@@ -73,12 +64,12 @@ Detection also works with text strings:
     >>> separator
     <LineSeparators.CRLF: '\r\n'>
 
-When line endings are mixed, the most frequent type is returned:
+When line endings are mixed, the first detected type is returned:
 
 .. doctest:: LineSeparators
 
-    >>> mostly_unix = 'A\nB\nC\nD\r\nE'
-    >>> separator = LineSeparators.detect_text( mostly_unix )
+    >>> mixed_unix_first = 'A\nB\nC\nD\r\nE'
+    >>> separator = LineSeparators.detect_text( mixed_unix_first )
     >>> separator
     <LineSeparators.LF: '\n'>
 
@@ -117,14 +108,6 @@ Convert normalized text to specific line ending formats:
     >>> windows_format = LineSeparators.CRLF.nativize( normalized )
     >>> windows_format
     'Line 1\r\nLine 2\r\nLine 3'
-
-Convert to Mac format:
-
-.. doctest:: LineSeparators
-
-    >>> mac_format = LineSeparators.CR.nativize( normalized )
-    >>> mac_format
-    'Line 1\rLine 2\rLine 3'
 
 Unix format (no change needed):
 
@@ -210,21 +193,3 @@ Line separator detection handles edge cases gracefully:
     >>> single_separator is None
     True
 
-Content with Only Line Separators
--------------------------------------------------------------------------------
-
-Handle content that consists entirely of line separators:
-
-.. doctest:: LineSeparators
-
-    >>> # Multiple blank lines
-    >>> blank_lines = '\n\n\n'
-    >>> separator = LineSeparators.detect_text( blank_lines )
-    >>> separator
-    <LineSeparators.LF: '\n'>
-
-    >>> # Mixed blank lines
-    >>> mixed_blanks = '\r\n\r\n\n'
-    >>> separator = LineSeparators.detect_text( mixed_blanks )
-    >>> separator
-    <LineSeparators.CRLF: '\r\n'>

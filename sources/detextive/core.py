@@ -61,7 +61,10 @@ class Behaviors( __.immut.DataclassObject ):
 
                 E.g., 7-bit ASCII to UTF-8.
             ''' ),
-    ] = __.immut.Dictionary( ( ( 'ascii', 'utf-8' ), ) )
+    ] = __.dcls.field(
+        default_factory = (
+            lambda: __.immut.Dictionary( (
+                ( 'ascii', 'utf-8-sig' ), ( 'utf-8', 'utf-8-sig' ) ) ) ) )
     mimetype_detect: __.typx.Annotated[
         BehaviorTristate,
         __.ddoc.Doc( ''' When to detect MIME type from content. ''' ),
@@ -84,7 +87,7 @@ class Behaviors( __.immut.DataclassObject ):
     text_validate_confidence: __.typx.Annotated[
         float,
         __.ddoc.Doc( ''' Minimum confidence to skip text validation. ''' ),
-    ] = 0.8
+    ] = 0.80
     trial_codecs: __.typx.Annotated[
         __.cabc.Sequence[ str | CodecSpecifiers ],
         __.ddoc.Doc( ''' Sequence of codec names or specifiers. ''' ),
@@ -96,7 +99,7 @@ class Behaviors( __.immut.DataclassObject ):
     ] = BehaviorTristate.AsNeeded
     trial_decode_confidence: __.typx.Annotated[
         float, __.ddoc.Doc( ''' Minimum confidence to skip trial decode. ''')
-    ] = 0.7
+    ] = 0.80
 
 
 BEHAVIORS_DEFAULT = Behaviors( )
