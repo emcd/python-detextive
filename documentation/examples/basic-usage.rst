@@ -125,6 +125,36 @@ Plain text files with location context:
     >>> charset
     'utf-8'
 
+Confidence-Based Detection
+-------------------------------------------------------------------------------
+
+Access confidence scores for detection decisions using the confidence API:
+
+.. doctest:: BasicUsage
+
+    >>> import detextive
+    >>> content = b'{"name": "example", "data": "test"}'
+    >>> mimetype_result, charset_result = detextive.infer_mimetype_charset_confidence( content, location = 'config.json' )
+    >>> mimetype_result.value
+    'application/json'
+    >>> mimetype_result.confidence > 0.8
+    True
+    >>> charset_result.value
+    'utf-8'
+    >>> charset_result.confidence > 0.8
+    True
+
+The confidence API is useful for quality assessment and decision making:
+
+.. doctest:: BasicUsage
+
+    >>> text_content = b'Plain text without magic bytes'
+    >>> mimetype_result, charset_result = detextive.infer_mimetype_charset_confidence( text_content, location = 'notes.txt' )
+    >>> mimetype_result.value
+    'text/plain'
+    >>> mimetype_result.confidence > 0.7
+    True
+
 High-Level Decoding
 ===============================================================================
 
