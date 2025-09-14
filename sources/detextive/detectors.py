@@ -26,6 +26,7 @@ from . import charsets as _charsets
 from . import exceptions as _exceptions
 from . import mimetypes as _mimetypes
 from . import nomina as _nomina
+from . import validation as _validation
 
 from .core import ( # isort: skip
     BEHAVIORS_DEFAULT as            _BEHAVIORS_DEFAULT,
@@ -70,10 +71,7 @@ def detect_charset_confidence(
     result = __.chardet.detect( content )
     charset, confidence = result[ 'encoding' ], result[ 'confidence' ]
     nomargs: __.NominativeArguments = dict(
-        behaviors = behaviors,
-        confidence = confidence,
-        supplement = supplement,
-        location = location )
+        behaviors = behaviors, supplement = supplement, location = location )
     if charset is None:
         if __.is_absent( mimetype ): return None
         if _mimetypes.is_textual_mimetype( mimetype ):
@@ -112,9 +110,8 @@ def detect_mimetype_confidence(
     try: mimetype = __.puremagic.from_string( content, mime = True )
     except ( __.puremagic.PureError, ValueError ):
         if __.is_absent( charset ): raise error from None
-        mimetype = _detect_mimetype_from_charset(
+        return _detect_mimetype_from_charset(
             content, behaviors, charset, location = location )
-        return _Result( value = mimetype, confidence = 1.0 )
     confidence = _confidence_from_quantity( content, behaviors = behaviors )
     return _Result( value = mimetype, confidence = confidence )
 
@@ -159,14 +156,20 @@ def _detect_mimetype_from_charset(
     behaviors: _Behaviors,
     charset: str, /, *,
     location: __.Absential[ _nomina.Location ] = __.absent,
-) -> str:
-    Error = _exceptions.MimetypeDetectFailure
+) -> _Result:
+    error = _exceptions.MimetypeDetectFailure( location = location )
     nomargs: __.NominativeArguments = dict(
         behaviors = behaviors, inference = charset, location = location )
-    try: _charsets.trial_decode_as_confident( content, **nomargs )
-    except _exceptions.ContentDecodeFailure:
-        raise Error( location = location ) from None
-    return 'text/plain'
+    match behaviors.trial_decode:
+        case _BehaviorTristate.Never: raise error
+        case _: pass
+    try: text, result = _charsets.attempt_decodes( content, **nomargs )
+    except _exceptions.ContentDecodeFailure: raise error from None
+    match behaviors.text_validate:
+        case _BehaviorTristate.Never: raise error
+        case _: pass
+    if not _validation.PROFILE_TEXTUAL( text ): raise error
+    return _Result( value = 'text/plain', confidence = result.confidence )
 
 
 def _normalize_charset_detection(

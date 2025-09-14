@@ -25,6 +25,7 @@ from . import __
 from . import charsets as _charsets
 from . import exceptions as _exceptions
 from . import inference as _inference
+from . import mimetypes as _mimetypes
 from . import nomina as _nomina
 from . import validation as _validation
 
@@ -32,6 +33,8 @@ from .core import ( # isort: skip
     BEHAVIORS_DEFAULT as            _BEHAVIORS_DEFAULT,
     BehaviorTristate as             _BehaviorTristate,
     Behaviors as                    _Behaviors,
+    Result as                       _Result,
+    confidence_from_quantity as     _confidence_from_quantity,
 )
 
 
@@ -41,27 +44,35 @@ def decode( # noqa: PLR0913
     profile: _validation.Profile = _validation.PROFILE_TEXTUAL,
     http_content_type: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
-    charset_supplement: __.Absential[ str ] = __.absent,
+    charset_supplement: str = 'utf-8-sig',
     mimetype_supplement: __.Absential[ str ] = __.absent,
 ) -> str:
     ''' Decodes bytes array to Unicode text. '''
     if content == b'': return ''
     behaviors_ = __.dcls.replace(
         behaviors, trial_decode = _BehaviorTristate.Never )
-    result = _inference.infer_charset_confidence(
-        content,
-        behaviors = behaviors_,
-        http_content_type = http_content_type,
-        mimetype_supplement = mimetype_supplement,
-        location = location )
-    # TODO: Get results from 'infer_mimetype_charset_confidence'.
-    #       If charset is None and MIME type is textual, then attempt decodes.
-    if result is None:
-        raise _exceptions.ContentDecodeImpossibility( location = location )
+    try:
+        mimetype_result, charset_result = (
+            _inference.infer_mimetype_charset_confidence(
+                content,
+                behaviors = behaviors_,
+                http_content_type = http_content_type,
+                charset_supplement = charset_supplement,
+                mimetype_supplement = mimetype_supplement,
+                location = location ) )
+    except _exceptions.Omnierror:
+        confidence = _confidence_from_quantity( content, behaviors )
+        charset_result = _Result(
+            value = charset_supplement, confidence = confidence )
+    else:
+        if (    charset_result is None
+            and not _mimetypes.is_textual_mimetype( mimetype_result.value )
+        ): raise _exceptions.ContentDecodeImpossibility( location = location )
     text, result = _charsets.attempt_decodes(
         content,
         behaviors = behaviors,
-        inference = result.value,
+        inference = (
+            'utf-8-sig' if charset_result is None else charset_result.value ),
         supplement = charset_supplement,
         location = location )
     should_validate = False

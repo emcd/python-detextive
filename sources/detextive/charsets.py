@@ -78,7 +78,7 @@ def trial_decode_as_confident( # noqa: PLR0913
     content: _nomina.Content, /, *,
     behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
     inference: __.Absential[ str ] = __.absent,
-    confidence: float = 1.0,
+    confidence: float = 0.0,
     supplement: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
 ) -> _Result:
@@ -105,7 +105,7 @@ def trial_decode_as_necessary( # noqa: PLR0913
     content: _nomina.Content, /, *,
     behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
     inference: __.Absential[ str ] = __.absent,
-    confidence: float = 1.0,
+    confidence: float = 0.0,
     supplement: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
 ) -> _Result:
