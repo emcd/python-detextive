@@ -22,6 +22,7 @@
 
 
 from . import __
+from . import core as _core
 from . import exceptions as _exceptions
 from . import nomina as _nomina
 
@@ -29,9 +30,8 @@ from .core import ( # isort: skip
     BEHAVIORS_DEFAULT as        _BEHAVIORS_DEFAULT,
     BehaviorTristate as         _BehaviorTristate,
     Behaviors as                _Behaviors,
+    CharsetResult as            _CharsetResult,
     CodecSpecifiers as          _CodecSpecifiers,
-    Result as                   _Result,
-    confidence_from_quantity as _confidence_from_quantity,
 )
 
 
@@ -41,8 +41,9 @@ def attempt_decodes(
     inference: __.Absential[ str ] = __.absent,
     supplement: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
-) -> tuple[ str, _Result ]:
-    confidence = _confidence_from_quantity( content, behaviors = behaviors )
+) -> tuple[ str, _CharsetResult ]:
+    confidence = _core.confidence_from_bytes_quantity(
+        content, behaviors = behaviors )
     on_decode_error = behaviors.on_decode_error
     trials: list[ str ] = [ ]
     for codec in behaviors.trial_codecs:
@@ -63,7 +64,8 @@ def attempt_decodes(
         except UnicodeDecodeError:
             trials.append( charset )
             continue
-        return text, _Result( value = charset, confidence = confidence )
+        result = _CharsetResult( charset = charset, confidence = confidence )
+        return text, result
     raise _exceptions.ContentDecodeFailure(
         charset = trials, location = location )
 
@@ -81,7 +83,7 @@ def trial_decode_as_confident( # noqa: PLR0913
     confidence: float = 0.0,
     supplement: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
-) -> _Result:
+) -> _CharsetResult:
     nomargs: __.NominativeArguments = dict(
         behaviors = behaviors,
         inference = inference,
@@ -98,30 +100,4 @@ def trial_decode_as_confident( # noqa: PLR0913
         return result
     if __.is_absent( inference ):
         raise _exceptions.CharsetDetectFailure( location = location )
-    return _Result( value = inference, confidence = confidence )
-
-
-def trial_decode_as_necessary( # noqa: PLR0913
-    content: _nomina.Content, /, *,
-    behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
-    inference: __.Absential[ str ] = __.absent,
-    confidence: float = 0.0,
-    supplement: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
-) -> _Result:
-    nomargs: __.NominativeArguments = dict(
-        behaviors = behaviors,
-        inference = inference,
-        supplement = supplement,
-        location = location )
-    should_decode = False
-    match behaviors.trial_decode:
-        case _BehaviorTristate.Always | _BehaviorTristate.AsNeeded:
-            should_decode = True
-        case _BehaviorTristate.Never: pass
-    if should_decode:
-        _, result = attempt_decodes( content, **nomargs )
-        return result
-    if __.is_absent( inference ):
-        raise _exceptions.CharsetDetectFailure( location = location )
-    return _Result( value = inference, confidence = confidence )
+    return _CharsetResult( charset = inference, confidence = confidence )

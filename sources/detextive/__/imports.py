@@ -34,10 +34,9 @@ import                      unicodedata
 
 from pathlib import Path
 
-import                      chardet
+import accretive as         accret
 import dynadoc as           ddoc
 import frigid as            immut
-import                      puremagic
 import typing_extensions as typx
 
 from absence import Absential, absent, is_absent

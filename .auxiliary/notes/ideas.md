@@ -5,7 +5,7 @@
 Text postprocessing features to enhance decoded content:
 
 ### **Line Separator Normalization**
-- `normalize_line_separators(text, target='unix')` - Convert CRLF/CR to LF 
+- `normalize_line_separators(text, target='unix')` - Convert CRLF/CR to LF
 - Integration with `lineseparators.py` existing functionality
 - Options: 'unix' (\n), 'windows' (\r\n), 'mac' (\r), 'universal'
 
@@ -20,7 +20,7 @@ Text postprocessing features to enhance decoded content:
 - Forms: NFC, NFD, NFKC, NFKD via unicodedata
 - Useful for consistent text processing across platforms
 
-### **Whitespace Standardization**  
+### **Whitespace Standardization**
 - `normalize_whitespace(text, preserve_breaks=True)` - Standardize spacing
 - Convert tabs to spaces, collapse multiple spaces, trim lines
 - Preserve paragraph breaks vs. full normalization modes
@@ -45,13 +45,12 @@ Text postprocessing features to enhance decoded content:
 ## Other Future Enhancements
 
 ### **Enhanced Detection**
-- Multiple detector backend support (`python-magic`, `charset-normalizer`)
 - Machine learning confidence models
 - Content-type specific heuristics
 
 ### **Caching**
 - Content-based detection caching
-- Confidence score persistence  
+- Confidence score persistence
 - Performance optimization for repeated operations
 
 ### **Monitoring**

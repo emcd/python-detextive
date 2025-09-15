@@ -55,7 +55,7 @@ Use custom behaviors for detection:
     ...     behaviors = strict_behaviors )
     >>> result.confidence > 0.8
     True
-    >>> result.value
+    >>> result.charset
     'utf-8'
 
 Trial Decode Configuration

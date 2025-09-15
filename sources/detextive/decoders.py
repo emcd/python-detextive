@@ -23,6 +23,7 @@
 
 from . import __
 from . import charsets as _charsets
+from . import core as _core
 from . import exceptions as _exceptions
 from . import inference as _inference
 from . import mimetypes as _mimetypes
@@ -33,8 +34,7 @@ from .core import ( # isort: skip
     BEHAVIORS_DEFAULT as            _BEHAVIORS_DEFAULT,
     BehaviorTristate as             _BehaviorTristate,
     Behaviors as                    _Behaviors,
-    Result as                       _Result,
-    confidence_from_quantity as     _confidence_from_quantity,
+    CharsetResult as                _CharsetResult,
 )
 
 
@@ -61,18 +61,19 @@ def decode( # noqa: PLR0913
                 mimetype_supplement = mimetype_supplement,
                 location = location ) )
     except _exceptions.Omnierror:
-        confidence = _confidence_from_quantity( content, behaviors )
-        charset_result = _Result(
-            value = charset_supplement, confidence = confidence )
+        confidence = _core.confidence_from_bytes_quantity( content, behaviors )
+        charset_result = _CharsetResult(
+            charset = charset_supplement, confidence = confidence )
     else:
-        if (    charset_result is None
-            and not _mimetypes.is_textual_mimetype( mimetype_result.value )
+        if (    charset_result.charset is None
+            and not _mimetypes.is_textual_mimetype( mimetype_result.mimetype )
         ): raise _exceptions.ContentDecodeImpossibility( location = location )
     text, result = _charsets.attempt_decodes(
         content,
         behaviors = behaviors,
         inference = (
-            'utf-8-sig' if charset_result is None else charset_result.value ),
+            'utf-8-sig' if charset_result.charset is None
+            else charset_result.charset ),
         supplement = charset_supplement,
         location = location )
     should_validate = False

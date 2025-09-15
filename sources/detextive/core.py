@@ -25,6 +25,12 @@ from . import __
 from . import nomina as _nomina
 
 
+_STANDARD_CHARSET_PROMOTIONS = (
+    ( 'ascii', 'utf-8-sig' ),
+    ( 'utf-8', 'utf-8-sig' ),
+)
+
+
 class BehaviorTristate( __.enum.Enum ):
     ''' When to apply behavior. '''
 
@@ -54,6 +60,11 @@ class Behaviors( __.immut.DataclassObject ):
         BehaviorTristate,
         __.ddoc.Doc( ''' When to detect charset from content. ''' ),
     ] = BehaviorTristate.AsNeeded
+    charset_detectors_order: __.typx.Annotated[
+        __.cabc.Sequence[ str ],
+        __.ddoc.Doc(
+            ''' Order in which charset detectors should be applied. ''' ),
+    ] = ( 'chardet', 'charset-normalizer' )
     charset_promotions: __.typx.Annotated[
         __.cabc.Mapping[ str, str ],
         __.ddoc.Doc(
@@ -63,12 +74,16 @@ class Behaviors( __.immut.DataclassObject ):
             ''' ),
     ] = __.dcls.field(
         default_factory = (
-            lambda: __.immut.Dictionary( (
-                ( 'ascii', 'utf-8-sig' ), ( 'utf-8', 'utf-8-sig' ) ) ) ) )
+            lambda: __.immut.Dictionary( _STANDARD_CHARSET_PROMOTIONS ) ) )
     mimetype_detect: __.typx.Annotated[
         BehaviorTristate,
         __.ddoc.Doc( ''' When to detect MIME type from content. ''' ),
     ] = BehaviorTristate.AsNeeded
+    mimetype_detectors_order: __.typx.Annotated[
+        __.cabc.Sequence[ str ],
+        __.ddoc.Doc(
+            ''' Order in which MIME type detectors should be applied. ''' ),
+    ] = ( 'magic', 'puremagic' )
     on_decode_error: __.typx.Annotated[
         str,
         __.ddoc.Doc(
@@ -105,18 +120,31 @@ class Behaviors( __.immut.DataclassObject ):
 BEHAVIORS_DEFAULT = Behaviors( )
 
 
-class Result( __.immut.DataclassObject ):
-    ''' Value with detection confidence. '''
+class CharsetResult( __.immut.DataclassObject ):
+    ''' Character set encoding with detection confidence. '''
 
-    value: __.typx.Annotated[
-        str, __.ddoc.Doc( 'Detected value (charset or mimetype).' )
+    charset: __.typx.Annotated[
+        __.typx.Optional[ str ],
+        __.ddoc.Doc(
+            ''' Detected character set encoding. May be ``None``.''' ),
     ]
     confidence: __.typx.Annotated[
-        float, __.ddoc.Doc( 'Detection confidence from 0.0 to 1.0.' )
+        float, __.ddoc.Doc( ''' Detection confidence from 0.0 to 1.0. ''' )
     ]
 
 
-def confidence_from_quantity(
+class MimetypeResult( __.immut.DataclassObject ):
+    ''' MIME type with detection confidence. '''
+
+    mimetype: __.typx.Annotated[
+        str, __.ddoc.Doc( ''' Detected MIME type. ''' )
+    ]
+    confidence: __.typx.Annotated[
+        float, __.ddoc.Doc( ''' Detection confidence from 0.0 to 1.0. ''' )
+    ]
+
+
+def confidence_from_bytes_quantity(
     content: _nomina.Content, behaviors: Behaviors = BEHAVIORS_DEFAULT
 ) -> float:
     return min(

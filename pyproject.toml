@@ -16,6 +16,7 @@ readme = { 'file' = 'README.rst', 'content-type' = 'text/x-rst' }
 requires-python = '>= 3.10'
 dependencies = [
   'absence~=1.1',
+  'accretive~=4.1',
   'chardet',
   'dynadoc~=1.4',
   'frigid~=4.1',
@@ -26,7 +27,7 @@ dependencies = [
 ]
 classifiers = [ # https://pypi.org/classifiers
   'Development Status :: 5 - Production/Stable',
-  #'Intended Audience :: Developers',
+  'Intended Audience :: Developers',
   'License :: OSI Approved :: Apache Software License',
   'Programming Language :: Python :: 3 :: Only',
   # --- BEGIN: Injected by Copier ---
@@ -37,10 +38,13 @@ classifiers = [ # https://pypi.org/classifiers
   'Programming Language :: Python :: Implementation :: CPython',
   'Programming Language :: Python :: Implementation :: PyPy',
   # --- END: Injected by Copier ---
-  #'Topic :: Software Development',
-  # TODO: Add classifiers as appropriate.
+  'Topic :: Software Development',
 ]
-keywords = [ ] # TODO: Add keywords.
+keywords = [ 'text', 'detection', 'charset', 'MIME', 'newline' ]
+[project.optional-dependencies]
+all = [ 'detextive[charset-normalizer,python-magic]' ]
+charset-normalizer = [ 'charset-normalizer' ]
+python-magic = [ 'python-magic' ]
 [[project.authors]]
 name = 'Eric McDonald'
 email = 'emcd@users.noreply.github.com'
@@ -101,6 +105,7 @@ description = ''' Development environment. '''
 dependencies = [
   'Jinja2',
   'coverage[toml]',
+  'detextive[all]',
   'furo',
   'isort',
   'packaging',

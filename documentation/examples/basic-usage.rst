@@ -135,11 +135,11 @@ Access confidence scores for detection decisions using the confidence API:
     >>> import detextive
     >>> content = b'{"name": "example", "data": "test"}'
     >>> mimetype_result, charset_result = detextive.infer_mimetype_charset_confidence( content, location = 'config.json' )
-    >>> mimetype_result.value
+    >>> mimetype_result.mimetype
     'application/json'
     >>> mimetype_result.confidence > 0.8
     True
-    >>> charset_result.value
+    >>> charset_result.charset
     'utf-8'
     >>> charset_result.confidence > 0.8
     True
@@ -150,7 +150,7 @@ The confidence API is useful for quality assessment and decision making:
 
     >>> text_content = b'Plain text without magic bytes'
     >>> mimetype_result, charset_result = detextive.infer_mimetype_charset_confidence( text_content, location = 'notes.txt' )
-    >>> mimetype_result.value
+    >>> mimetype_result.mimetype
     'text/plain'
     >>> mimetype_result.confidence > 0.7
     True
