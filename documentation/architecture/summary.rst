@@ -42,6 +42,7 @@ Core Detection Functions
   * ``infer_charset(content, *, behaviors=BEHAVIORS_DEFAULT, ...)`` - Charset inference with validation
   * ``infer_charset_confidence(content, *, behaviors=BEHAVIORS_DEFAULT, ...)`` - Charset inference with confidence scoring
   * ``infer_mimetype_charset(content, *, behaviors=BEHAVIORS_DEFAULT, ...)`` - Combined MIME type and charset inference
+  * ``infer_mimetype_charset_confidence(content, *, behaviors=BEHAVIORS_DEFAULT, ...)`` - Combined detection with confidence scoring
   * ``decode(content, *, behaviors=BEHAVIORS_DEFAULT, ...)`` - High-level bytes-to-text decoding with validation
   * ``is_textual_mimetype(mimetype)`` - Textual MIME type validation  
   * ``is_valid_text(text, profile=PROFILE_TEXTUAL)`` - Unicode-aware text validation
@@ -49,7 +50,8 @@ Core Detection Functions
 **Core Types and Configuration**
   Shared data structures for confidence-aware behavior:
   
-  * ``Result(value, confidence)`` - Detection results with confidence scoring (0.0-1.0)
+  * ``CharsetResult(charset, confidence)`` - Charset detection results with confidence scoring (0.0-1.0)
+  * ``MimetypeResult(mimetype, confidence)`` - MIME type detection results with confidence scoring (0.0-1.0)
   * ``Behaviors`` - Configurable detection behavior with confidence thresholds  
   * ``BehaviorTristate`` - When to apply behaviors (Never/AsNeeded/Always)
   * ``CodecSpecifiers`` - Dynamic codec resolution (FromInference/OsDefault/etc.)
@@ -98,13 +100,14 @@ Component Relationships
                             │
     ┌─────────────────────────────────────────────────┐
     │            External Dependencies               │
-    │    chardet  puremagic  mimetypes (stdlib)      │
+    │  chardet  charset-normalizer  puremagic        │
+    │  python-magic  mimetypes (stdlib) [optional]   │
     └─────────────────────────────────────────────────┘
 
 **v2.0 Data Flow**
 
 1. **Input Processing**: Functions receive byte content, behaviors configuration, and optional HTTP/location context
-2. **Confidence-Aware Detection**: Core detectors return Result objects with confidence scores using chardet/puremagic
+2. **Registry-Based Detection**: Core detectors iterate through configured backends (chardet, charset-normalizer, puremagic, python-magic) returning CharsetResult/MimetypeResult objects with confidence scores
 3. **Smart Decision Making**: Confidence thresholds drive AsNeeded behavior for trial decode and text validation  
 4. **Layered Inference**: Higher-level functions orchestrate detection, validation, and error handling
 5. **Validated Output**: Text validation ensures decoded content meets specified profiles for safety/quality
@@ -152,16 +155,18 @@ Architectural Patterns
   * **LineSeparators**: Byte-level line ending detection and normalization
 
 **v2.0 Evolution**
-  ADR-003, ADR-004, and ADR-005 document the context-aware detection architecture 
-  for v2.0 that addresses real-world integration challenges:
-  
+  ADR-003 documents the context-aware detection architecture for v2.0 that
+  addresses real-world integration challenges:
+
   * Context-driven detection utilizing HTTP headers, location, and content analysis
-  * Error class provider pattern eliminating exception translation overhead
+  * Confidence-based result types with specific CharsetResult/MimetypeResult objects
   * Configurable validation behaviors for performance and security requirements
   * Enhanced function interfaces maintaining backward compatibility
 
-**Future Extensibility**
-  ADR-002 documents potential future architectural enhancements:
-  
-  * Plugin architecture for alternative detection backends
-  * Internal detector classes for advanced configuration and testing
+**Detector Registry Architecture**
+  ADR-002 documents the implemented pluggable backend system:
+
+  * Dynamic detector registration with type aliases for CharsetDetector/MimetypeDetector functions
+  * Configurable detector precedence via Behaviors.charset_detectors_order and mimetype_detectors_order
+  * Graceful degradation with NotImplemented return pattern for missing optional dependencies
+  * Registry dictionaries (charset_detectors, mimetype_detectors) enabling runtime backend selection

@@ -33,9 +33,9 @@ Real-world integration analysis from downstream packages (librovore) revealed
 fundamental limitations in the v1.x functional API that create significant 
 integration burden. The primary integration pain points identified include:
 
-**Exception Translation Tax**: Current integration patterns require 8+ lines 
-of boilerplate per call site to translate detextive exceptions into downstream 
-exception hierarchies, creating maintenance overhead and code duplication.
+**Redundant Detection Operations**: Current integration patterns require multiple
+function calls for comprehensive detection workflows, creating performance
+overhead and code complexity.
 
 **Redundant Detection Overhead**: Multiple function calls perform overlapping 
 content analysis (detect_mimetype_and_charset + is_textual_content), resulting 
@@ -80,6 +80,11 @@ compatibility with enhanced function implementations.
 * ``printable_threshold`` parameter for character validation tolerance
 * Conditional execution prevents unnecessary validation overhead
 
+**Confidence-Based Result Types:**
+* ``CharsetResult(charset, confidence)`` for charset detection results
+* ``MimetypeResult(mimetype, confidence)`` for MIME type detection results
+* Confidence scoring enables AsNeeded behavior and quality assessment
+
 **Backward Compatibility Strategy:**
 * Existing v1.x functions enhanced with new capabilities while preserving signatures
 * No breaking changes to current function behavior
@@ -117,7 +122,7 @@ Consequences
 
 **Positive Consequences**
 
-* **Zero Exception Translation**: Error class provider eliminates boilerplate translation patterns
+* **Unified Detection**: Single function calls provide comprehensive detection with confidence scoring
 * **Context Fusion**: Single detection call leverages all available context (HTTP headers, location, content)
 * **Performance Optimization**: Conditional validation prevents unnecessary computational overhead
 * **Backward Compatibility**: Existing code continues working with enhanced capabilities
@@ -139,8 +144,8 @@ Consequences
 **Implementation Implications**
 
 * Focus on context-driven detection logic that automatically selects appropriate methods
-* Implement error class provider pattern with robust exception mapping capabilities
-* Design Behaviors dataclass for intuitive validation control
+* Implement detector registry system with configurable backend precedence
+* Design Behaviors dataclass for intuitive validation control and detector ordering
 * Maintain strict backward compatibility through enhanced function implementations
 * Create comprehensive test suite covering behavior combinations and context scenarios
 * Document migration patterns for common integration scenarios

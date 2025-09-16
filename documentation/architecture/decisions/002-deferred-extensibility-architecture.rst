@@ -24,7 +24,7 @@
 Status
 ===============================================================================
 
-Proposed (Deferred to Future Iteration)
+Implemented
 
 Context
 ===============================================================================
@@ -58,29 +58,32 @@ while sufficient for consolidation, has limitations for advanced use cases:
 Decision
 ===============================================================================
 
-**DEFERRED** until ADR-001 implementation is complete and validated in production.
+**IMPLEMENTED** in v2.0 as a **Detector Registry Architecture** that provides
+pluggable backend support while maintaining functional API compatibility.
 
-When implemented in a future iteration, we propose a **Hybrid Functional-Object
-Architecture** that maintains the existing functional API while adding internal
-extensibility:
+**Implemented Components:**
 
-**Proposed Components:**
+*Detector Registry System:*
+* ``CharsetDetector`` and ``MimetypeDetector`` type aliases for pluggable functions
+* ``charset_detectors`` and ``mimetype_detectors`` registry dictionaries
+* Dynamic detector registration with graceful ImportError handling
+* User-configurable detector precedence via ``Behaviors.charset_detectors_order`` and ``mimetype_detectors_order``
 
-*Public Functional API (Unchanged):*
-* Existing functions maintain identical signatures and behavior
-* No breaking changes to code using ADR-001 implementation
+*Optional Dependency Architecture:*
+* Lazy import registration system for optional detection libraries
+* ``NotImplemented`` return pattern for graceful degradation
+* Support for ``charset-normalizer``, ``chardet``, ``python-magic``, and ``puremagic``
+* Fallback chains when preferred detectors are unavailable
 
-*Internal Architecture Enhancements:*
-* ``MimeDetector`` class - Configurable MIME detection with pluggable backends
-* ``CharsetDetector`` class - Statistical analysis with configurable thresholds  
-* ``LineSeparatorDetector`` class - Enhanced line ending detection
-* ``DetectionResult`` class - Consolidated result object for multi-value operations
-* Configuration system for detection parameters and pattern registration
+*Enhanced Configuration:*
+* ``Behaviors`` dataclass with detector ordering configuration
+* Confidence-based detection thresholds and validation control
+* Context-aware detection utilizing HTTP headers and file locations
 
-*Integration Pattern:*
-* Functional API delegates to lazily-initialized internal detector instances
-* Configuration passed through detector constructors or global configuration
-* Backward compatibility maintained through facade pattern over internal objects
+*Backward Compatibility:*
+* Existing functional API maintains identical signatures and behavior
+* Enhanced capabilities available through optional parameters
+* No breaking changes to existing usage patterns
 
 Alternatives
 ===============================================================================
