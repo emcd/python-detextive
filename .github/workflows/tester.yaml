@@ -43,7 +43,8 @@ jobs:
 
           echo "=== Coverage + Sphinx Test ==="
           hatch --env "qa.${v}" run coverage --version
-          hatch --env "qa.${v}" run coverage run -c "import sphinx.cmd.build; print('Coverage + Sphinx works')" || echo "Coverage + Sphinx failed"
+          echo "import sphinx.cmd.build; print('Coverage + Sphinx works')" > .auxiliary/test_coverage_sphinx.py
+          hatch --env "qa.${v}" run coverage run --source=. .auxiliary/test_coverage_sphinx.py || echo "Coverage + Sphinx failed"
 
           echo "=== Optional Dependencies Check ==="
           hatch --env "qa.${v}" run python -c "import magic; print('python-magic available')" || echo "python-magic not available"
@@ -89,7 +90,8 @@ jobs:
           hatch --env "qa.${v}" run python -c "import os, sys; print('PATH:', os.environ.get('PATH')[:200] + '...'); print('PYTHONPATH:', getattr(sys, 'path', 'None')[:5])"
 
           echo "=== Module Import Context Test ==="
-          hatch --env "qa.${v}" run coverage run -c "import sphinx.cmd.build; print('Coverage + import success')" || echo "Coverage + import failed"
+          hatch --env "qa.${v}" run python -c "import sys; print('Python executable:', sys.executable)"
+          hatch --env "qa.${v}" run python -c "import sphinx.cmd.build; print('Direct import success')" || echo "Direct import failed"
 
   test:
     needs: [initialize, debug-windows]
