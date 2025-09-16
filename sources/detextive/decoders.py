@@ -32,6 +32,8 @@ from . import validation as _validation
 
 from .core import ( # isort: skip
     BEHAVIORS_DEFAULT as            _BEHAVIORS_DEFAULT,
+    CHARSET_DEFAULT as              _CHARSET_DEFAULT,
+    MIMETYPE_DEFAULT as             _MIMETYPE_DEFAULT,
     BehaviorTristate as             _BehaviorTristate,
     Behaviors as                    _Behaviors,
     CharsetResult as                _CharsetResult,
@@ -42,9 +44,11 @@ def decode( # noqa: PLR0913
     content: _nomina.Content, /, *,
     behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
     profile: _validation.Profile = _validation.PROFILE_TEXTUAL,
+    charset_default: str = _CHARSET_DEFAULT,
+    mimetype_default: str = _MIMETYPE_DEFAULT,
     http_content_type: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
-    charset_supplement: str = 'utf-8-sig',
+    charset_supplement: __.Absential[ str ] = __.absent,
     mimetype_supplement: __.Absential[ str ] = __.absent,
 ) -> str:
     ''' Decodes bytes array to Unicode text. '''
@@ -56,14 +60,19 @@ def decode( # noqa: PLR0913
             _inference.infer_mimetype_charset_confidence(
                 content,
                 behaviors = behaviors_,
+                charset_default = charset_default,
+                mimetype_default = mimetype_default,
                 http_content_type = http_content_type,
                 charset_supplement = charset_supplement,
                 mimetype_supplement = mimetype_supplement,
                 location = location ) )
     except _exceptions.Omnierror:
+        charset = (
+            'utf-8-sig' if __.is_absent( charset_supplement )
+            else charset_supplement )
         confidence = _core.confidence_from_bytes_quantity( content, behaviors )
         charset_result = _CharsetResult(
-            charset = charset_supplement, confidence = confidence )
+            charset = charset, confidence = confidence )
     else:
         if (    charset_result.charset is None
             and not _mimetypes.is_textual_mimetype( mimetype_result.mimetype )

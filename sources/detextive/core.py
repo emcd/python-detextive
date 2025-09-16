@@ -31,6 +31,10 @@ _STANDARD_CHARSET_PROMOTIONS = (
 )
 
 
+CHARSET_DEFAULT = 'utf-8'
+MIMETYPE_DEFAULT = 'application/octet-stream'
+
+
 class BehaviorTristate( __.enum.Enum ):
     ''' When to apply behavior. '''
 
@@ -45,7 +49,14 @@ class CodecSpecifiers( __.enum.Enum ):
     FromInference   = __.enum.auto( )
     OsDefault       = __.enum.auto( )
     PythonDefault   = __.enum.auto( )
-    UserDefault     = __.enum.auto( )
+    UserSupplement  = __.enum.auto( )
+
+
+class DetectFailureActions( __.enum.Enum ):
+    ''' Possible responses to detection failure. '''
+
+    Default     = __.enum.auto( )
+    Error       = __.enum.auto( )
 
 
 class Behaviors( __.immut.DataclassObject ):
@@ -65,6 +76,10 @@ class Behaviors( __.immut.DataclassObject ):
         __.ddoc.Doc(
             ''' Order in which charset detectors should be applied. ''' ),
     ] = ( 'chardet', 'charset-normalizer' )
+    charset_on_detect_failure: __.typx.Annotated[
+        DetectFailureActions,
+        __.ddoc.Doc( ''' Action to take on charset detection failure. ''' ),
+    ] = DetectFailureActions.Default
     charset_promotions: __.typx.Annotated[
         __.cabc.Mapping[ str, str ],
         __.ddoc.Doc(
@@ -84,6 +99,10 @@ class Behaviors( __.immut.DataclassObject ):
         __.ddoc.Doc(
             ''' Order in which MIME type detectors should be applied. ''' ),
     ] = ( 'magic', 'puremagic' )
+    mimetype_on_detect_failure: __.typx.Annotated[
+        DetectFailureActions,
+        __.ddoc.Doc( ''' Action to take on MIME type detection failure. ''' ),
+    ] = DetectFailureActions.Default
     on_decode_error: __.typx.Annotated[
         str,
         __.ddoc.Doc(
@@ -106,7 +125,7 @@ class Behaviors( __.immut.DataclassObject ):
     trial_codecs: __.typx.Annotated[
         __.cabc.Sequence[ str | CodecSpecifiers ],
         __.ddoc.Doc( ''' Sequence of codec names or specifiers. ''' ),
-    ] = ( CodecSpecifiers.FromInference, CodecSpecifiers.UserDefault )
+    ] = ( CodecSpecifiers.FromInference, CodecSpecifiers.UserSupplement )
     trial_decode: __.typx.Annotated[
         BehaviorTristate,
         __.ddoc.Doc(

@@ -30,6 +30,8 @@ from . import nomina as _nomina
 
 from .core import ( # isort: skip
     BEHAVIORS_DEFAULT as    _BEHAVIORS_DEFAULT,
+    CHARSET_DEFAULT as      _CHARSET_DEFAULT,
+    MIMETYPE_DEFAULT as     _MIMETYPE_DEFAULT,
     BehaviorTristate as     _BehaviorTristate,
     Behaviors as            _Behaviors,
     CharsetResult as        _CharsetResult,
@@ -40,6 +42,7 @@ from .core import ( # isort: skip
 def infer_charset( # noqa: PLR0913
     content: _nomina.Content, /, *,
     behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
+    charset_default: str = _CHARSET_DEFAULT,
     http_content_type: __.Absential[ str ] = __.absent,
     charset_supplement: __.Absential[ str ] = __.absent,
     mimetype_supplement: __.Absential[ str ] = __.absent,
@@ -49,6 +52,7 @@ def infer_charset( # noqa: PLR0913
     result = infer_charset_confidence(
         content,
         behaviors = behaviors,
+        charset_default = charset_default,
         http_content_type = http_content_type,
         charset_supplement = charset_supplement,
         mimetype_supplement = mimetype_supplement,
@@ -59,6 +63,7 @@ def infer_charset( # noqa: PLR0913
 def infer_charset_confidence( # noqa: PLR0913
     content: _nomina.Content, /, *,
     behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
+    charset_default: str = _CHARSET_DEFAULT,
     http_content_type: __.Absential[ str ] = __.absent,
     charset_supplement: __.Absential[ str ] = __.absent,
     mimetype_supplement: __.Absential[ str ] = __.absent,
@@ -84,7 +89,7 @@ def infer_charset_confidence( # noqa: PLR0913
         ): return charset_result
     if __.is_absent( result ) and should_detect:
         result = _detectors.detect_charset_confidence(
-            content, mimetype = mimetype )
+            content, default = charset_default, mimetype = mimetype )
     if __.is_absent( result ):
         raise _exceptions.CharsetInferFailure( location = location )
     return result
@@ -93,6 +98,8 @@ def infer_charset_confidence( # noqa: PLR0913
 def infer_mimetype_charset( # noqa: PLR0913
     content: _nomina.Content, /, *,
     behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
+    charset_default: str = _CHARSET_DEFAULT,
+    mimetype_default: str = _MIMETYPE_DEFAULT,
     http_content_type: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
     charset_supplement: __.Absential[ str ] = __.absent,
@@ -103,6 +110,8 @@ def infer_mimetype_charset( # noqa: PLR0913
         infer_mimetype_charset_confidence(
             content,
             behaviors = behaviors,
+            charset_default = charset_default,
+            mimetype_default = mimetype_default,
             http_content_type = http_content_type,
             location = location,
             charset_supplement = charset_supplement,
@@ -113,6 +122,8 @@ def infer_mimetype_charset( # noqa: PLR0913
 def infer_mimetype_charset_confidence( # noqa: PLR0913
     content: _nomina.Content, /, *,
     behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
+    charset_default: str = _CHARSET_DEFAULT,
+    mimetype_default: str = _MIMETYPE_DEFAULT,
     http_content_type: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
     charset_supplement: __.Absential[ str ] = __.absent,
@@ -145,14 +156,20 @@ def infer_mimetype_charset_confidence( # noqa: PLR0913
             else charset_result.charset )
         mimetype_result = _detectors.detect_mimetype_confidence(
             content,
-            behaviors = behaviors, charset = charset, location = location )
+            behaviors = behaviors,
+            default = mimetype_default,
+            charset = charset,
+            location = location )
     if __.is_absent( charset_result ) and should_detect_charset:
         mimetype = (
             mimetype_supplement if __.is_absent( mimetype_result )
             else mimetype_result.mimetype )
         charset_result = _detectors.detect_charset_confidence(
             content,
-            behaviors = behaviors, mimetype = mimetype, location = location )
+            behaviors = behaviors,
+            default = charset_default,
+            mimetype = mimetype,
+            location = location )
     if __.is_absent( charset_result ):
         raise _exceptions.CharsetInferFailure( location = location )
     if __.is_absent( mimetype_result ):

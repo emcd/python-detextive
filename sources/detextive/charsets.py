@@ -42,6 +42,11 @@ def attempt_decodes(
     supplement: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
 ) -> tuple[ str, _CharsetResult ]:
+    ''' Attempts to decode content with various character sets.
+
+        Will try character sets in the order specified by the trial codecs
+        listed on the behaviors object.
+    '''
     confidence = _core.confidence_from_bytes_quantity(
         content, behaviors = behaviors )
     on_decode_error = behaviors.on_decode_error
@@ -55,7 +60,7 @@ def attempt_decodes(
                 charset = discover_os_charset_default( )
             case _CodecSpecifiers.PythonDefault:
                 charset = __.locale.getpreferredencoding( )
-            case _CodecSpecifiers.UserDefault:
+            case _CodecSpecifiers.UserSupplement:
                 if __.is_absent( supplement ): continue
                 charset = supplement
             case str( ): charset = codec
@@ -71,9 +76,15 @@ def attempt_decodes(
 
 
 def discover_os_charset_default( ) -> str:
+    ''' Discovers default character set encoding from operating system. '''
     discoverer = getattr(
         __.locale, 'getencoding', __.sys.getfilesystemencoding )
-    return discoverer( )
+    return normalize_charset( discoverer( ) )
+
+
+def normalize_charset( charset: str ) -> str:
+    ''' Normalizes character set encoding names. '''
+    return __.codecs.lookup( charset ).name
 
 
 def trial_decode_as_confident( # noqa: PLR0913
@@ -84,6 +95,10 @@ def trial_decode_as_confident( # noqa: PLR0913
     supplement: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
 ) -> _CharsetResult:
+    ''' Performs trial decode of content.
+
+        Considers desired trial decode behavior and detection confidence.
+    '''
     nomargs: __.NominativeArguments = dict(
         behaviors = behaviors,
         inference = inference,

@@ -56,7 +56,7 @@ Non-ASCII encodings can be detected with sufficient content:
     >>> content = 'Café Restaurant Menu\nEntrées: Soupe, Salade'.encode( 'iso-8859-1' )
     >>> charset = detextive.detect_charset( content )
     >>> charset
-    'ISO-8859-9'
+    'iso8859-9'
 
 MIME Type Detection
 ===============================================================================

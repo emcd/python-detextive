@@ -17,6 +17,9 @@ is_valid_text           # public API function
 # Exception classes for public API
 TextualMimetypeInvalidity  # exception class for public API
 
+# Core enums
+Error                   # variant
+
 # LineSeparators enum methods - public API
 detect_bytes            # LineSeparators class method
 detect_text             # LineSeparators class method

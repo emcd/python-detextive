@@ -23,6 +23,7 @@
 # ruff: noqa: F401
 
 import collections.abc as   cabc
+import                      codecs
 import dataclasses as       dcls
 import                      enum
 import                      locale
