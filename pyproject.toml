@@ -44,7 +44,10 @@ keywords = [ 'text', 'detection', 'charset', 'MIME', 'newline' ]
 [project.optional-dependencies]
 all = [ 'detextive[charset-normalizer,python-magic]' ]
 charset-normalizer = [ 'charset-normalizer' ]
-python-magic = [ 'python-magic' ]
+python-magic = [
+  'python-magic; sys_platform != "win32"',
+  'python-magic-bin; sys_platform == "win32"'
+]
 [[project.authors]]
 name = 'Eric McDonald'
 email = 'emcd@users.noreply.github.com'
