@@ -47,7 +47,8 @@ jobs:
           hatch --env "qa.${v}" run coverage run --source=. .auxiliary/test_coverage_sphinx.py || echo "Coverage + Sphinx failed"
 
           echo "=== Optional Dependencies Check ==="
-          hatch --env "qa.${v}" run python -c "import magic; print('python-magic available')" || echo "python-magic not available"
+          echo "Skipping python-magic test (known to hang on Windows)"
+          echo "Testing puremagic import..."
           hatch --env "qa.${v}" run python -c "import puremagic; print('puremagic available')" || echo "puremagic not available"
 
       - name: Test Sphinx Without Coverage
