@@ -87,12 +87,16 @@ jobs:
       - name: Test Sphinx Without Coverage
         if: runner.os == 'Windows'
         shell: bash
+        env:
+          # Fix Cygwin buffer issue that causes "TP_NUM_C_BUFS too small" error
+          CYGWIN: heap_chunk_in_mb:512
         run: |
           set -eu
           v=py3.10
 
           echo "=== Pre-Sphinx Environment Check ==="
           echo "Working directory: $(pwd)"
+          echo "CYGWIN environment: $CYGWIN"
           echo "Hatch env location:"
           hatch --env "qa.${v}" run python -c "import sys; print(sys.executable)"
 
@@ -111,6 +115,9 @@ jobs:
       - name: Test Coverage + Sphinx Direct
         if: runner.os == 'Windows'
         shell: bash
+        env:
+          # Fix Cygwin buffer issue that causes "TP_NUM_C_BUFS too small" error
+          CYGWIN: heap_chunk_in_mb:512
         run: |
           set -eu
           v=py3.10
@@ -122,6 +129,9 @@ jobs:
       - name: Test Hatch Script Context
         if: runner.os == 'Windows'
         shell: bash
+        env:
+          # Fix Cygwin buffer issue that causes "TP_NUM_C_BUFS too small" error
+          CYGWIN: heap_chunk_in_mb:512
         run: |
           set -eu
           v=py3.10
