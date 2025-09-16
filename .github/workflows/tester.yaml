@@ -59,6 +59,38 @@ jobs:
             -E -b doctest -d .auxiliary/caches/sphinx --quiet \
             documentation .auxiliary/artifacts/sphinx-doctest
 
+      - name: Test Coverage + Sphinx Direct
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          set -eu
+          v=py3.10
+          echo "=== Testing Coverage + Sphinx Direct Command ==="
+          hatch --env "qa.${v}" run coverage run -m sphinx.cmd.build \
+            -E -b doctest -d .auxiliary/caches/sphinx --quiet \
+            documentation .auxiliary/artifacts/sphinx-doctest || echo "Coverage + Sphinx direct failed"
+
+      - name: Test Hatch Script Context
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          set -eu
+          v=py3.10
+          echo "=== Testing Hatch Script Execution ==="
+          hatch --env "qa.${v}" run testers-documentation || echo "testers-documentation script failed"
+
+      - name: Test Environment Context Differences
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          set -eu
+          v=py3.10
+          echo "=== Environment Variables in Hatch Context ==="
+          hatch --env "qa.${v}" run python -c "import os, sys; print('PATH:', os.environ.get('PATH')[:200] + '...'); print('PYTHONPATH:', getattr(sys, 'path', 'None')[:5])"
+
+          echo "=== Module Import Context Test ==="
+          hatch --env "qa.${v}" run coverage run -c "import sphinx.cmd.build; print('Coverage + import success')" || echo "Coverage + import failed"
+
   test:
     needs: [initialize, debug-windows]
     if: always() && needs.initialize.result == 'success' && (needs.debug-windows.result == 'success' || needs.debug-windows.result == 'skipped')
