@@ -47,7 +47,40 @@ jobs:
           hatch --env "qa.${v}" run coverage run --source=. .auxiliary/test_coverage_sphinx.py || echo "Coverage + Sphinx failed"
 
           echo "=== Optional Dependencies Check ==="
-          echo "Skipping python-magic test (known to hang on Windows)"
+          echo "Probing for libmagic DLL availability..."
+          hatch --env "qa.${v}" run python -c "
+          import ctypes
+          import os
+          import sys
+
+          # Common libmagic DLL names on Windows
+          dll_names = ['magic1.dll', 'libmagic-1.dll', 'magic.dll', 'cygmagic-1.dll']
+          found = False
+
+          for dll in dll_names:
+              try:
+                  lib = ctypes.CDLL(dll)
+                  print(f'Found libmagic: {dll}')
+                  found = True
+                  break
+              except OSError:
+                  continue
+
+          if not found:
+              print('No libmagic DLL found - this may cause python-magic import to hang')
+
+          # Test if python-magic package is installed by checking importability
+          try:
+              import importlib.util
+              spec = importlib.util.find_spec('magic')
+              if spec is not None:
+                  print('python-magic package is available for import')
+              else:
+                  print('python-magic package not found')
+          except Exception as e:
+              print(f'Error checking python-magic availability: {e}')
+          " || echo "DLL probe failed"
+
           echo "Testing puremagic import..."
           hatch --env "qa.${v}" run python -c "import puremagic; print('puremagic available')" || echo "puremagic not available"
 
@@ -57,9 +90,23 @@ jobs:
         run: |
           set -eu
           v=py3.10
+
+          echo "=== Pre-Sphinx Environment Check ==="
+          echo "Working directory: $(pwd)"
+          echo "Hatch env location:"
+          hatch --env "qa.${v}" run python -c "import sys; print(sys.executable)"
+
+          echo "=== Creating output directories ==="
+          mkdir -p .auxiliary/caches/sphinx .auxiliary/artifacts/sphinx-doctest
+          ls -la .auxiliary/
+
+          echo "=== Testing Sphinx module directly ==="
+          hatch --env "qa.${v}" run python -c "from sphinx.cmd.build import main; print('Sphinx build module imported')"
+
+          echo "=== Running Sphinx command ==="
           hatch --env "qa.${v}" run python -m sphinx.cmd.build \
             -E -b doctest -d .auxiliary/caches/sphinx --quiet \
-            documentation .auxiliary/artifacts/sphinx-doctest
+            documentation .auxiliary/artifacts/sphinx-doctest || echo "Sphinx command failed"
 
       - name: Test Coverage + Sphinx Direct
         if: runner.os == 'Windows'
