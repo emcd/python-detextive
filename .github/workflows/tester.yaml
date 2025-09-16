@@ -12,8 +12,56 @@ jobs:
   initialize:
     uses: ./.github/workflows/core--initializer.yaml
 
-  test:
+  debug-windows:
     needs: [initialize]
+    if: contains(fromJSON(needs.initialize.outputs.platforms), 'windows-latest')
+    runs-on: windows-latest
+    steps:
+
+      - name: Prepare Python
+        uses: emcd/python-project-common/.github/actions/python-hatch@master
+        with:
+          python-version: '3.10'
+
+      - name: Debug Environment
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          set -eu
+          v=py3.10
+
+          echo "=== Python Environment Debug ==="
+          python --version
+          which python
+
+          echo "=== Hatch Environment Debug ==="
+          hatch env show qa.${v}
+
+          echo "=== Module Resolution Test ==="
+          hatch --env "qa.${v}" run python -c "import sphinx.cmd.build; print('Sphinx module found')" || echo "Sphinx import failed"
+          hatch --env "qa.${v}" run python -m sphinx.cmd.build --version || echo "Sphinx module execution failed"
+
+          echo "=== Coverage + Sphinx Test ==="
+          hatch --env "qa.${v}" run coverage --version
+          hatch --env "qa.${v}" run coverage run -c "import sphinx.cmd.build; print('Coverage + Sphinx works')" || echo "Coverage + Sphinx failed"
+
+          echo "=== Optional Dependencies Check ==="
+          hatch --env "qa.${v}" run python -c "import magic; print('python-magic available')" || echo "python-magic not available"
+          hatch --env "qa.${v}" run python -c "import puremagic; print('puremagic available')" || echo "puremagic not available"
+
+      - name: Test Sphinx Without Coverage
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          set -eu
+          v=py3.10
+          hatch --env "qa.${v}" run python -m sphinx.cmd.build \
+            -E -b doctest -d .auxiliary/caches/sphinx --quiet \
+            documentation .auxiliary/artifacts/sphinx-doctest
+
+  test:
+    needs: [initialize, debug-windows]
+    if: always() && needs.initialize.result == 'success' && (needs.debug-windows.result == 'success' || needs.debug-windows.result == 'skipped')
     uses: emcd/python-project-common/.github/workflows/xrepo--tester.yaml@gha-1
     with:
       matrix-exclusions: '${{ needs.initialize.outputs.matrix-exclusions }}'
