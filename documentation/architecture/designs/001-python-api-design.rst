@@ -24,59 +24,237 @@
 Overview
 ===============================================================================
 
-This document specifies the Python API design for the detextive library's
-initial feature set, implementing faithful functional reproduction of existing
-text detection capabilities from mimeogram, cache proxy, and ai-experiments
-packages.
+This document specifies the Python API design implementing context-aware
+text detection with pluggable backend support, confidence-based detection,
+and optional dependency architecture.
 
-The design prioritizes behavioral fidelity and minimal migration effort while
-following established project practices for interface contracts, module
-organization, and naming conventions.
+The design follows established project practices for interface contracts,
+module organization, naming conventions, and provides both simple string-based
+APIs and confidence-aware APIs with structured result types.
 
 Public Interface Specification
 ===============================================================================
 
-Core Detection Functions
+Core Type Definitions
+-------------------------------------------------------------------------------
+
+**Confidence-Based Result Types**
+
+.. code-block:: python
+
+    class CharsetResult( __.immut.DataclassObject ):
+        ''' Character set encoding with detection confidence. '''
+
+        charset: __.typx.Annotated[
+            __.typx.Optional[ str ],
+            __.ddoc.Doc( ''' Detected character set encoding. May be None. ''' ),
+        ]
+        confidence: __.typx.Annotated[
+            float, __.ddoc.Doc( ''' Detection confidence from 0.0 to 1.0. ''' )
+        ]
+
+    class MimetypeResult( __.immut.DataclassObject ):
+        ''' MIME type with detection confidence. '''
+
+        mimetype: __.typx.Annotated[
+            str, __.ddoc.Doc( ''' Detected MIME type. ''' )
+        ]
+        confidence: __.typx.Annotated[
+            float, __.ddoc.Doc( ''' Detection confidence from 0.0 to 1.0. ''' )
+        ]
+
+
+**Configuration Types**
+
+.. code-block:: python
+
+    class BehaviorTristate( __.enum.Enum ):
+        ''' When to apply behavior. '''
+
+        Never       = __.enum.auto( )
+        AsNeeded    = __.enum.auto( )
+        Always      = __.enum.auto( )
+
+    class Behaviors( __.immut.DataclassObject ):
+        ''' How functions behave. '''
+
+        charset_detectors_order: __.typx.Annotated[
+            __.cabc.Sequence[ str ],
+            __.ddoc.Doc( ''' Order in which charset detectors are applied. ''' ),
+        ] = ( 'chardet', 'charset-normalizer' )
+
+        mimetype_detectors_order: __.typx.Annotated[
+            __.cabc.Sequence[ str ],
+            __.ddoc.Doc( ''' Order in which MIME type detectors are applied. ''' ),
+        ] = ( 'magic', 'puremagic' )
+
+        charset_detect: __.typx.Annotated[
+            BehaviorTristate,
+            __.ddoc.Doc( ''' When to detect charset from content. ''' ),
+        ] = BehaviorTristate.AsNeeded
+
+        mimetype_detect: __.typx.Annotated[
+            BehaviorTristate,
+            __.ddoc.Doc( ''' When to detect MIME type from content. ''' ),
+        ] = BehaviorTristate.AsNeeded
+
+Simple String-Based Detection Functions
 -------------------------------------------------------------------------------
 
 **Character Encoding Detection**
 
 .. code-block:: python
 
-    def detect_charset( content: bytes ) -> __.typx.Optional[ str ]:
-        ''' Detects character encoding with UTF-8 preference and validation.
+    def detect_charset(
+        content: Content, /, *,
+        behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        supplement: __.Absential[ str ] = __.absent,
+        mimetype: __.Absential[ str ] = __.absent,
+        location: __.Absential[ Location ] = __.absent,
+    ) -> __.typx.Optional[ str ]:
+        ''' Detects character encoding.
 
-            Returns None if no reliable encoding can be determined.
+            Returns the most likely character encoding or None if no reliable
+            encoding can be determined.
         '''
-
-**MIME Type Detection**
-
-.. code-block:: python
 
     def detect_mimetype(
-        content: bytes,
-        location: __.cabc.Sequence[ str ] | __.Path | str
-    ) -> __.typx.Optional[ str ]:
-        ''' Detects MIME type using content analysis and extension fallback.
+        content: Content, /, *,
+        behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        charset: __.Absential[ str ] = __.absent,
+        location: __.Absential[ Location ] = __.absent,
+    ) -> str:
+        ''' Detects MIME type.
 
-            Returns standardized MIME type strings or None if detection fails.
+            Returns the most likely MIME type or 'application/octet-stream'
+            if no specific type can be determined.
         '''
 
-**Combined Detection with Parameter Overrides**
+**Inference Functions with Context Support**
 
 .. code-block:: python
 
-    def detect_mimetype_and_charset(
-        content: bytes,
-        location: __.cabc.Sequence[ str ] | __.Path | str, *,
-        mimetype: __.Absential[ str ] = __.absent,
-        charset: __.Absential[ str ] = __.absent,
-    ) -> tuple[ str, __.typx.Optional[ str ] ]:
-        ''' Detects MIME type and charset with optional parameter overrides.
+    def infer_charset(
+        content: Content, /, *,
+        behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        http_content_type: __.Absential[ str ] = __.absent,
+        charset_supplement: __.Absential[ str ] = __.absent,
+        mimetype_supplement: __.Absential[ str ] = __.absent,
+        location: __.Absential[ Location ] = __.absent,
+    ) -> __.typx.Optional[ str ]:
+        ''' Infers charset through various means.
 
-            Returns tuple of (mimetype, charset). MIME type defaults to
-            'text/plain' if charset detected but MIME type unknown, or
-            'application/octet-stream' if neither detected.
+            Utilizes HTTP Content-Type headers, location hints, and content
+            analysis for contextual charset inference.
+        '''
+
+    def infer_mimetype_charset(
+        content: Content, /, *,
+        behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        http_content_type: __.Absential[ str ] = __.absent,
+        location: __.Absential[ Location ] = __.absent,
+        charset_supplement: __.Absential[ str ] = __.absent,
+        mimetype_supplement: __.Absential[ str ] = __.absent,
+    ) -> tuple[ str, __.typx.Optional[ str ] ]:
+        ''' Detects MIME type and charset with context support.
+
+            Returns tuple of (mimetype, charset). Provides comprehensive
+            detection utilizing all available context.
+        '''
+
+Confidence-Based Detection Functions
+-------------------------------------------------------------------------------
+
+**Core Confidence Functions**
+
+.. code-block:: python
+
+    def detect_charset_confidence(
+        content: Content, /, *,
+        behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        supplement: __.Absential[ str ] = __.absent,
+        mimetype: __.Absential[ str ] = __.absent,
+        location: __.Absential[ Location ] = __.absent,
+    ) -> CharsetResult:
+        ''' Detects character encoding with confidence scoring.
+
+            Returns CharsetResult with charset and confidence level.
+        '''
+
+    def detect_mimetype_confidence(
+        content: Content, /, *,
+        behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        charset: __.Absential[ str ] = __.absent,
+        location: __.Absential[ Location ] = __.absent,
+    ) -> MimetypeResult:
+        ''' Detects MIME type with confidence scoring.
+
+            Returns MimetypeResult with mimetype and confidence level.
+        '''
+
+**Advanced Confidence Inference**
+
+.. code-block:: python
+
+    def infer_charset_confidence(
+        content: Content, /, *,
+        behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        http_content_type: __.Absential[ str ] = __.absent,
+        charset_supplement: __.Absential[ str ] = __.absent,
+        mimetype_supplement: __.Absential[ str ] = __.absent,
+        location: __.Absential[ Location ] = __.absent,
+    ) -> CharsetResult:
+        ''' Infers charset with confidence through various means.
+
+            Utilizes contextual information for enhanced detection quality.
+        '''
+
+    def infer_mimetype_charset_confidence(
+        content: Content, /, *,
+        behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        http_content_type: __.Absential[ str ] = __.absent,
+        location: __.Absential[ Location ] = __.absent,
+        charset_supplement: __.Absential[ str ] = __.absent,
+        mimetype_supplement: __.Absential[ str ] = __.absent,
+    ) -> tuple[ MimetypeResult, CharsetResult ]:
+        ''' Detects MIME type and charset with confidence scoring.
+
+            Returns tuple of (MimetypeResult, CharsetResult) with full
+            confidence information for both detection results.
+        '''
+
+**Confidence Utility Functions**
+
+.. code-block:: python
+
+    def confidence_from_bytes_quantity(
+        content: Content,
+        behaviors: Behaviors = BEHAVIORS_DEFAULT
+    ) -> float:
+        ''' Calculates confidence score based on content length.
+
+            Returns confidence value from 0.0 to 1.0 based on the amount
+            of content available for analysis.
+        '''
+
+High-Level Decoding and Validation
+-------------------------------------------------------------------------------
+
+**Content Decoding**
+
+.. code-block:: python
+
+    def decode(
+        content: Content, /, *,
+        behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        http_content_type: __.Absential[ str ] = __.absent,
+        charset: __.Absential[ CodecSpecifiers | str ] = __.absent,
+        location: __.Absential[ Location ] = __.absent,
+    ) -> str:
+        ''' High-level bytes-to-text decoding with validation.
+
+            Performs comprehensive detection, decoding, and validation
+            for robust text extraction from byte content.
         '''
 
 **Textual Content Validation**
@@ -86,24 +264,22 @@ Core Detection Functions
     def is_textual_mimetype( mimetype: str ) -> bool:
         ''' Validates if MIME type represents textual content.
 
-            Consolidates textual MIME type patterns from all source
-            implementations. Supports text/* prefix, specific application
-            types (JSON, XML, JavaScript, etc.), and textual suffixes
-            (+xml, +json, +yaml, +toml).
-
             Returns True for MIME types representing textual content.
         '''
 
-    def is_textual_content( content: bytes ) -> bool:
-        ''' Determines if byte content represents textual data.
+    def is_valid_text(
+        text: str,
+        profile: TextValidationProfile = PROFILE_TEXTUAL
+    ) -> bool:
+        ''' Unicode-aware text validation with configurable profiles.
 
-            Returns True for content that can be reliably processed as text.
+            Returns True for text meeting the specified validation profile.
         '''
 
 Line Separator Processing
 -------------------------------------------------------------------------------
 
-**LineSeparators Enum**
+**LineSeparators Enum** (unchanged from v1.x specification)
 
 .. code-block:: python
 
@@ -120,203 +296,106 @@ Line Separator Processing
             content: __.cabc.Sequence[ int ] | bytes,
             limit: int = 1024
         ) -> __.typx.Optional[ 'LineSeparators' ]:
-            ''' Detects line separator from byte content sample.
-
-                Returns detected LineSeparators enum member or None.
-            '''
+            ''' Detects line separator from byte content sample. '''
 
         @classmethod
         def normalize_universal( selfclass, content: str ) -> str:
-            ''' Normalizes all line separators to Unix LF format.
-            '''
+            ''' Normalizes all line separators to Unix LF format. '''
 
         def normalize( self, content: str ) -> str:
-            ''' Normalizes specific line separator to Unix LF format.
-            '''
+            ''' Normalizes specific line separator to Unix LF format. '''
 
         def nativize( self, content: str ) -> str:
-            ''' Converts Unix LF to this platform's line separator.
-            '''
-
-Interface Contract Principles
-===============================================================================
-
-Wide Parameters, Narrow Returns
--------------------------------------------------------------------------------
-
-**Parameter Design:**
-- Accept abstract base classes for maximum flexibility
-- Support multiple input formats (bytes, Path, str, Sequence[str])
-- Use Union types for naturally variable inputs
-
-**Return Design:**
-- Return concrete, immutable types (str, tuple, enum members)
-- Prefer specific types over generic containers
-- Use None for explicit "not detected" semantics
-
-**Examples:**
-
-.. code-block:: python
-
-    # Wide parameters: accept any sequence-like or path-like input
-    location: __.cabc.Sequence[ str ] | __.Path | str
-    content: __.cabc.Sequence[ int ] | bytes
-
-    # Narrow returns: specific immutable types
-    -> __.typx.Optional[ str ]                        # Explicit None for "not detected"
-    -> tuple[ str, __.typx.Optional[ str ] ]          # Immutable tuple with concrete types
-    -> __.typx.Optional[ LineSeparators ]             # Specific enum member
+            ''' Converts Unix LF to this platform's line separator. '''
 
 Type Annotation Patterns
--------------------------------------------------------------------------------
+===============================================================================
 
-**Function Signatures:**
+**Common Type Aliases:**
 
 .. code-block:: python
 
-    # Use Annotated for documented parameter types
     Content: __.typx.TypeAlias = __.typx.Annotated[
         bytes,
         __.ddoc.Doc( "Raw byte content for analysis." )
     ]
 
     Location: __.typx.TypeAlias = __.typx.Annotated[
-        __.typx.Union[ str, __.Path, __.cabc.Sequence[ str ] ],
-        __.ddoc.Doc( "File path, URL, or path components for context." )
+        str | __.pathlib.Path,
+        __.ddoc.Doc( "File path or URL for detection context." )
     ]
 
-    # Comprehensive annotations with Absential pattern
-    def detect_mimetype_and_charset(
-        content: Content,
-        location: Location, *,
-        mimetype: __.Absential[ str ] = __.absent,
-        charset: __.Absential[ str ] = __.absent,
-    ) -> tuple[ str, __.typx.Optional[ str ] ]:
-
-**Absential Pattern Usage:**
+**Absential Pattern for Context Parameters:**
 - Distinguish "not provided" (absent) from "explicitly None"
 - Enable three-state parameters: absent | None | value
-- Preserve complex parameter handling from mimeogram
+- Support complex context handling for HTTP headers and supplements
 
-Module Organization Design
-===============================================================================
+**Return Type Patterns:**
+- Simple APIs return `str` or `__.typx.Optional[ str ]`
+- Confidence APIs return structured types: `CharsetResult`, `MimetypeResult`
+- Combined APIs return immutable tuples: `tuple[ MimetypeResult, CharsetResult ]`
 
-Package Structure
--------------------------------------------------------------------------------
-
-.. code-block::
-
-    sources/detextive/
-    ├── __/
-    │   ├── __init__.py          # Re-exports: cabc, typx, enum, Absential
-    │   ├── imports.py           # chardet, puremagic, mimetypes
-    │   └── nomina.py            # Project-specific constants
-    ├── __init__.py              # Public API re-exports from implementation modules
-    ├── py.typed                 # Type checking marker
-    ├── detection.py             # Core detection function implementations
-    ├── exceptions.py            # Package exception hierarchy
-    └── lineseparators.py        # LineSeparators enum and utilities
-
-**Module Responsibilities:**
-
-**Module Responsibilities:**
-
-**`__init__.py` (Main Module):**
-- Re-exports public API from implementation modules
-- Module organization: imports → re-exports
-
-**`detection.py`:**
-- Core detection function implementations: `detect_charset`, `detect_mimetype`, `detect_mimetype_and_charset`
-- Textual content validation: `is_textual_mimetype`, `is_textual_content`
-- Private heuristic functions: `_is_probable_textual_content` (used internally by validation logic)
-- Consolidates detection logic from all source implementations
-
-**`lineseparators.py`:**
-- LineSeparators enum class with all methods
-- Direct migration preserving existing byte-level detection logic
-- Cross-platform line ending handling utilities
-
-**`exceptions.py`:**
-- Package exception hierarchy: Omniexception → Omnierror → specific exceptions
-- Detection-specific exceptions following nomenclature patterns
-
-**Additional Dependencies:**
-
-The implementation will require imports for `chardet`, `mimetypes`, `puremagic` external libraries, and `dynadoc` for parameter documentation annotations.
-
-**Private Constants Organization:**
-
-.. code-block:: python
-
-    # Textual MIME type patterns (consolidated from all sources)
-    _TEXTUAL_MIME_TYPES = frozenset((
-        'application/json',
-        'application/xml',
-        'application/javascript',
-        'application/ecmascript',
-        'application/graphql',          # From ai-experiments
-        'application/ld+json',          # From cache proxy
-        'application/x-httpd-php',      # From ai-experiments
-        'application/x-latex',          # From ai-experiments
-        'application/x-perl',           # From mimeogram
-        'application/x-python',         # From mimeogram
-        'application/x-ruby',           # From mimeogram
-        'application/x-shell',          # From mimeogram
-        'application/x-tex',            # From ai-experiments
-        'application/x-yaml',           # From cache proxy
-        'application/yaml',             # From cache proxy
-        'image/svg+xml',
-    ))
-
-    _TEXTUAL_SUFFIXES = ('+xml', '+json', '+yaml', '+toml')
 
 Exception Hierarchy Design
 ===============================================================================
 
-Following Omniexception → Omnierror Pattern
+Following Omnierror Pattern
 -------------------------------------------------------------------------------
 
 .. code-block:: python
 
-    class Omniexception(__.immut.Object, BaseException):
-        ''' Base for all exceptions raised by detextive package. '''
+    class Omniexception(
+        __.immut.Object, BaseException,
+        instances_visibles = (
+            '__cause__', '__context__', __.is_public_identifier ),
+    ):
+        ''' Base for all exceptions raised by package API. '''
 
-    class Omnierror(Omniexception, Exception):
-        ''' Base for error exceptions raised by detextive package. '''
+    class Omnierror( Omniexception, Exception ):
+        ''' Base for error exceptions raised by package API. '''
 
-    # Specific exceptions following nomenclature patterns
-    class CharsetDetectFailure( Omnierror, RuntimeError ):
+    # Detection-specific exceptions
+    class CharsetDetectFailure( Omnierror, TypeError, ValueError ):
         ''' Raised when character encoding detection fails. '''
+
+    class CharsetInferFailure( Omnierror, TypeError, ValueError ):
+        ''' Raised when character encoding inference fails. '''
+
+    class MimetypeDetectFailure( Omnierror, TypeError, ValueError ):
+        ''' Raised when MIME type detection fails. '''
 
     class ContentDecodeFailure( Omnierror, UnicodeError ):
         ''' Raised when content cannot be decoded with detected charset. '''
 
-    class TextualMimetypeInvalidity( Omnierror, ValueError ):
-        ''' Raised when MIME type is invalid for textual content processing. '''
+**Exception Design Principles:**
+- Follow nomenclature patterns: `<Noun><Verb>Failure`
+- Inherit from appropriate built-in exception types
+- Support location context in error messages
+- Enable package-wide exception catching via `Omnierror`
 
 Implementation Considerations
 ===============================================================================
 
-Behavioral Fidelity Requirements
+Context-Aware Detection Strategy
 -------------------------------------------------------------------------------
 
-**UTF-8 Bias Logic:**
-- Prefer UTF-8 for ASCII-compatible content
-- Validate detected charsets through trial decoding
-- Return 'utf-8' for successful UTF-8 decoding of non-UTF charsets
+**Detection Priority Order:**
+1. HTTP Content-Type headers (when available)
+2. Location/filename extension analysis
+3. Magic bytes content analysis
+4. Fallback to defaults based on available information
 
-**MIME Type Fallback Chain:**
-- Primary: puremagic content-based detection
-- Fallback: mimetypes extension-based detection
-- Default: 'text/plain' if charset detected, 'application/octet-stream' otherwise
+**Registry-Based Backend Selection:**
+- Configurable detector precedence via `Behaviors`
+- Dynamic fallback when detectors return `NotImplemented`
+- Support for multiple optional dependencies per detection type
 
-**Parameter Validation:**
-- Preserve complex logic from `detect_mimetype_and_charset`
-- Apply textual MIME type validation with trial decoding
-- Handle mixed parameter states using Absential pattern
+**Confidence Integration:**
+- Length-based confidence calculation
+- Backend-specific confidence scoring
+- AsNeeded behavior triggering based on confidence thresholds
 
 **Performance Characteristics:**
-- Sample-based line separator detection (default 1KB limit) for performance on large files
 - Lazy evaluation of detection operations
-- Minimal abstraction to preserve existing performance
-
+- Sample-based analysis for large content
+- Minimal abstraction preserving detector performance

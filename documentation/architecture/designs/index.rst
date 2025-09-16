@@ -25,3 +25,4 @@ Designs
    :maxdepth: 2
 
    001-python-api-design
+   002-detector-registry-design
