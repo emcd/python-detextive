@@ -154,8 +154,8 @@ Use Path objects for precise location context:
 
     >>> location = Path( 'document.json' )
     >>> mimetype = detextive.detect_mimetype( content, location = location )
-    >>> mimetype
-    'application/json'
+    >>> mimetype in ('application/json', 'text/plain')  # text/plain on Windows with python-magic-bin
+    True
 
 Default Value Handling
 -------------------------------------------------------------------------------

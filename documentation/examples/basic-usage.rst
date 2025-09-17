@@ -71,8 +71,8 @@ Detect MIME types from file content using magic bytes:
     >>> import detextive
     >>> json_content = b'{"name": "example", "value": 42}'
     >>> mimetype = detextive.detect_mimetype( json_content )
-    >>> mimetype
-    'application/json'
+    >>> mimetype in ('application/json', 'text/plain')  # text/plain on Windows with python-magic-bin
+    True
 
 Location-aware detection combines content analysis with file extension:
 
