@@ -18,13 +18,13 @@
 
 
 *******************************************************************************
-001. Python API Design Specification
+001. Python API Specification
 *******************************************************************************
 
 Overview
 ===============================================================================
 
-This document specifies the Python API design implementing context-aware
+This document specifies the Python API implementing context-aware
 text detection with pluggable backend support, confidence-based detection,
 and optional dependency architecture.
 
@@ -75,6 +75,20 @@ Core Type Definitions
         AsNeeded    = __.enum.auto( )
         Always      = __.enum.auto( )
 
+    class DetectFailureActions( __.enum.Enum ):
+        ''' Possible responses to detection failure. '''
+
+        Default     = __.enum.auto( )
+        Error       = __.enum.auto( )
+
+    class CodecSpecifiers( __.enum.Enum ):
+        ''' Specifiers for dynamic codecs. '''
+
+        FromInference   = __.enum.auto( )
+        OsDefault       = __.enum.auto( )
+        PythonDefault   = __.enum.auto( )
+        UserSupplement  = __.enum.auto( )
+
     class Behaviors( __.immut.DataclassObject ):
         ''' How functions behave. '''
 
@@ -83,10 +97,20 @@ Core Type Definitions
             __.ddoc.Doc( ''' Order in which charset detectors are applied. ''' ),
         ] = ( 'chardet', 'charset-normalizer' )
 
+        charset_on_detect_failure: __.typx.Annotated[
+            DetectFailureActions,
+            __.ddoc.Doc( ''' Action to take on charset detection failure. ''' ),
+        ] = DetectFailureActions.Default
+
         mimetype_detectors_order: __.typx.Annotated[
             __.cabc.Sequence[ str ],
             __.ddoc.Doc( ''' Order in which MIME type detectors are applied. ''' ),
         ] = ( 'magic', 'puremagic' )
+
+        mimetype_on_detect_failure: __.typx.Annotated[
+            DetectFailureActions,
+            __.ddoc.Doc( ''' Action to take on MIME type detection failure. ''' ),
+        ] = DetectFailureActions.Default
 
         charset_detect: __.typx.Annotated[
             BehaviorTristate,
@@ -108,26 +132,30 @@ Simple String-Based Detection Functions
     def detect_charset(
         content: Content, /, *,
         behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        default: str = CHARSET_DEFAULT,
         supplement: __.Absential[ str ] = __.absent,
         mimetype: __.Absential[ str ] = __.absent,
         location: __.Absential[ Location ] = __.absent,
     ) -> __.typx.Optional[ str ]:
         ''' Detects character encoding.
 
-            Returns the most likely character encoding or None if no reliable
-            encoding can be determined.
+            Returns the most likely character encoding. When configured for
+            default return behavior, returns the default value on detection
+            failure rather than raising an exception.
         '''
 
     def detect_mimetype(
         content: Content, /, *,
         behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        default: str = MIMETYPE_DEFAULT,
         charset: __.Absential[ str ] = __.absent,
         location: __.Absential[ Location ] = __.absent,
     ) -> str:
         ''' Detects MIME type.
 
-            Returns the most likely MIME type or 'application/octet-stream'
-            if no specific type can be determined.
+            Returns the most likely MIME type. When configured for default
+            return behavior, returns the default value on detection failure
+            rather than raising an exception.
         '''
 
 **Inference Functions with Context Support**
@@ -137,6 +165,7 @@ Simple String-Based Detection Functions
     def infer_charset(
         content: Content, /, *,
         behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        charset_default: str = CHARSET_DEFAULT,
         http_content_type: __.Absential[ str ] = __.absent,
         charset_supplement: __.Absential[ str ] = __.absent,
         mimetype_supplement: __.Absential[ str ] = __.absent,
@@ -145,12 +174,15 @@ Simple String-Based Detection Functions
         ''' Infers charset through various means.
 
             Utilizes HTTP Content-Type headers, location hints, and content
-            analysis for contextual charset inference.
+            analysis for contextual charset inference. Supports configurable
+            default return behavior on inference failure.
         '''
 
     def infer_mimetype_charset(
         content: Content, /, *,
         behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        charset_default: str = CHARSET_DEFAULT,
+        mimetype_default: str = MIMETYPE_DEFAULT,
         http_content_type: __.Absential[ str ] = __.absent,
         location: __.Absential[ Location ] = __.absent,
         charset_supplement: __.Absential[ str ] = __.absent,
@@ -159,7 +191,8 @@ Simple String-Based Detection Functions
         ''' Detects MIME type and charset with context support.
 
             Returns tuple of (mimetype, charset). Provides comprehensive
-            detection utilizing all available context.
+            detection utilizing all available context with configurable
+            default behavior on detection failure.
         '''
 
 Confidence-Based Detection Functions
@@ -172,24 +205,30 @@ Confidence-Based Detection Functions
     def detect_charset_confidence(
         content: Content, /, *,
         behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        default: str = CHARSET_DEFAULT,
         supplement: __.Absential[ str ] = __.absent,
         mimetype: __.Absential[ str ] = __.absent,
         location: __.Absential[ Location ] = __.absent,
     ) -> CharsetResult:
         ''' Detects character encoding with confidence scoring.
 
-            Returns CharsetResult with charset and confidence level.
+            Returns CharsetResult with charset and confidence level. When
+            configured for default return behavior, returns default value
+            with zero confidence on detection failure.
         '''
 
     def detect_mimetype_confidence(
         content: Content, /, *,
         behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        default: str = MIMETYPE_DEFAULT,
         charset: __.Absential[ str ] = __.absent,
         location: __.Absential[ Location ] = __.absent,
     ) -> MimetypeResult:
         ''' Detects MIME type with confidence scoring.
 
-            Returns MimetypeResult with mimetype and confidence level.
+            Returns MimetypeResult with mimetype and confidence level. When
+            configured for default return behavior, returns default value
+            with zero confidence on detection failure.
         '''
 
 **Advanced Confidence Inference**
@@ -199,6 +238,7 @@ Confidence-Based Detection Functions
     def infer_charset_confidence(
         content: Content, /, *,
         behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        charset_default: str = CHARSET_DEFAULT,
         http_content_type: __.Absential[ str ] = __.absent,
         charset_supplement: __.Absential[ str ] = __.absent,
         mimetype_supplement: __.Absential[ str ] = __.absent,
@@ -207,11 +247,14 @@ Confidence-Based Detection Functions
         ''' Infers charset with confidence through various means.
 
             Utilizes contextual information for enhanced detection quality.
+            Supports configurable default return behavior on inference failure.
         '''
 
     def infer_mimetype_charset_confidence(
         content: Content, /, *,
         behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        charset_default: str = CHARSET_DEFAULT,
+        mimetype_default: str = MIMETYPE_DEFAULT,
         http_content_type: __.Absential[ str ] = __.absent,
         location: __.Absential[ Location ] = __.absent,
         charset_supplement: __.Absential[ str ] = __.absent,
@@ -220,7 +263,8 @@ Confidence-Based Detection Functions
         ''' Detects MIME type and charset with confidence scoring.
 
             Returns tuple of (MimetypeResult, CharsetResult) with full
-            confidence information for both detection results.
+            confidence information for both detection results. Supports
+            configurable default behavior on detection failure.
         '''
 
 **Confidence Utility Functions**
@@ -247,14 +291,19 @@ High-Level Decoding and Validation
     def decode(
         content: Content, /, *,
         behaviors: Behaviors = BEHAVIORS_DEFAULT,
+        profile: TextValidationProfile = PROFILE_TEXTUAL,
+        charset_default: str = CHARSET_DEFAULT,
+        mimetype_default: str = MIMETYPE_DEFAULT,
         http_content_type: __.Absential[ str ] = __.absent,
-        charset: __.Absential[ CodecSpecifiers | str ] = __.absent,
         location: __.Absential[ Location ] = __.absent,
+        charset_supplement: __.Absential[ str ] = __.absent,
+        mimetype_supplement: __.Absential[ str ] = __.absent,
     ) -> str:
         ''' High-level bytes-to-text decoding with validation.
 
             Performs comprehensive detection, decoding, and validation
-            for robust text extraction from byte content.
+            for robust text extraction from byte content. Supports
+            configurable default values for graceful degradation.
         '''
 
 **Textual Content Validation**
@@ -311,6 +360,13 @@ Line Separator Processing
 Type Annotation Patterns
 ===============================================================================
 
+**Module Constants:**
+
+.. code-block:: python
+
+    CHARSET_DEFAULT: str = 'utf-8'
+    MIMETYPE_DEFAULT: str = 'application/octet-stream'
+
 **Common Type Aliases:**
 
 .. code-block:: python
@@ -334,6 +390,12 @@ Type Annotation Patterns
 - Simple APIs return `str` or `__.typx.Optional[ str ]`
 - Confidence APIs return structured types: `CharsetResult`, `MimetypeResult`
 - Combined APIs return immutable tuples: `tuple[ MimetypeResult, CharsetResult ]`
+- Default return behavior: confidence = 0.0 indicates detection failure with fallback value
+
+**Default Return Behavior Pattern:**
+- `DetectFailureActions.Default`: Return default value with zero confidence
+- `DetectFailureActions.Error`: Raise appropriate exception (legacy behavior)
+- All detection functions accept `default` parameters for graceful degradation
 
 
 Exception Hierarchy Design
