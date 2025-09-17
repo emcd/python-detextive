@@ -49,12 +49,13 @@ Core Detection Functions
 
 **Core Types and Configuration**
   Shared data structures for confidence-aware behavior:
-  
+
   * ``CharsetResult(charset, confidence)`` - Charset detection results with confidence scoring (0.0-1.0)
   * ``MimetypeResult(mimetype, confidence)`` - MIME type detection results with confidence scoring (0.0-1.0)
-  * ``Behaviors`` - Configurable detection behavior with confidence thresholds  
+  * ``Behaviors`` - Configurable detection behavior with confidence thresholds and failure handling
   * ``BehaviorTristate`` - When to apply behaviors (Never/AsNeeded/Always)
-  * ``CodecSpecifiers`` - Dynamic codec resolution (FromInference/OsDefault/etc.)
+  * ``CodecSpecifiers`` - Dynamic codec resolution (FromInference/OsDefault/UserSupplement/etc.)
+  * ``DetectFailureActions`` - Failure handling strategy (Default/Error) for graceful degradation
 
 **Text Validation System**
   Unicode-aware text validation with configurable profiles:
@@ -106,11 +107,12 @@ Component Relationships
 
 **v2.0 Data Flow**
 
-1. **Input Processing**: Functions receive byte content, behaviors configuration, and optional HTTP/location context
+1. **Input Processing**: Functions receive byte content, behaviors configuration, optional default values, and HTTP/location context
 2. **Registry-Based Detection**: Core detectors iterate through configured backends (chardet, charset-normalizer, puremagic, python-magic) returning CharsetResult/MimetypeResult objects with confidence scores
-3. **Smart Decision Making**: Confidence thresholds drive AsNeeded behavior for trial decode and text validation  
-4. **Layered Inference**: Higher-level functions orchestrate detection, validation, and error handling
-5. **Validated Output**: Text validation ensures decoded content meets specified profiles for safety/quality
+3. **Smart Decision Making**: Confidence thresholds drive AsNeeded behavior for trial decode and text validation
+4. **Failure Handling**: DetectFailureActions configuration determines whether to return default values (graceful degradation) or raise exceptions
+5. **Layered Inference**: Higher-level functions orchestrate detection, validation, and configurable error handling
+6. **Validated Output**: Text validation ensures decoded content meets specified profiles for safety/quality
 
 Integration Patterns
 ===============================================================================
@@ -155,12 +157,13 @@ Architectural Patterns
   * **LineSeparators**: Byte-level line ending detection and normalization
 
 **v2.0 Evolution**
-  ADR-003 documents the context-aware detection architecture for v2.0 that
+  ADR-003 and ADR-006 document the context-aware detection architecture for v2.0 that
   addresses real-world integration challenges:
 
   * Context-driven detection utilizing HTTP headers, location, and content analysis
   * Confidence-based result types with specific CharsetResult/MimetypeResult objects
   * Configurable validation behaviors for performance and security requirements
+  * Default return behavior pattern enabling graceful degradation for detection failures
   * Enhanced function interfaces maintaining backward compatibility
 
 **Detector Registry Architecture**
