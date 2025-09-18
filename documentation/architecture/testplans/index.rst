@@ -27,4 +27,3 @@ Test Plans
    summary
    v2-test-suite
    content-patterns
-   core-functionality
