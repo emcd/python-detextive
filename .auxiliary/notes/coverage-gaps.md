@@ -1,285 +1,238 @@
-# Coverage Gap Analysis
+# Coverage Gaps Analysis - Current Status
 
-Analysis of test coverage gaps identified after implementation of default return behavior pattern and related architectural changes. These areas require targeted test development to ensure robustness of the new failure handling capabilities.
+**Current Coverage: 84% (489/550 lines, 151/208 branches)**
+**Previous Coverage: 68%**
+**Improvement: +16 percentage points**
+**Target: 100%**
+**Remaining: 61 uncovered lines, 57 uncovered branches**
 
-## Coverage Summary
+## Progress Summary
 
-Based on coverage report from 2025-09-16 20:04:
+✅ **Priority 1 (CRITICAL) - COMPLETED**:
+- detectors.py default return behavior (lines 97-101, 149-155) ✅
+- exceptions.py location parameters (lines 45-48, 56-59, 67-70, 95-98) ✅
+- decoders.py exception fallback paths (lines 69-74) ✅
 
-- **Overall coverage**: 68% (519/758 lines)
-- **Modules with significant gaps**: detectors.py (48%), exceptions.py (44%), inference.py (60%), decoders.py (75%)
+✅ **Priority 2 (HIGH) - COMPLETED**:
+- charsets.py codec edge cases (lines 60, 62, 65-67, 117) ✅
+- inference.py enhanced inference functions (lines 52-60, 73-95) ✅
 
-### Coverage Improvement Notes
-- Overall coverage improved from 65% to 68%
-- charsets.py improved significantly to 81% coverage
-- New gaps identified in default return behavior patterns
+✅ **Priority 3 (MEDIUM) - COMPLETED**:
+- validation.py edge case (line 193) ✅
+- lineseparators.py edge cases (lines 56, 87-88) ✅
+- mimetypes.py edge case (line 66) ✅
 
-## Specific Gaps by Module
+✅ **Modules Reaching High Coverage**:
+- `mimetypes.py`: **100%** (12/12 lines)
+- `validation.py`: **97%** (54/54 lines)
+- `charsets.py`: **96%** (48/49 lines)
+- `lineseparators.py`: **94%** (44/44 lines)
+- `decoders.py`: **88%** (28/30 lines)
+- `inference.py`: **86%** (82/88 lines)
 
-### exceptions.py (44% coverage)
+---
 
-**Missing coverage areas:**
-- Exception initialization with location parameters (lines 45-48, 56-59, 67-70, 95-98, 106-109)
-- Exception message formatting for different scenarios
-- Exception chaining and context preservation
-- Branch coverage for location parameter handling (lines 46, 57, 68, 96, 107)
-- Exception subclasses with location-specific messaging
+## Remaining Gaps Analysis
 
-**Recommended test cases:**
-- Test each exception type with and without location parameter
-- Verify proper message formatting includes location when provided
-- Test exception chaining from underlying library failures
-- Test edge cases in exception construction (empty strings, special characters in locations)
-- Test branch conditions in location parameter handling
+### Primary Target: detectors.py (38 uncovered lines, 67% coverage)
 
-### charsets.py (81% coverage - Improved)
+**Major Uncovered Functional Areas:**
 
-**Remaining missing coverage areas:**
-- Specific codec specifier branches in `attempt_decodes()` (lines 60, 62, 65-67)
-- Trial decode failure edge cases (line 117)
-- Error handling paths in codec resolution
-
-**Recommended test cases:**
-- Test all `CodecSpecifiers` enum variants including `UserSupplement`
-- Test `attempt_decodes()` with malformed content causing decode failures
-- Test trial decode with unsupported charset names
-- Test OS charset detection with mocked environment variations
-
-### detectors.py (48% coverage) - Critical for Default Return Behavior
-
-**Missing coverage areas:**
-- **Default return behavior paths** (lines 97-101, 149-155) - NEW CRITICAL GAPS
-- Detection failure scenarios with `DetectFailureActions.Default`
-- Detection failure scenarios with `DetectFailureActions.Error`
-- Empty content edge cases (line 89, 142)
-- `_detect_mimetype_from_charset()` function entirely (lines 205-230)
-- `_confirm_charset_detection()` edge cases (lines 194-195)
-- Registry detector failure fallback chains
-
-**HIGH PRIORITY - Default Return Behavior Test Cases:**
-- Test `charset_on_detect_failure = DetectFailureActions.Default` returns default with confidence 0.0
-- Test `mimetype_on_detect_failure = DetectFailureActions.Default` returns default with confidence 0.0
-- Test `charset_on_detect_failure = DetectFailureActions.Error` raises appropriate exceptions
-- Test `mimetype_on_detect_failure = DetectFailureActions.Error` raises appropriate exceptions
-- Test empty content handling in both failure modes
-- Test failed charset detection with various default values
-- Test failed mimetype detection with various default values
-- Test mixed failure behaviors (charset defaults, mimetype errors)
-
-**Additional recommended test cases:**
-- Test detection with no available detectors (registry empty scenarios)
-- Test `_detect_mimetype_from_charset()` with charset-based MIME type inference
-- Test confidence calculation edge cases (very short content, very long content)
-- Test detection failures with malformed or ambiguous content
-
-### inference.py (60% coverage - Improved)
-
-**Missing coverage areas related to default behavior:**
-- Inference functions with new `charset_default` and `mimetype_default` parameters
-- HTTP Content-Type parsing edge cases
-- Context-aware inference failure scenarios
-- Behavior determination logic with new failure handling
-
-**Recommended test cases:**
-- Test inference functions with custom default values
-- Test HTTP Content-Type parsing with malformed headers
-- Test charset inference with conflicting indicators (HTTP header vs content detection)
-- Test inference failures with different failure action configurations
-- Test combined inference with mixed failure behaviors
-
-### decoders.py (75% coverage - NEW GAPS)
-
-**Missing coverage areas related to default behavior:**
-- `decode()` function with new default value parameters (lines 69-74)
-- Exception handling with default return behavior enabled
-- Fallback logic in `decode()` when detection fails
-
-**Recommended test cases:**
-- Test `decode()` with custom `charset_default` and `mimetype_default` values
-- Test `decode()` with detection failure scenarios and graceful degradation
-- Test exception handling paths when default return behavior is disabled
-
-### validation.py (93% coverage - minimal gaps)
-
-**Missing coverage areas:**
-- Edge cases in validation profile application
-- BOM handling edge cases
-- Character ratio calculations at boundary conditions
-
-**Recommended test cases:**
-- Test validation with content exactly at ratio thresholds
-- Test BOM handling with various Unicode encodings
-- Test validation profiles with edge case character combinations
-
-### lineseparators.py (88% coverage - minimal gaps)
-
-**Missing coverage areas:**
-- Edge cases in line separator detection
-- Mixed line ending scenarios with unusual combinations
-
-**Recommended test cases:**
-- Test detection with unusual line ending combinations
-- Test edge cases in content with only separators
-
-## Priority Areas for Test Development
-
-### Critical Priority (Default Return Behavior)
-1. **CRITICAL**: detectors.py - Default return behavior paths completely untested
-2. **HIGH**: decoders.py - New default parameter paths need coverage
-3. **HIGH**: inference.py - Enhanced inference with default values
-
-### High Priority (Core Functionality)
-4. **HIGH**: exceptions.py - Exception handling crucial for reliability
-5. **MEDIUM**: charsets.py - Improved but codec edge cases remain
-
-### Low Priority (Well Covered)
-6. **LOW**: validation.py, lineseparators.py - Already well covered
-
-## Testing Strategy Recommendations
-
-### Priority 1: Default Return Behavior Testing
-1. **Failure action configuration testing** - Parametrized tests with `DetectFailureActions.Default` vs `DetectFailureActions.Error`
-2. **Default value validation** - Test all functions with custom default parameters
-3. **Mixed behavior testing** - Test functions with different failure actions for charset vs mimetype
-4. **Confidence scoring validation** - Verify confidence = 0.0 for default returns
-5. **Integration testing** - Test complete detection workflows with graceful degradation
-
-### Priority 2: Core Functionality
-6. **Exception handling** - Test all exception types with and without location parameters
-7. **Charset edge cases** - Test codec specifier variants and error paths
-8. **Registry testing** - Test detector registry failure scenarios
-9. **HTTP parsing** - Test malformed Content-Type headers
-10. **Property-based testing** - Detection invariants and round-trip verification
-
-## Implementation Notes
-
-### Critical Additions for Default Return Behavior
-- **Test all DetectFailureActions enum variants** in isolation and combination
-- **Test default value parameters** with various custom values and edge cases
-- **Validate confidence scoring** for failure scenarios (must be 0.0)
-- **Test behavioral consistency** between string-returning and confidence-returning functions
-
-### General Testing Guidance
-- Focus on edge cases and error conditions not covered by examples
-- Create a dedicated test content patterns module (e.g., `tests/patterns.py`) with curated samples
-- Use pytest fixtures for common test configurations and behaviors, especially `Behaviors` with different failure actions
-- Use dependency injection through public API parameters rather than directly testing internal functions
-- Mock external dependencies where appropriate (OS charset detection)
-- Ensure tests cover both success and failure paths for all functions
-- **Priority focus**: Test coverage gaps in default return behavior are critical for system reliability
-
-## Detailed Expansion on Testing Approaches
-
-### Default Return Behavior Testing Strategy
-
-The default return behavior pattern requires comprehensive testing to ensure graceful degradation works correctly:
-
-**Failure Scenario Testing:**
+#### 1. Enhanced Charset Detection with MIME Type Context (Lines 103-110)
 ```python
-# Test charset detection failure with default return
-def test_charset_detect_failure_default():
-    behaviors = Behaviors(charset_on_detect_failure=DetectFailureActions.Default)
-    result = detect_charset_confidence(malformed_content, behaviors=behaviors, default='ascii')
-    assert result.charset == 'ascii'
-    assert result.confidence == 0.0
-
-# Test charset detection failure with exception
-def test_charset_detect_failure_error():
-    behaviors = Behaviors(charset_on_detect_failure=DetectFailureActions.Error)
-    with pytest.raises(CharsetDetectFailure):
-        detect_charset_confidence(malformed_content, behaviors=behaviors)
+# In _detect_charset_confidence function
+if __.is_absent( mimetype ): return result                    # Line 103 ❌
+if not _mimetypes.is_textual_mimetype( mimetype ): return result # Line 104 ❌
+result = _charsets.trial_decode_as_confident(                 # Lines 105-109 ❌
+    content, behaviors = behaviors, supplement = supplement, location = location )
+return _normalize_charset_detection( content, behaviors, result ) # Line 110 ❌
 ```
 
-**Mixed Behavior Testing:**
+**Function**: Enhanced charset detection that leverages MIME type information
+**To Cover**:
+- Pass `mimetype` parameter to charset detection
+- Test with textual MIME types (text/plain, text/html, etc.)
+- Test trial decoding and charset normalization pipeline
+
+#### 2. MIME Type from Charset Validation Pipeline (Lines 214-231)
 ```python
-# Test mixed failure behaviors (charset defaults, mimetype errors)
-def test_mixed_failure_behaviors():
-    behaviors = Behaviors(
-        charset_on_detect_failure=DetectFailureActions.Default,
-        mimetype_on_detect_failure=DetectFailureActions.Error
-    )
-    # Should return default charset but raise exception for mimetype
+# In _detect_mimetype_from_charset function
+try:
+    text, charset_result = _charsets.attempt_decodes(...)     # Lines 217-219 ❌
+except _exceptions.ContentDecodeFailure:                      # Line 220 ❌
+    if should_error: raise error from None                    # Line 221 ❌
+    return result_default                                     # Line 222 ❌
+match behaviors.text_validate:                               # Line 223 ❌
+    case _BehaviorTristate.Never:                            # Line 224 ❌
+        if should_error: raise error                         # Line 225 ❌
+        return result_default                                # Line 226 ❌
+if not _validation.PROFILE_TEXTUAL( text ):                 # Line 228 ❌
+    if should_error: raise error                             # Line 229 ❌
+    return result_default                                    # Line 230 ❌
+return _MimetypeResult(...)                                  # Line 231 ❌
 ```
 
-**Integration Testing:**
+**Function**: Validates decoded text and determines MIME type based on charset
+**To Cover**:
+- Content decode failures with error/default behaviors
+- Text validation behaviors (`text_validate = Never`)
+- Non-textual content validation failures
+- Error vs default return logic
+
+#### 3. Advanced Detection Functions (Lines 250-256, 278-284)
 ```python
-# Test complete pipeline with graceful degradation
-def test_decode_with_graceful_degradation():
-    behaviors = Behaviors(
-        charset_on_detect_failure=DetectFailureActions.Default,
-        mimetype_on_detect_failure=DetectFailureActions.Default
-    )
-    # Test that decode() function handles detection failures gracefully
+# Platform-specific magic detection and HTTP parsing
+def _detect_via_puremagic(...):                             # Lines 250-256 ❌
+def _validate_http_content_type(...):                       # Lines 278-284 ❌
 ```
 
-### Curated Content Testing Strategy
+**Function**: Platform-specific detection and HTTP Content-Type parsing
+**To Cover**:
+- Alternative magic detection implementations
+- HTTP Content-Type header validation and parsing
+- Malformed header handling
 
-Create a comprehensive library of test patterns with known expected outcomes:
+#### 4. Edge Case Paths (Lines 185, 194-195, 239, 265, 267)
+**Function**: Various edge cases in detection pipeline
+**To Cover**:
+- Specific error conditions and fallback scenarios
+- Content validation edge cases
+- Registry and detector failure scenarios
 
-- **Known charset samples**: UTF-8, Latin-1, Windows-1252, etc. with predictable detection outcomes
-- **Malformed content**: Invalid UTF-8 sequences, truncated multibyte characters
-- **Edge cases**: Empty content, content with only whitespace, very short content
-- **Ambiguous content**: 7-bit ASCII that could be multiple charsets
-- **Binary content**: Images, executables with magic bytes for MIME detection
+---
 
-### Property-Based Testing Strategy
+### Secondary Target: exceptions.py (13 uncovered lines, 72% coverage)
 
-Use hypothesis to test behavioral invariants and properties that should hold regardless of specific input:
-
-**Round-trip testing**: Generate Unicode text, encode with known charset, verify detection recovers the original charset (or acceptable promotion like ASCII → UTF-8):
+#### 1. ContentDecodeImpossibility Exception (Lines 67-70)
 ```python
-@given(text=st.text(), charset=st.sampled_from(['utf-8', 'latin1', 'cp1252']))
-def test_charset_roundtrip(text, charset):
-    encoded = text.encode(charset, errors='ignore')
-    detected = detect_charset(encoded)
-    assert detected in [charset] + ACCEPTABLE_PROMOTIONS[charset]
+class ContentDecodeImpossibility( Omnierror, TypeError, ValueError ):
+    def __init__(self, location: __.Absential[ _nomina.Location ] = __.absent ) -> None:
+        message = "Could not decode probable non-textual content"       # Line 67 ❌
+        if not __.is_absent( location ):                               # Line 68 ❌
+            message = f"{message} at '{location}'"                     # Line 69 ❌
+        super( ).__init__( f"{message}." )                            # Line 70 ❌
 ```
 
-**Confidence monotonicity**: Verify confidence increases with content length for identical repeated patterns:
+**Function**: Exception for non-textual content decode attempts
+**To Cover**: Trigger this exception with/without location parameter
+
+#### 2. Advanced Exception Scenarios (Lines 106-109, 120, 131-134)
+**Function**: Complex exception handling and chaining
+**To Cover**:
+- Exception chaining scenarios
+- Context-specific exception construction
+- Advanced error handling paths
+
+---
+
+### Tertiary Targets: Remaining Modules
+
+#### inference.py (6 uncovered lines, 86% coverage)
+- Lines 85-87: HTTP Content-Type validation edge cases
+- Lines 194-198: Advanced inference edge cases
+- Lines 174, 176, 226, 228: Specific inference scenarios
+
+#### decoders.py (2 uncovered lines, 88% coverage)
+- Lines 91, 95: Advanced decode edge cases and validation
+
+---
+
+## Implementation Strategy for 100% Coverage
+
+### Phase 1: Enhanced Charset Detection (Lines 103-110)
+**Target**: 5-7% coverage increase
 ```python
-@given(pattern=st.text(min_size=1, max_size=20))
-def test_confidence_monotonic(pattern):
-    short = (pattern * 10).encode('utf-8')
-    long = (pattern * 100).encode('utf-8')
-    conf_short = detect_charset_confidence(short).confidence
-    conf_long = detect_charset_confidence(long).confidence
-    assert conf_long >= conf_short
+def test_charset_detection_with_mimetype_context():
+    """Test enhanced charset detection using MIME type information"""
+    behaviors = detextive.Behaviors(charset_detect = detextive.BehaviorTristate.Always)
+    content = b'Hello, world!'
+    result = detextive.detect_charset_confidence(
+        content, behaviors=behaviors, mimetype='text/plain')
+    # This should trigger the enhanced detection path
 ```
 
-**Detection determinism**: Same input always produces same result:
+### Phase 2: MIME Type Validation Pipeline (Lines 214-231)
+**Target**: 8-10% coverage increase
 ```python
-@given(content=st.binary())
-def test_detection_deterministic(content):
-    result1 = detect_charset(content)
-    result2 = detect_charset(content)
-    assert result1 == result2
+def test_mimetype_from_charset_validation():
+    """Test MIME type determination with text validation"""
+    # Test decode failures
+    # Test text validation disabled
+    # Test non-textual content validation
+    # Test error vs default behaviors
 ```
 
-**Validation consistency**: Text validation should be consistent with charset detection success:
+### Phase 3: Platform-Specific Detection (Lines 250-256, 278-284)
+**Target**: 3-5% coverage increase
 ```python
-@given(content=st.binary())
-def test_validation_consistency(content):
-    charset = detect_charset(content)
-    if charset:
-        try:
-            text = content.decode(charset)
-            assert is_valid_text(text) or charset in LEGACY_CHARSETS
-        except UnicodeDecodeError:
-            pass  # Detection can suggest charset that still fails edge cases
+def test_puremagic_detection():
+    """Test alternative magic detection implementation"""
+
+def test_http_content_type_parsing():
+    """Test HTTP Content-Type header parsing edge cases"""
 ```
 
-This approach tests the logical properties and invariants of detection rather than specific outcomes, which is valuable for catching regression bugs and ensuring behavioral consistency.
+### Phase 4: Exception Scenarios (Lines 67-70, 106-109, etc.)
+**Target**: 2-3% coverage increase
+```python
+def test_content_decode_impossibility():
+    """Test non-textual content decode exception"""
 
-### Detection Pipeline Testing
+def test_advanced_exception_scenarios():
+    """Test complex exception chaining and context"""
+```
 
-Test complete detection workflows that mirror real-world usage:
+### Phase 5: Edge Cases and Branch Coverage
+**Target**: Remaining 2-5% to reach 100%
+- Focus on uncovered branches
+- Error condition edge cases
+- Platform-specific code paths
 
-- **Content detection workflows**: detect charset → detect MIME type → validate → decode
-- **HTTP content processing**: parse Content-Type → infer missing information → validate textuality
-- **Error recovery workflows**: failed detection → fallback behaviors → user defaults
-- **Configuration scenarios**: custom behaviors affecting entire detection chain
-- **Inference workflows**: combined MIME type and charset inference with various content types
+## Specific Implementation Notes
 
-This integration testing ensures that components work correctly together and that behavior configurations properly influence the entire pipeline.
+### Critical Paths for 100% Coverage
 
-**Note on real-world content**: If broader detection coverage is needed, consider extracting content signatures from real-world examples into the curated patterns library, or create a separate slow test suite that examines actual diverse content samples.
+1. **Enhanced Detection Pipeline**:
+   - Requires understanding of how `mimetype` parameter affects charset detection
+   - Need tests that exercise trial decoding and normalization
+   - Must test interaction between charset and MIME type detection
+
+2. **Text Validation Integration**:
+   - Need to understand when `_detect_mimetype_from_charset` is called
+   - Must test various `text_validate` behavior settings
+   - Need content that fails textual validation
+
+3. **Platform Detection Variants**:
+   - Research `puremagic` vs `magic` library differences
+   - Create test scenarios for platform-specific detection
+   - Test HTTP Content-Type parsing edge cases
+
+4. **Exception Triggering**:
+   - Need scenarios that trigger `ContentDecodeImpossibility`
+   - Must understand when this exception vs others is raised
+   - Test with various content types and configurations
+
+### Testing Strategy Recommendations
+
+1. **Start with detectors.py enhancement paths** (biggest coverage impact)
+2. **Use dependency injection** through public API parameters
+3. **Create specific test content** designed to trigger uncovered paths
+4. **Test behavior configuration combinations** systematically
+5. **Mock platform-specific dependencies** where needed
+
+### Estimated Coverage Targets by Phase
+
+- **Phase 1**: 84% → 89% (+5%)
+- **Phase 2**: 89% → 95% (+6%)
+- **Phase 3**: 95% → 98% (+3%)
+- **Phase 4**: 98% → 99% (+1%)
+- **Phase 5**: 99% → 100% (+1%)
+
+## Next Actions
+
+1. **Immediate**: Focus on detectors.py lines 103-110 (enhanced charset detection)
+2. **Short-term**: Implement MIME type validation pipeline tests (lines 214-231)
+3. **Medium-term**: Research and test platform-specific detection functions
+4. **Final push**: Exception scenarios and branch coverage refinement
+
+The foundation established by our Priority 1-3 implementation provides an excellent base for reaching 100% coverage. The remaining gaps are primarily in advanced detection scenarios and edge cases rather than core functionality.

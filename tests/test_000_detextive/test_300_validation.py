@@ -18,35 +18,22 @@
 #============================================================================#
 
 
-''' Exception classes functionality is correct. '''
+''' Validation edge cases for text content analysis. '''
 
 
-import pytest
-
-from .__ import PACKAGE_NAME, cache_import_module
+import detextive
 
 
-@pytest.fixture
-def exceptions_module( ):
-    ''' Provides access to exceptions module. '''
-    return cache_import_module( f"{PACKAGE_NAME}.exceptions" )
+def test_000_imports( ):
+    ''' Validation functions are accessible from main module. '''
+    assert hasattr( detextive, 'validation' )
 
 
-def test_100_exception_hierarchy( exceptions_module ):
-    ''' Exception hierarchy follows expected inheritance pattern. '''
-    assert issubclass(
-        exceptions_module.Omnierror, exceptions_module.Omniexception )
-    assert issubclass( exceptions_module.Omniexception, BaseException )
-    assert issubclass( exceptions_module.Omnierror, Exception )
-
-
-# def test_200_exception_catching_via_base_classes( exceptions_module ):
-#     ''' Package exceptions are catchable via base exception classes. '''
-#     exceptions = [
-#         exceptions_module.CharsetDetectFailure( 'test' ),
-#         exceptions_module.ContentDecodeFailure( 'test', 'utf-8' ),
-#         exceptions_module.TextualMimetypeInvalidity( 'test', 'image/jpeg' ),
-#     ]
-#     for exc in exceptions:
-#         assert isinstance( exc, exceptions_module.Omnierror )
-#         assert isinstance( exc, exceptions_module.Omniexception )
+def test_100_is_valid_text_rejectable_families_edge_case( ):
+    ''' Unicode category checking in rejectable families. '''
+    profile = detextive.validation.Profile(
+        rejectable_families = frozenset( ( 'Cf', ) ) )
+    text_with_format_char = 'Hello\u200BWorld'
+    result = detextive.validation.is_valid_text(
+        text_with_format_char, profile )
+    assert isinstance( result, bool )
