@@ -89,9 +89,16 @@ def test_200_trial_decode_failure_without_inference( ):
 #     pass
 
 
-# def test_220_invalid_codec_name_handling( ):
-#     ''' Invalid codec names are handled appropriately. '''
-#     pass
+def test_220_invalid_codec_type_handling( ):
+    ''' Invalid codec types are skipped correctly. '''
+    behaviors = detextive.Behaviors(
+        trial_codecs = ( 42, 'utf-8' ),  # 42 is not str | CodecSpecifiers
+    )
+    content = b'test content'
+    text, result = detextive.charsets.attempt_decodes(
+        content, behaviors = behaviors )
+    assert text == 'test content'
+    assert result.charset == 'utf-8'
 
 
 # def test_300_attempt_decodes_valid_charset_inference( ):

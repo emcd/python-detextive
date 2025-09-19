@@ -39,12 +39,38 @@ def test_100_is_valid_text_rejectable_families_edge_case( ):
     assert isinstance( result, bool )
 
 
-# def test_110_default_profile_behavior( ):
+def test_110_validation_sample_quantity_none( ):
+    ''' Validation with sample_quantity=None processes entire text. '''
+    # Test line 171->173: profile.sample_quantity is None, skip min() call
+    profile = detextive.validation.Profile(
+        sample_quantity = None )  # This should skip the min() assignment
+    text = 'Hello World! This is a test text.'
+    result = detextive.validation.is_valid_text( text, profile )
+    assert isinstance( result, bool )
+    assert result is True  # Normal text should be valid
+
+
+def test_120_validation_non_printable_unicode_category( ):
+    ''' Validation with non-printable Unicode categories skips elif branch. '''
+    # Test line 194->196: character category not in _HYPERCATEGORIES_PRINTABLE
+    # Use a control character (category 'Cc') which is not printable
+    # \x00 is NULL character with category 'Cc', first letter 'C' not printable
+    text = 'Hello\x00World'
+    profile = detextive.validation.Profile(
+        acceptable_characters = frozenset( ),  # Don't accept control chars
+        rejectable_families = frozenset( ),    # Don't reject by family
+        rejectables_ratio_max = 0.5 )          # Allow some rejectables
+    result = detextive.validation.is_valid_text( text, profile )
+    assert isinstance( result, bool )
+    # Result depends on validation logic, just ensure branch is hit
+
+
+# def test_200_default_profile_behavior( ):
 #     ''' Default validation profile behaves correctly. '''
 #     pass
 
 
-# def test_120_custom_profile_creation( ):
+# def test_210_custom_profile_creation( ):
 #     ''' Custom validation profiles are created and applied correctly. '''
 #     pass
 

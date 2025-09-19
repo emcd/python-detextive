@@ -29,22 +29,49 @@ def test_000_imports( ):
     assert hasattr( detextive, 'lineseparators' )
 
 
-# def test_010_enum_structure_validation( ):
-#     ''' Enum structure and values validation. '''
-#     pass
+def test_100_detect_content_double_cr( ):
+    ''' Content with double CR triggers early return. '''
+    # Test line 49->exit: found_cr=True and another CR
+    content = b'text\r\rmore text'  # CR followed by CR
+    result = detextive.lineseparators.LineSeparators.detect_bytes( content )
+    assert result == detextive.lineseparators.LineSeparators.CR
 
 
-# def test_100_detect_unix_lf_line_endings( ):
+def test_110_detect_content_cr_followed_by_char( ):
+    ''' Content with CR followed by non-LF character triggers early return. '''
+    # Test line 55->exit: found_cr=True and any other byte
+    content = b'text\rx'  # CR followed by regular character
+    result = detextive.lineseparators.LineSeparators.detect_bytes( content )
+    assert result == detextive.lineseparators.LineSeparators.CR
+
+
+def test_120_detect_text_double_cr( ):
+    ''' Text with double CR triggers early return. '''
+    # Test line 71->exit: found_cr=True and another CR
+    text = 'text\r\rmore text'  # CR followed by CR
+    result = detextive.lineseparators.LineSeparators.detect_text( text )
+    assert result == detextive.lineseparators.LineSeparators.CR
+
+
+def test_130_detect_text_cr_followed_by_char( ):
+    ''' Text with CR followed by non-LF character triggers early return. '''
+    # Test line 77->exit: found_cr=True and any other character
+    text = 'text\rx'  # CR followed by regular character
+    result = detextive.lineseparators.LineSeparators.detect_text( text )
+    assert result == detextive.lineseparators.LineSeparators.CR
+
+
+# def test_200_detect_unix_lf_line_endings( ):
 #     ''' Unix LF line endings are identified correctly. '''
 #     pass
 
 
-# def test_110_detect_windows_crlf_line_endings( ):
+# def test_210_detect_windows_crlf_line_endings( ):
 #     ''' Windows CRLF line endings are identified correctly. '''
 #     pass
 
 
-# def test_120_detect_mac_cr_line_endings( ):
+# def test_220_detect_mac_cr_line_endings( ):
 #     ''' Classic Mac CR line endings are identified correctly. '''
 #     pass
 

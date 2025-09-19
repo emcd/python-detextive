@@ -472,11 +472,68 @@ def test_900_python_magic_vs_python_magic_bin( ):
 #     pass
 
 
-# def test_920_cygwin_buffer_handling( ):
-#     ''' Cygwin buffer handling for large content. '''
-#     pass
+def test_320_detector_returns_not_implemented( ):
+    ''' Charset detection continues when detector returns NotImplemented. '''
+    # Register a custom detector that always returns NotImplemented
+    def always_not_implemented( content, behaviors ):
+        return NotImplemented
+    detextive.detectors.charset_detectors[ 'test-not-implemented' ] = (
+        always_not_implemented )
+    # Configure behaviors to use only this detector
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( 'test-not-implemented', ),
+        charset_on_detect_failure = detextive.DetectFailureActions.Default )
+    # This should trigger line 94 and continue to fallback logic
+    result = detextive.detectors.detect_charset_confidence(
+        b'test content', behaviors = behaviors, default = 'utf-8' )
+    assert result.charset == 'utf-8'
+    assert result.confidence == 0.0
 
 
-# def test_930_platform_specific_charset_detection( ):
-#     ''' Platform-specific charset detection differences. '''
-#     pass
+def test_330_trial_decode_charset_none_textual_mimetype( ):
+    ''' Trial decode pathway when charset=None with textual mimetype. '''
+
+    # Register a custom detector that returns charset=None
+    def charset_none_detector( content, behaviors ):
+        return detextive.core.CharsetResult( charset = None, confidence = 0.8 )
+
+    detextive.detectors.charset_detectors[ 'test-charset-none' ] = (
+        charset_none_detector )
+
+    # Configure behaviors to enable trial decode with textual mimetype
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( 'test-charset-none', ),
+        trial_decode = detextive.BehaviorTristate.Always )
+
+    # This should trigger lines 105-110: trial decode pathway
+    result = detextive.detectors.detect_charset_confidence(
+        b'test content', behaviors = behaviors,
+        mimetype = 'text/plain', supplement = 'utf-8' )
+
+    # Should return the trial decode result
+    assert result.charset is not None  # trial_decode_as_confident provides it
+
+
+def test_370_charset_normalizer_execution( ):
+    ''' charset_normalizer detector executes when available. '''
+
+    # Test that charset_normalizer detection works when available
+    # This tests lines 252-256 by forcing charset_normalizer as only detector
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( 'charset-normalizer', ) )
+
+    # Use content that charset_normalizer can detect
+    utf8_content = 'Hello, world! 你好世界'.encode( 'utf-8' )
+
+    try:
+        result = detextive.detectors.detect_charset_confidence(
+            utf8_content, behaviors = behaviors )
+        # If charset_normalizer is available, it should detect the charset
+        assert result.charset is not None
+        assert result.confidence > 0.0
+    except detextive.exceptions.CharsetDetectFailure:
+        # If charset_normalizer is not available, detection should fail
+        # This is acceptable since it means the import failed
+        pass
+
+

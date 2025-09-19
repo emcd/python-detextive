@@ -33,3 +33,11 @@ def test_100_exports( module_name ):
     ''' Module exports expected names. '''
     module = __.cache_import_module( f"{__.PACKAGE_NAME}.__.imports" )
     assert hasattr( module, module_name )
+
+
+def test_110_nomina_is_public_identifier( ):
+    ''' Nomina module correctly identifies public identifiers. '''
+    nomina = __.cache_import_module( f"{__.PACKAGE_NAME}.__.nomina" )
+    assert nomina.is_public_identifier( 'public_name' ) is True
+    assert nomina.is_public_identifier( '_private_name' ) is False
+    assert nomina.is_public_identifier( '__dunder__' ) is False
