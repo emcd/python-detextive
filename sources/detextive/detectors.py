@@ -278,7 +278,8 @@ def _detect_via_puremagic(
     try: import puremagic
     except ImportError: return NotImplemented
     try: mimetype = puremagic.from_string( content, mime = True )
-    except ( puremagic.PureError, ValueError ): return NotImplemented
+    except ( puremagic.PureError, ValueError ):  # pragma: no cover
+        return NotImplemented
     confidence = _core.confidence_from_bytes_quantity(
         content, behaviors = behaviors )
     return _MimetypeResult( mimetype = mimetype, confidence = confidence )

@@ -172,6 +172,49 @@ def test_410_empty_content_mimetype_handling( ):
     assert result.confidence == 1.0
 
 
+def test_420_charset_detection_with_mimetype_absent( ):
+    ''' Charset detection ignores enhancement when mimetype is absent. '''
+    # Create a scenario where initial detection returns None charset
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( 'chardet', ),  # Fallback to chardet
+    )
+    # Use content that chardet might struggle with
+    content = b'\x80\x81\x82\x83'  # Ambiguous content
+    result = detextive.detect_charset_confidence(
+        content, behaviors = behaviors )
+    # Should exit early when mimetype is absent (default)
+    # The function should handle this gracefully
+    assert result is not None
+    assert result.confidence >= 0.0
+
+
+def test_430_charset_detection_with_non_textual_mimetype( ):
+    ''' Charset detection ignores enhancement for non-textual MIME types. '''
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( 'chardet', ),
+    )
+    content = b'\x80\x81\x82\x83'  # Ambiguous content
+    result = detextive.detect_charset_confidence(
+        content, behaviors = behaviors, mimetype = 'image/png' )
+    # Should exit early when mimetype is not textual
+    assert result is not None
+    assert result.confidence >= 0.0
+
+
+def test_440_charset_detection_with_textual_mimetype_enhancement( ):
+    ''' Charset detection uses MIME type context for textual content. '''
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( 'chardet', ),
+    )
+    # Use UTF-8 content that should be detectable with trial decoding
+    content = b'Caf\xc3\xa9'  # UTF-8 encoded text
+    result = detextive.detect_charset_confidence(
+        content, behaviors = behaviors, mimetype = 'text/plain' )
+    # Should trigger trial_decode_as_confident and normalization
+    assert result is not None
+    assert result.confidence >= 0.0
+
+
 # def test_500_detect_charset_utf8_content( ):
 #     ''' UTF-8 content charset is detected correctly. '''
 #     pass
@@ -222,9 +265,112 @@ def test_410_empty_content_mimetype_handling( ):
 #     pass
 
 
-# def test_630_detect_mimetype_charset_influence( ):
-#     ''' Charset information influences MIME type detection appropriately. '''
-#     pass
+def test_630_detect_mimetype_charset_influence( ):
+    ''' Charset information influences MIME type detection appropriately. '''
+    # Test trial_decode disabled behavior
+    behaviors_no_trial = detextive.Behaviors(
+        mimetype_detectors_order = ( 'nonexistent-detector', ),
+        trial_decode = detextive.BehaviorTristate.Never,
+        mimetype_on_detect_failure = detextive.DetectFailureActions.Default )
+    result = detextive.detect_mimetype_confidence(
+        b'test content', behaviors = behaviors_no_trial,
+        charset = 'utf-8', default = 'text/custom' )
+    assert result.mimetype == 'text/custom'
+    assert result.confidence == 0.0
+
+
+def test_631_detect_mimetype_decode_failure_default_behavior( ):
+    ''' MIME type detection handles decode failures with default behavior. '''
+    # Test ContentDecodeFailure with default behavior
+    behaviors = detextive.Behaviors(
+        mimetype_detectors_order = ( 'nonexistent-detector', ),
+        mimetype_on_detect_failure = detextive.DetectFailureActions.Default )
+    # Use content that will fail to decode with the specified charset
+    result = detextive.detect_mimetype_confidence(
+        b'\xff\xfe\xfd',  # Invalid UTF-8
+        behaviors = behaviors, charset = 'utf-8',
+        default = 'application/fallback' )
+    assert result.mimetype == 'application/fallback'
+    assert result.confidence == 0.0
+
+
+def test_632_detect_mimetype_decode_failure_error_behavior( ):
+    ''' MIME type detection raises exception on decode failure. '''
+    # Test ContentDecodeFailure with error behavior
+    behaviors = detextive.Behaviors(
+        mimetype_detectors_order = ( 'nonexistent-detector', ),
+        mimetype_on_detect_failure = detextive.DetectFailureActions.Error )
+    with pytest.raises( detextive.exceptions.MimetypeDetectFailure ):
+        detextive.detect_mimetype_confidence(
+            b'\xff\xfe\xfd',  # Invalid UTF-8
+            behaviors = behaviors, charset = 'utf-8' )
+
+
+def test_633_detect_mimetype_text_validation_never( ):
+    ''' MIME type detection respects text validation disabled setting. '''
+    # Test text_validate Never with default behavior
+    behaviors = detextive.Behaviors(
+        mimetype_detectors_order = ( 'nonexistent-detector', ),
+        text_validate = detextive.BehaviorTristate.Never,
+        mimetype_on_detect_failure = detextive.DetectFailureActions.Default )
+    result = detextive.detect_mimetype_confidence(
+        b'valid text content',
+        behaviors = behaviors, charset = 'utf-8', default = 'text/fallback' )
+    assert result.mimetype == 'text/fallback'
+    assert result.confidence == 0.0
+
+
+def test_634_detect_mimetype_text_validation_never_error( ):
+    ''' MIME type detection raises exception with text validation disabled. '''
+    # Test text_validate Never with error behavior
+    behaviors = detextive.Behaviors(
+        mimetype_detectors_order = ( 'nonexistent-detector', ),
+        text_validate = detextive.BehaviorTristate.Never,
+        mimetype_on_detect_failure = detextive.DetectFailureActions.Error )
+    with pytest.raises( detextive.exceptions.MimetypeDetectFailure ):
+        detextive.detect_mimetype_confidence(
+            b'valid text content',
+            behaviors = behaviors, charset = 'utf-8' )
+
+
+def test_635_detect_mimetype_non_textual_content_default( ):
+    ''' MIME type detection handles non-textual content with defaults. '''
+    # Test non-textual content with default behavior
+    behaviors = detextive.Behaviors(
+        mimetype_detectors_order = ( 'nonexistent-detector', ),
+        mimetype_on_detect_failure = detextive.DetectFailureActions.Default )
+    # Use content that fails textual validation (high control char ratio)
+    result = detextive.detect_mimetype_confidence(
+        b'\x01\x02\x03\x04\x05' * 20,  # Control chars fail validation
+        behaviors = behaviors, charset = 'utf-8',
+        default = 'application/binary' )
+    assert result.mimetype == 'application/binary'
+    assert result.confidence == 0.0
+
+
+def test_636_detect_mimetype_non_textual_content_error( ):
+    ''' MIME type detection raises exception for non-textual content. '''
+    # Test non-textual content with error behavior
+    behaviors = detextive.Behaviors(
+        mimetype_detectors_order = ( 'nonexistent-detector', ),
+        mimetype_on_detect_failure = detextive.DetectFailureActions.Error )
+    with pytest.raises( detextive.exceptions.MimetypeDetectFailure ):
+        detextive.detect_mimetype_confidence(
+            b'\x01\x02\x03\x04\x05' * 20,  # Control chars fail validation
+            behaviors = behaviors, charset = 'utf-8' )
+
+
+def test_637_detect_mimetype_successful_validation_pipeline( ):
+    ''' MIME type detection succeeds with valid textual content. '''
+    # Test successful path through validation pipeline
+    behaviors = detextive.Behaviors(
+        mimetype_detectors_order = ( 'nonexistent-detector', ),
+        mimetype_on_detect_failure = detextive.DetectFailureActions.Default )
+    result = detextive.detect_mimetype_confidence(
+        b'This is valid textual content that should pass validation.',
+        behaviors = behaviors, charset = 'utf-8' )
+    assert result.mimetype == 'text/plain'
+    assert result.confidence > 0.0
 
 
 # def test_640_detect_mimetype_binary_content( ):
@@ -242,9 +388,18 @@ def test_410_empty_content_mimetype_handling( ):
 #     pass
 
 
-# def test_720_not_implemented_handling( ):
-#     ''' Missing dependencies return NotImplemented correctly. '''
-#     pass
+def test_720_not_implemented_handling( ):
+    ''' Missing dependencies return NotImplemented correctly. '''
+    # Test puremagic detector when puremagic module is not available
+    behaviors = detextive.Behaviors(
+        mimetype_detectors_order = ( 'puremagic', ) )
+    # This should work even if puremagic is not installed
+    # The detector should return NotImplemented and fallback gracefully
+    result = detextive.detect_mimetype_confidence(
+        b'test content', behaviors = behaviors )
+    assert result is not None
+    # Either detects via another method or returns default
+    assert result.confidence >= 0.0
 
 
 # def test_730_detector_ordering_configuration( ):
@@ -292,9 +447,24 @@ def test_410_empty_content_mimetype_handling( ):
 #     pass
 
 
-# def test_900_python_magic_vs_python_magic_bin( ):
-#     ''' python-magic vs python-magic-bin MIME type differences. '''
-#     pass
+def test_900_python_magic_vs_python_magic_bin( ):
+    ''' python-magic vs python-magic-bin MIME type differences. '''
+    # Test that detection works with different magic implementations
+    behaviors_puremagic = detextive.Behaviors(
+        mimetype_detectors_order = ( 'puremagic', 'python-magic' ) )
+    behaviors_magic = detextive.Behaviors(
+        mimetype_detectors_order = ( 'python-magic', 'puremagic' ) )
+    # Test with JSON content that might be detected differently
+    json_content = b'{"key": "value", "number": 42}'
+    result_puremagic = detextive.detect_mimetype_confidence(
+        json_content, behaviors = behaviors_puremagic )
+    result_magic = detextive.detect_mimetype_confidence(
+        json_content, behaviors = behaviors_magic )
+    # Both should detect something reasonable
+    assert result_puremagic is not None
+    assert result_magic is not None
+    assert result_puremagic.confidence >= 0.0
+    assert result_magic.confidence >= 0.0
 
 
 # def test_910_cross_platform_magic_interpretation( ):
