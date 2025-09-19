@@ -129,6 +129,41 @@ def test_175_content_decode_failure_with_path_location( ):
     assert str( exc ) == expected
 
 
+# def test_116_charset_detect_failure_absential_location( ):
+#     ''' CharsetDetectFailure handles absential location correctly. '''
+#     pass
+
+
+# def test_136_charset_infer_failure_absential_location( ):
+#     ''' CharsetInferFailure handles absential location correctly. '''
+#     pass
+
+
+# def test_156_mimetype_detect_failure_absential_location( ):
+#     ''' MimetypeDetectFailure handles absential location correctly. '''
+#     pass
+
+
+# def test_176_content_decode_failure_exception_chaining( ):
+#     ''' ContentDecodeFailure preserves exception chaining correctly. '''
+#     pass
+
+
+# def test_177_content_decode_failure_with_multiple_charsets( ):
+#     ''' ContentDecodeFailure handles multiple charset attempts. '''
+#     pass
+
+
+# def test_185_multiple_inheritance_builtin_exceptions( ):
+#     ''' Exception classes properly inherit from built-in types. '''
+#     pass
+
+
+# def test_186_exception_chaining_behavior( ):
+#     ''' Exception chaining with 'from' clauses works correctly. '''
+#     pass
+
+
 def test_180_exception_hierarchy_inheritance( ):
     ''' Exception hierarchy follows expected inheritance pattern. '''
     assert issubclass(

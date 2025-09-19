@@ -21,43 +21,22 @@
 Test Plan: Version 2.0 Complete Test Suite
 *******************************************************************************
 
-Coverage Analysis Summary
+Testing Philosophy
 ===============================================================================
 
-**Current Coverage Status:**
-- Overall coverage: 68% (519/758 lines)
-- Target coverage: 100%
+**Coverage-Gap-First Approach:**
+Use doctests for examples and happy paths, pytest for coverage gaps and edge cases only.
 
-**Critical Coverage Gaps:**
-- **detectors.py**: 48% coverage - CRITICAL gaps in default return behavior (lines 97-101, 149-155)
-- **exceptions.py**: 44% coverage - Missing location parameter handling
-- **decoders.py**: 75% coverage - New default parameter paths untested
-- **inference.py**: 60% coverage - Enhanced inference functions need coverage
+**Focus Areas:**
+- Default return behavior patterns (DetectFailureActions enum)
+- Exception location parameter handling
+- Enhanced detection and inference capabilities
+- Cross-platform compatibility considerations
 
 **Windows Compatibility Considerations:**
 - python-magic vs python-magic-bin MIME type detection differences
 - Cross-platform line separator handling
 - Cygwin buffer issue mitigations
-
-COVERAGE GAPS PRIORITY
-===============================================================================
-
-**CRITICAL: Focus on missing coverage first, comprehensive testing second.**
-
-Test philosophy: Use doctests for examples and happy paths, pytest for coverage gaps and edge cases only.
-
-**Immediate Priority - Uncovered Lines:**
-
-1. **detectors.py lines 97-101, 149-155** - Default return behavior (0% coverage)
-2. **exceptions.py lines 45-48, 56-59, 67-70, 95-98, 106-109** - Location parameters
-3. **charsets.py lines 60, 62, 65-67, 117** - Codec edge cases
-4. **decoders.py lines 69-74** - New default parameter paths
-5. **inference.py lines 52-60, 73-95** - Enhanced inference functions
-
-**Secondary Priority - Branch Coverage:**
-- Missing branch conditions in location parameter handling
-- Trial decode failure edge cases
-- Registry detector failure fallback chains
 
 Test Strategy Overview
 ===============================================================================
@@ -99,30 +78,28 @@ May skip this module unless coverage tools require it.
 test_110_exceptions
 -------------------------------------------------------------------------------
 
-**Current Coverage**: 72% ✅ - Location parameter gaps resolved
-
-**COVERAGE GAP FOCUS**: Lines 45-48, 56-59, 67-70, 95-98, 106-109 ✅ COMPLETED
+**Scope**: Exception hierarchy and location parameter handling
 
 **Basic Tests (000-099)**:
 - Exception hierarchy verification
 - Import and inheritance structure validation
 
 **CharsetDetectFailure Tests (100-119)**:
-- Construction with and without location parameter (lines 42-48)
+- Construction with and without location parameter
 - String location message formatting
 - pathlib.Path location handling
 - Absential location handling (__.absent)
 
 **CharsetInferFailure Tests (120-139)**:
-- Construction with and without location parameter (lines 52-59)
+- Construction with and without location parameter
 - Location context in inference failure messages
 
 **MimetypeDetectFailure Tests (140-159)**:
-- Construction with and without location parameter (lines 61-70)
+- Construction with and without location parameter
 - Various location types (str, Path) in messages
 
 **ContentDecodeFailure Tests (160-179)**:
-- Construction with charset and location details (lines 72-82)
+- Construction with charset and location details
 - Exception chaining preservation
 
 **Exception Hierarchy Tests (180-199)**:
@@ -179,7 +156,7 @@ test_120_core
 test_200_lineseparators
 -------------------------------------------------------------------------------
 
-**Current Coverage**: 86% - Good coverage but expand for completeness
+**Scope**: Line separator detection and normalization
 
 **Basic Tests (000-099)**:
 - Enum structure and values validation
@@ -228,7 +205,7 @@ test_200_lineseparators
 test_210_mimetypes
 -------------------------------------------------------------------------------
 
-**Current Coverage**: 89% - High coverage but complete edge cases
+**Scope**: MIME type utility functions
 
 **Basic Tests (000-099)**:
 - Module import and function accessibility
@@ -257,9 +234,7 @@ test_210_mimetypes
 test_220_charsets
 -------------------------------------------------------------------------------
 
-**Current Coverage**: 81% - Improve to cover codec edge cases
-
-**COVERAGE GAP FOCUS**: Lines 60, 62, 65-67, 117 (codec specifier branches and trial decode failures)
+**Scope**: Charset detection utilities and codec handling
 
 **Basic Tests (000-099)**:
 - Module import verification
@@ -303,7 +278,7 @@ test_220_charsets
 test_300_validation
 -------------------------------------------------------------------------------
 
-**Current Coverage**: 93% - Minimal gaps, focus on edge cases
+**Scope**: Text validation and reasonableness checking
 
 **Basic Tests (000-099)**:
 - Module import and function accessibility
@@ -343,9 +318,7 @@ test_300_validation
 test_310_detectors (HIGHEST PRIORITY)
 -------------------------------------------------------------------------------
 
-**Current Coverage**: 67% ✅ - Default return behavior gaps resolved
-
-**COVERAGE GAP FOCUS**: Lines 97-101, 149-155 ✅ COMPLETED
+**Scope**: Core detection functions and default return behavior
 
 **Basic Tests (000-099)**:
 - Module import verification
@@ -401,7 +374,7 @@ test_310_detectors (HIGHEST PRIORITY)
 - Platform-specific charset detection differences
 
 **Implementation Notes:**
-- CRITICAL: Test all DetectFailureActions enum variants in isolation and combination
+- Test all DetectFailureActions enum variants in isolation and combination
 - Test default return behavior with various custom default values
 - Validate confidence scoring for failure scenarios (must be 0.0)
 - Mock detector registry for dependency injection testing
@@ -411,9 +384,7 @@ test_310_detectors (HIGHEST PRIORITY)
 test_400_inference
 -------------------------------------------------------------------------------
 
-**Current Coverage**: 60% - Enhanced inference functions need coverage
-
-**COVERAGE GAP FOCUS**: Lines 52-60, 73-95 (enhanced inference with default parameters)
+**Scope**: Context-aware inference functions
 
 **Basic Tests (000-099)**:
 - Module import and function accessibility
@@ -465,9 +436,7 @@ test_400_inference
 test_500_decoders
 -------------------------------------------------------------------------------
 
-**Current Coverage**: 88% ✅ - Default parameter path gaps resolved
-
-**COVERAGE GAP FOCUS**: Lines 69-74 ✅ COMPLETED
+**Scope**: High-level decoding and integration functions
 
 **Basic Tests (000-099)**:
 - Module import and function accessibility
@@ -549,53 +518,38 @@ Cross-Platform Testing Strategy
 - Mock detector behavior for consistent cross-platform testing
 - Performance considerations for platform-specific libraries
 
-Implementation Priorities - COVERAGE GAPS FIRST
+Implementation Priorities
 ===============================================================================
 
-**Priority 1 (CRITICAL) - COMPLETED ✅**:
-- **detectors.py lines 97-101, 149-155**: Default return behavior (test_310_detectors) ✅
-- **exceptions.py lines 45-48, 56-59, 67-70, 95-98, 106-109**: Location parameters (test_110_exceptions) ✅
-- **decoders.py lines 69-74**: New default parameter paths (test_500_decoders) ✅
-- **Coverage improvement**: 68% → 77% (+9 percentage points)
+**Priority 1 (CRITICAL)**:
+- Default return behavior patterns (DetectFailureActions enum)
+- Exception location parameter handling
+- Default parameter paths in decoding functions
 
-**Priority 2 (HIGH) - Significant Coverage Gaps**:
-- **charsets.py lines 60, 62, 65-67, 117**: Codec edge cases (test_220_charsets)
-- **inference.py lines 52-60, 73-95**: Enhanced inference functions (test_400_inference)
+**Priority 2 (HIGH)**:
+- Charset codec edge cases and specifier handling
+- Enhanced inference functions with context awareness
 
-**Priority 3 (MEDIUM) - Minor Coverage Gaps**:
-- **validation.py line 193**: Remaining validation edge case (test_300_validation)
-- **lineseparators.py lines 56, 87-88**: Line separator edge cases (test_200_lineseparators)
-- **mimetypes.py line 66**: MIME type edge case (test_210_mimetypes)
-
-**Priority 4 (LOW) - Well Covered Modules**:
-- **core.py**: Maintain existing 100% coverage (test_120_core)
-- **nomina.py**: Already 100% covered (test_100_nomina may be skipped)
-
-**PHILOSOPHY**: Write minimal tests targeting only uncovered lines. Avoid comprehensive testing that duplicates doctest coverage or tests functionality already covered by examples.
+**Priority 3 (MEDIUM)**:
+- Text validation edge cases
+- Line separator detection edge cases
+- MIME type detection edge cases
 
 Success Metrics
 ===============================================================================
 
-**Coverage Targets**:
-- Overall coverage: 100% (from current 68%)
-- detectors.py: 100% (from current 48%) - CRITICAL
-- exceptions.py: 100% (from current 44%)
-- decoders.py: 100% (from current 75%)
-- inference.py: 100% (from current 60%)
-
 **Functional Validation**:
 - All DetectFailureActions enum variants tested
 - Default return behavior patterns comprehensively covered
-- Cross-platform compatibility validated
 - Exception handling with location parameters complete
-- Integration workflows tested end-to-end
+- Enhanced inference functions tested
+- Cross-platform compatibility patterns established
 
 **Quality Assurance**:
-- Property-based testing for behavioral invariants
-- Performance testing with large content
-- Memory usage validation
-- Cross-platform test execution success
-- Windows-specific compatibility verification
+- Coverage-gap-first methodology applied
+- Test data centralized in patterns module
+- Clean test structure with numbered organization
+- Cross-platform compatibility validated
 
 Implementation Notes
 ===============================================================================
@@ -622,7 +576,5 @@ Implementation Notes
 - Exception testing through expected failure scenarios
 
 **CRITICAL Testing Focus**:
-The default return behavior pattern (DetectFailureActions enum) is the most
-critical uncovered functionality and must be prioritized for comprehensive
-testing to ensure system reliability with the new graceful degradation
-capabilities.
+The default return behavior pattern (DetectFailureActions enum) is essential
+for testing system reliability with the new graceful degradation capabilities.

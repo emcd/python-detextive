@@ -138,7 +138,6 @@ Version 2.0 Testing Focus
 - ``DetectFailureActions.Default`` vs ``DetectFailureActions.Error`` testing
 - Default parameter validation and confidence scoring (must be 0.0 for failures)
 - Mixed failure behaviors (charset defaults, mimetype errors)
-- Lines 97-101, 149-155 in detectors.py (currently 0% coverage)
 
 **High Priority:**
 - Exception handling with location parameters

@@ -82,3 +82,63 @@ def test_200_trial_decode_failure_without_inference( ):
     with pytest.raises( detextive.exceptions.CharsetDetectFailure ):
         detextive.charsets.trial_decode_as_confident(
             content, behaviors = behaviors, confidence = 0.5 )
+
+
+# def test_210_codec_specifiers_from_inference( ):
+#     ''' FromInference codec specifier behaves correctly. '''
+#     pass
+
+
+# def test_220_invalid_codec_name_handling( ):
+#     ''' Invalid codec names are handled appropriately. '''
+#     pass
+
+
+# def test_300_attempt_decodes_valid_charset_inference( ):
+#     ''' Valid charset inference produces successful decoding attempts. '''
+#     pass
+
+
+# def test_310_attempt_decodes_malformed_content( ):
+#     ''' Malformed content is handled during decoding attempts. '''
+#     pass
+
+
+# def test_320_attempt_decodes_unsupported_charset( ):
+#     ''' Unsupported charset names are handled during attempts. '''
+#     pass
+
+
+# def test_330_trial_decode_as_confident_behavior( ):
+#     ''' Trial decoding with confidence behaves correctly. '''
+#     pass
+
+
+# def test_340_confidence_calculation_trial_decoding( ):
+#     ''' Confidence calculation during trial decoding works correctly. '''
+#     pass
+
+
+# def test_350_exception_handling_decode_failures( ):
+#     ''' Decode failures are handled with appropriate exceptions. '''
+#     pass
+
+
+# def test_400_ascii_to_utf8_promotion( ):
+#     ''' ASCII charsets are promoted to UTF-8 correctly. '''
+#     pass
+
+
+# def test_410_utf8_to_utf8_sig_promotion( ):
+#     ''' UTF-8 charsets are promoted to UTF-8-sig when appropriate. '''
+#     pass
+
+
+# def test_420_custom_promotion_mapping( ):
+#     ''' Custom promotion mappings are handled correctly. '''
+#     pass
+
+
+# def test_430_promotion_precedence_conflict_resolution( ):
+#     ''' Promotion conflicts are resolved with correct precedence. '''
+#     pass
