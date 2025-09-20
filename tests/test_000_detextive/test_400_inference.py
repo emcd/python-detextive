@@ -390,6 +390,63 @@ def test_370_charset_result_early_return( ):
     assert charset_result.charset is not None
 
 
+def test_380_mimetype_result_absent_branch( ):
+    ''' HTTP parsing returns absent mimetype_result. '''
+    # Test branch 85->87: mimetype_result is absent, skip line 86
+    content = b'test content'
+    # Create HTTP content type that will parse but yield absent mimetype
+    result = detextive.inference.infer_charset_confidence(
+        content,
+        http_content_type = '; charset=utf-8' )  # Invalid mimetype part
+    assert result.charset == 'utf-8'
+
+
+def test_390_charset_result_absent_no_early_return( ):
+    ''' HTTP parsing with absent charset_result continues to detection. '''
+    # Test branch 87->90: charset_result is absent, continue to line 90
+    content = b'test content'
+    # HTTP content type with mimetype but no charset
+    result = detextive.inference.infer_charset_confidence(
+        content,
+        http_content_type = 'text/plain' )  # No charset parameter
+    assert hasattr( result, 'charset' )
+    # Should continue to detection phase, not early return
+
+
+def test_400_behavior_tristate_never_parse_detect( ):
+    ''' BehaviorTristate.Never sets should_detect to False. '''
+    # Test branch 211->214: BehaviorTristate.Never case
+    content = b'test content'
+    # Test specifically the second _determine_parse_detect call with Never
+    # First call (charset_detect=AsNeeded) returns should_parse=True
+    # Second call (mimetype_detect=Never) with should_parse=True hits 211->214
+    mimetype_result, charset_result = (
+        detextive.inference.infer_mimetype_charset_confidence(
+            content,
+            behaviors = detextive.Behaviors(
+                charset_detect = detextive.BehaviorTristate.AsNeeded,
+                mimetype_detect = detextive.BehaviorTristate.Never ),
+            charset_default = 'utf-8',
+            mimetype_default = 'text/plain',
+            http_content_type = 'text/plain; charset=utf-8' ) )
+    assert charset_result.charset == 'utf-8'
+    assert mimetype_result.mimetype == 'text/plain'
+
+
+def test_410_http_validation_mimetype_not_absent( ):
+    ''' HTTP validation when mimetype is not absent. '''
+    # Test branch 235->239: mimetype is not absent, take else path
+    content = b'{"test": "json"}'
+    mimetype_result, charset_result = (
+        detextive.inference.infer_mimetype_charset_confidence(
+            content,
+            http_content_type = 'application/json; charset=utf-8' ) )
+    # Should create MimetypeResult object (not absent)
+    assert mimetype_result.mimetype == 'application/json'
+    assert mimetype_result.confidence == 0.9
+    assert charset_result.charset == 'utf-8'
+
+
 # def test_330_mimetype_parameter_handling( ):
 #     ''' MIME type parameters are handled correctly. '''
 #     pass

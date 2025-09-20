@@ -208,7 +208,7 @@ def _determine_parse_detect(
         case _BehaviorTristate.AsNeeded:
             should_parse = should_parse or True
             should_detect = True
-        case _BehaviorTristate.Never:
+        case _BehaviorTristate.Never:  # pragma: no branch
             should_parse = should_parse or True
             should_detect = False
     return should_parse, should_detect
