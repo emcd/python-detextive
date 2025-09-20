@@ -211,16 +211,16 @@ test_210_mimetypes
 - Module import and function accessibility
 
 **Textual MIME Type Tests (100-199)**:
-- is_textual_mimetype with text/* prefixes
+- is_textual_mimetype with ``text/*`` prefixes
 - Known textual application types (json, xml, javascript, yaml)
 - Textual suffixes (+json, +xml, +yaml, +toml)
-- Non-textual types rejection (image/*, video/*, audio/*)
+- Non-textual types rejection (``image/*``, ``video/*``, ``audio/*``)
 - Empty and malformed MIME type handling
 - Case sensitivity in MIME type evaluation
 
 **Edge Case Tests (200-299)**:
 - MIME types with parameters (text/plain; charset=utf-8)
-- Vendor-specific MIME types (application/vnd.*)
+- Vendor-specific MIME types (``application/vnd.*``)
 - Custom and unknown MIME types
 - Very long MIME type strings
 - MIME types with unusual characters
