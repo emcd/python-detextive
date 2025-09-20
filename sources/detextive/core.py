@@ -136,6 +136,13 @@ class Behaviors( __.immut.DataclassObject ):
     ] = 0.80
 
 
+BehaviorsArgument: __.typx.TypeAlias = __.typx.Annotated[
+    Behaviors,
+    __.ddoc.Doc(
+        ''' Configuration for detection and inference behaviors. ''' ),
+]
+
+
 BEHAVIORS_DEFAULT = Behaviors( )
 
 

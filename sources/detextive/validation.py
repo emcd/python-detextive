@@ -112,6 +112,12 @@ class Profile( __.immut.DataclassObject ):
         return is_valid_text( text, profile = self )
 
 
+ProfileArgument: __.typx.TypeAlias = __.typx.Annotated[
+    Profile,
+    __.ddoc.Doc( ''' Text validation profile for content analysis. ''' ),
+]
+
+
 PROFILE_PRINTER_SAFE: __.typx.Annotated[
     Profile, __.ddoc.Doc( ''' Is text safe to send to a printer? ''' ),
 ] = Profile(

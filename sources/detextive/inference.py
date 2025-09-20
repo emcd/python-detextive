@@ -34,6 +34,7 @@ from .core import ( # isort: skip
     MIMETYPE_DEFAULT as     _MIMETYPE_DEFAULT,
     BehaviorTristate as     _BehaviorTristate,
     Behaviors as            _Behaviors,
+    BehaviorsArgument as    _BehaviorsArgument,
     CharsetResult as        _CharsetResult,
     MimetypeResult as       _MimetypeResult,
 )
@@ -41,12 +42,12 @@ from .core import ( # isort: skip
 
 def infer_charset( # noqa: PLR0913
     content: _nomina.Content, /, *,
-    behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
-    charset_default: str = _CHARSET_DEFAULT,
-    http_content_type: __.Absential[ str ] = __.absent,
-    charset_supplement: __.Absential[ str ] = __.absent,
-    mimetype_supplement: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
+    behaviors: _BehaviorsArgument = _BEHAVIORS_DEFAULT,
+    charset_default: _nomina.CharsetDefaultArgument = _CHARSET_DEFAULT,
+    http_content_type: _nomina.HttpContentTypeArgument = __.absent,
+    charset_supplement: _nomina.CharsetSupplementArgument = __.absent,
+    mimetype_supplement: _nomina.MimetypeSupplementArgument = __.absent,
+    location: _nomina.LocationArgument = __.absent,
 ) -> __.typx.Optional[ str ]:
     ''' Infers charset through various means. '''
     result = infer_charset_confidence(
@@ -62,12 +63,12 @@ def infer_charset( # noqa: PLR0913
 
 def infer_charset_confidence( # noqa: PLR0913
     content: _nomina.Content, /, *,
-    behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
-    charset_default: str = _CHARSET_DEFAULT,
-    http_content_type: __.Absential[ str ] = __.absent,
-    charset_supplement: __.Absential[ str ] = __.absent,
-    mimetype_supplement: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
+    behaviors: _BehaviorsArgument = _BEHAVIORS_DEFAULT,
+    charset_default: _nomina.CharsetDefaultArgument = _CHARSET_DEFAULT,
+    http_content_type: _nomina.HttpContentTypeArgument = __.absent,
+    charset_supplement: _nomina.CharsetSupplementArgument = __.absent,
+    mimetype_supplement: _nomina.MimetypeSupplementArgument = __.absent,
+    location: _nomina.LocationArgument = __.absent,
 ) -> _CharsetResult:
     ''' Infers charset with confidence level through various means. '''
     if content == b'':
@@ -97,13 +98,13 @@ def infer_charset_confidence( # noqa: PLR0913
 
 def infer_mimetype_charset( # noqa: PLR0913
     content: _nomina.Content, /, *,
-    behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
-    charset_default: str = _CHARSET_DEFAULT,
-    mimetype_default: str = _MIMETYPE_DEFAULT,
-    http_content_type: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
-    charset_supplement: __.Absential[ str ] = __.absent,
-    mimetype_supplement: __.Absential[ str ] = __.absent,
+    behaviors: _BehaviorsArgument = _BEHAVIORS_DEFAULT,
+    charset_default: _nomina.CharsetDefaultArgument = _CHARSET_DEFAULT,
+    mimetype_default: _nomina.MimetypeDefaultArgument = _MIMETYPE_DEFAULT,
+    http_content_type: _nomina.HttpContentTypeArgument = __.absent,
+    location: _nomina.LocationArgument = __.absent,
+    charset_supplement: _nomina.CharsetSupplementArgument = __.absent,
+    mimetype_supplement: _nomina.MimetypeSupplementArgument = __.absent,
 ) -> tuple[ str, __.typx.Optional[ str ] ]:
     ''' Infers MIME type and charset through various means. '''
     mimetype_result, charset_result = (
@@ -121,13 +122,13 @@ def infer_mimetype_charset( # noqa: PLR0913
 
 def infer_mimetype_charset_confidence( # noqa: PLR0913
     content: _nomina.Content, /, *,
-    behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
-    charset_default: str = _CHARSET_DEFAULT,
-    mimetype_default: str = _MIMETYPE_DEFAULT,
-    http_content_type: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
-    charset_supplement: __.Absential[ str ] = __.absent,
-    mimetype_supplement: __.Absential[ str ] = __.absent,
+    behaviors: _BehaviorsArgument = _BEHAVIORS_DEFAULT,
+    charset_default: _nomina.CharsetDefaultArgument = _CHARSET_DEFAULT,
+    mimetype_default: _nomina.MimetypeDefaultArgument = _MIMETYPE_DEFAULT,
+    http_content_type: _nomina.HttpContentTypeArgument = __.absent,
+    location: _nomina.LocationArgument = __.absent,
+    charset_supplement: _nomina.CharsetSupplementArgument = __.absent,
+    mimetype_supplement: _nomina.MimetypeSupplementArgument = __.absent,
 ) -> tuple[ _MimetypeResult, _CharsetResult ]:
     ''' Infers MIME type and charset through various means. '''
     should_parse, should_detect_charset = (

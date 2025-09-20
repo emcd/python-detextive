@@ -35,35 +35,64 @@ from .core import ( # isort: skip
     MIMETYPE_DEFAULT as             _MIMETYPE_DEFAULT,
     BehaviorTristate as             _BehaviorTristate,
     Behaviors as                    _Behaviors,
+    BehaviorsArgument as            _BehaviorsArgument,
     CharsetResult as                _CharsetResult,
     DetectFailureActions as         _DetectFailureActions,
     MimetypeResult as               _MimetypeResult,
 )
 
 
-CharsetDetector: __.typx.TypeAlias = __.cabc.Callable[
-    [ _nomina.Content, _Behaviors ],
-    _CharsetResult | __.types.NotImplementedType
+CharsetDetector: __.typx.TypeAlias = __.typx.Annotated[
+    __.cabc.Callable[
+        [ _nomina.Content, _Behaviors ],
+        _CharsetResult | __.types.NotImplementedType
+    ],
+    __.ddoc.Doc(
+        ''' Character set detector function.
+
+            Takes bytes content and behaviors object.
+
+            Returns either a detection result or ``NotImplemented``. The
+            detection result will include the name of the character set, which
+            has been determined as able to decode the content, or ``None``, if
+            it believes that no character set is applicable to the content, and
+            the confidence of the detection.
+        ''' ),
 ]
-MimetypeDetector: __.typx.TypeAlias = __.cabc.Callable[
-    [ _nomina.Content, _Behaviors ],
-    _MimetypeResult | __.types.NotImplementedType
+MimetypeDetector: __.typx.TypeAlias = __.typx.Annotated[
+    __.cabc.Callable[
+        [ _nomina.Content, _Behaviors ],
+        _MimetypeResult | __.types.NotImplementedType,
+    ],
+    __.ddoc.Doc(
+        ''' MIME type detector function.
+
+            Takes bytes content and behaviors object.
+
+            Returns either a detection result or ``NotImplemented``. The
+            detection result will include the MIME type and the confidence of
+            the detection.
+        ''' ),
 ]
 
 
-charset_detectors: __.accret.Dictionary[ str, CharsetDetector ] = (
-    __.accret.Dictionary( ) )
-mimetype_detectors: __.accret.Dictionary[ str, MimetypeDetector ] = (
-    __.accret.Dictionary( ) )
+charset_detectors: __.typx.Annotated[
+    __.accret.Dictionary[ str, CharsetDetector ],
+    __.ddoc.Doc( ''' Registry for character set detectors. ''' ),
+] = __.accret.Dictionary( )
+mimetype_detectors: __.typx.Annotated[
+    __.accret.Dictionary[ str, MimetypeDetector ],
+    __.ddoc.Doc( ''' Registry for MIME type detectors. ''' ),
+] = __.accret.Dictionary( )
 
 
 def detect_charset( # noqa: PLR0913
     content: _nomina.Content, /, *,
-    behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
-    default: str = _CHARSET_DEFAULT,
-    supplement: __.Absential[ str ] = __.absent,
-    mimetype: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
+    behaviors: _BehaviorsArgument = _BEHAVIORS_DEFAULT,
+    default: _nomina.CharsetDefaultArgument = _CHARSET_DEFAULT,
+    supplement: _nomina.CharsetSupplementArgument = __.absent,
+    mimetype: _nomina.MimetypeAssumptionArgument = __.absent,
+    location: _nomina.LocationArgument = __.absent,
 ) -> __.typx.Optional[ str ]:
     ''' Detects character set. '''
     result = detect_charset_confidence(
@@ -78,11 +107,11 @@ def detect_charset( # noqa: PLR0913
 
 def detect_charset_confidence( # noqa: PLR0913
     content: _nomina.Content, /, *,
-    behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
-    default: str = _CHARSET_DEFAULT,
-    supplement: __.Absential[ str ] = __.absent,
-    mimetype: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
+    behaviors: _BehaviorsArgument = _BEHAVIORS_DEFAULT,
+    default: _nomina.CharsetDefaultArgument = _CHARSET_DEFAULT,
+    supplement: _nomina.CharsetSupplementArgument = __.absent,
+    mimetype: _nomina.MimetypeAssumptionArgument = __.absent,
+    location: _nomina.LocationArgument = __.absent,
 ) -> _CharsetResult:
     ''' Detects character set candidates with confidence scores. '''
     if b'' == content:
@@ -115,10 +144,10 @@ def detect_charset_confidence( # noqa: PLR0913
 
 def detect_mimetype(
     content: _nomina.Content, /, *,
-    behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
-    default: str = _MIMETYPE_DEFAULT,
-    charset: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
+    behaviors: _BehaviorsArgument = _BEHAVIORS_DEFAULT,
+    default: _nomina.MimetypeDefaultArgument = _MIMETYPE_DEFAULT,
+    charset: _nomina.CharsetAssumptionArgument = __.absent,
+    location: _nomina.LocationArgument = __.absent,
 ) -> str:
     ''' Detects most probable MIME type. '''
     nomargs: __.NominativeArguments = dict(
@@ -132,10 +161,10 @@ def detect_mimetype(
 
 def detect_mimetype_confidence(
     content: _nomina.Content, /, *,
-    behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
-    default: str = _MIMETYPE_DEFAULT,
-    charset: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
+    behaviors: _BehaviorsArgument = _BEHAVIORS_DEFAULT,
+    default: _nomina.MimetypeDefaultArgument = _MIMETYPE_DEFAULT,
+    charset: _nomina.CharsetAssumptionArgument = __.absent,
+    location: _nomina.LocationArgument = __.absent,
 ) -> _MimetypeResult:
     ''' Detects MIME type candidates with confidence scores. '''
     if b'' == content:

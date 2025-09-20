@@ -35,21 +35,21 @@ from .core import ( # isort: skip
     CHARSET_DEFAULT as              _CHARSET_DEFAULT,
     MIMETYPE_DEFAULT as             _MIMETYPE_DEFAULT,
     BehaviorTristate as             _BehaviorTristate,
-    Behaviors as                    _Behaviors,
+    BehaviorsArgument as            _BehaviorsArgument,
     CharsetResult as                _CharsetResult,
 )
 
 
 def decode( # noqa: PLR0913
     content: _nomina.Content, /, *,
-    behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
-    profile: _validation.Profile = _validation.PROFILE_TEXTUAL,
-    charset_default: str = _CHARSET_DEFAULT,
-    mimetype_default: str = _MIMETYPE_DEFAULT,
-    http_content_type: __.Absential[ str ] = __.absent,
-    location: __.Absential[ _nomina.Location ] = __.absent,
-    charset_supplement: __.Absential[ str ] = __.absent,
-    mimetype_supplement: __.Absential[ str ] = __.absent,
+    behaviors: _BehaviorsArgument = _BEHAVIORS_DEFAULT,
+    profile: _validation.ProfileArgument = _validation.PROFILE_TEXTUAL,
+    charset_default: _nomina.CharsetDefaultArgument = _CHARSET_DEFAULT,
+    mimetype_default: _nomina.MimetypeDefaultArgument = _MIMETYPE_DEFAULT,
+    http_content_type: _nomina.HttpContentTypeArgument = __.absent,
+    location: _nomina.LocationArgument = __.absent,
+    charset_supplement: _nomina.CharsetSupplementArgument = __.absent,
+    mimetype_supplement: _nomina.MimetypeSupplementArgument = __.absent,
 ) -> str:
     ''' Decodes bytes array to Unicode text. '''
     if content == b'': return ''
