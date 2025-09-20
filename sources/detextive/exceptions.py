@@ -27,6 +27,7 @@ from . import nomina as _nomina
 
 class Omniexception(
     __.immut.Object, BaseException,
+    instances_mutables = ( '__cause__', '__context__' ),
     instances_visibles = (
         '__cause__', '__context__', __.is_public_identifier ),
 ):
