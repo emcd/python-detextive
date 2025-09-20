@@ -163,12 +163,12 @@ Validate that decoded text content is reasonable:
     text = "Hello world!"
     detextive.is_valid_text( text )      # True
 
-Text with control characters fails validation:
+Binary data that might decode as text but isn't valid fails validation:
 
 .. code-block:: python
 
-    text_with_controls = "Hello\x00\x01world"
-    detextive.is_valid_text( text_with_controls )  # False
+    binary_as_text = "Config file\x00\x00\x00data"
+    detextive.is_valid_text( binary_as_text )  # False
 
 **High-Level Decoding**:
 
