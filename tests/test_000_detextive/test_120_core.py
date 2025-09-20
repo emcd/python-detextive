@@ -21,14 +21,14 @@
 ''' Core types, enums, and behaviors. '''
 
 
-import detextive
+import detextive.core as _core
 
 
 # Basic Tests (000-099): Module import verification, Constant value validation
 
 def test_000_imports( ):
-    ''' Core types and functions are accessible from main module. '''
-    assert hasattr( detextive, 'Behaviors' )
-    assert hasattr( detextive, 'BehaviorTristate' )
-    assert hasattr( detextive, 'CodecSpecifiers' )
-    assert hasattr( detextive, 'DetectFailureActions' )
+    ''' Core types and functions are accessible from core module. '''
+    assert hasattr( _core, 'Behaviors' )
+    assert hasattr( _core, 'BehaviorTristate' )
+    assert hasattr( _core, 'CodecSpecifiers' )
+    assert hasattr( _core, 'DetectFailureActions' )

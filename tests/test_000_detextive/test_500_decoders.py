@@ -24,6 +24,7 @@
 import pytest
 
 import detextive
+import detextive.decoders as _decoders
 
 from .patterns import (
     EMPTY_CONTENT,
@@ -48,7 +49,7 @@ def test_100_decode_inference_failure_fallback_to_utf8_sig( ):
         charset_on_detect_failure = detextive.DetectFailureActions.Error,
         mimetype_on_detect_failure = detextive.DetectFailureActions.Error )
     utf8_content = b'Hello, world!'
-    result = detextive.decode(
+    result = _decoders.decode(
         utf8_content, behaviors = behaviors )
     assert result == 'Hello, world!'
 
@@ -61,7 +62,7 @@ def test_110_decode_inference_failure_fallback_to_supplement( ):
         charset_on_detect_failure = detextive.DetectFailureActions.Error,
         mimetype_on_detect_failure = detextive.DetectFailureActions.Error )
     content = b'Hello, world!'
-    result = detextive.decode(
+    result = _decoders.decode(
         content, behaviors = behaviors, charset_supplement = 'ascii' )
     assert result == 'Hello, world!'
 
@@ -71,7 +72,7 @@ def test_190_decode_validation_profile_parameters( ):
     content = b'\x00\x01\x02\xff'  # Binary content that fails text validation
     behaviors = detextive.Behaviors(
         text_validate = detextive.BehaviorTristate.Never )
-    text = detextive.decode(
+    text = _decoders.decode(
         content, behaviors = behaviors,
         charset_default = 'latin-1' )
     assert text is not None  # Should succeed when validation is disabled
@@ -81,7 +82,7 @@ def test_190_decode_validation_profile_parameters( ):
 
 def test_200_decode_empty_content_returns_empty_string( ):
     ''' Empty content decoding returns empty string immediately. '''
-    result = detextive.decode( EMPTY_CONTENT )
+    result = _decoders.decode( EMPTY_CONTENT )
     assert result == ''
 
 
@@ -93,7 +94,7 @@ def test_420_validation_failure_handling( ):
     behaviors = detextive.Behaviors(
         text_validate = detextive.BehaviorTristate.Always )
     with pytest.raises( detextive.exceptions.TextInvalidity ):
-        detextive.decode(
+        _decoders.decode(
             content, behaviors = behaviors,
             charset_default = 'latin-1' )
 
@@ -118,4 +119,4 @@ def test_430_content_decode_impossibility( ):
         mimetype_detectors_order = ( 'test-decode-mimetype-png', ) )
     # This should trigger ContentDecodeImpossibility
     with pytest.raises( detextive.exceptions.ContentDecodeImpossibility ):
-        detextive.decode( content, behaviors = behaviors )
+        _decoders.decode( content, behaviors = behaviors )

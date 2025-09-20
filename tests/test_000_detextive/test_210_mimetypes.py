@@ -22,6 +22,8 @@
 
 
 import detextive
+import detextive.__ as _internals
+import detextive.mimetypes as _mimetypes
 
 
 def test_000_imports( ):
@@ -31,7 +33,7 @@ def test_000_imports( ):
 
 def test_100_mimetype_from_location_unknown_extension( ):
     ''' Unknown file extension returns absent mimetype. '''
-    result = detextive.mimetypes.mimetype_from_location( 'file.unknownext' )
-    assert detextive.__.is_absent( result )
+    result = _mimetypes.mimetype_from_location( 'file.unknownext' )
+    assert _internals.is_absent( result )
 
 

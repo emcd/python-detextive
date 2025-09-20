@@ -22,6 +22,7 @@
 
 
 import detextive
+import detextive.validation as _validation
 
 
 # Basic Tests (000-099): Module import and function accessibility
@@ -35,20 +36,20 @@ def test_000_imports( ):
 
 def test_100_is_valid_text_rejectable_families_edge_case( ):
     ''' Unicode category checking in rejectable families. '''
-    profile = detextive.validation.Profile(
+    profile = _validation.Profile(
         rejectable_families = frozenset( ( 'Cf', ) ) )
     text_with_format_char = 'Hello\u200BWorld'
-    result = detextive.validation.is_valid_text(
+    result = _validation.is_valid_text(
         text_with_format_char, profile )
     assert isinstance( result, bool )
 
 
 def test_110_validation_sample_quantity_none( ):
     ''' Validation with sample_quantity=None processes entire text. '''
-    profile = detextive.validation.Profile(
+    profile = _validation.Profile(
         sample_quantity = None )
     text = 'Hello World! This is a test text.'
-    result = detextive.validation.is_valid_text( text, profile )
+    result = _validation.is_valid_text( text, profile )
     assert isinstance( result, bool )
     assert result is True
 
@@ -56,9 +57,9 @@ def test_110_validation_sample_quantity_none( ):
 def test_120_validation_non_printable_unicode_category( ):
     ''' Validation with non-printable Unicode categories skips elif branch. '''
     text = 'Hello\x00World'
-    profile = detextive.validation.Profile(
+    profile = _validation.Profile(
         acceptable_characters = frozenset( ),
         rejectable_families = frozenset( ),
         rejectables_ratio_max = 0.5 )
-    result = detextive.validation.is_valid_text( text, profile )
+    result = _validation.is_valid_text( text, profile )
     assert isinstance( result, bool )

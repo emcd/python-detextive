@@ -24,10 +24,9 @@
 import pytest
 
 import detextive
+import detextive.charsets as _charsets
 
-from .patterns import (
-    UTF8_BASIC,
-)
+from . import patterns as _patterns
 
 
 #============================================================================#
@@ -45,7 +44,7 @@ def test_000_imports( ):
 
 def test_100_discover_os_charset_default( ):
     ''' OS charset detection returns valid charset name. '''
-    charset = detextive.charsets.discover_os_charset_default( )
+    charset = _charsets.discover_os_charset_default( )
     assert isinstance( charset, str )
     assert len( charset ) > 0
 
@@ -54,8 +53,8 @@ def test_110_attempt_decodes_os_default_codec( ):
     ''' Attempt decodes uses OS default codec when specified. '''
     behaviors = detextive.Behaviors(
         trial_codecs = ( detextive.CodecSpecifiers.OsDefault, ) )
-    text, result = detextive.charsets.attempt_decodes(
-        UTF8_BASIC, behaviors = behaviors )
+    text, result = _charsets.attempt_decodes(
+        _patterns.UTF8_BASIC, behaviors = behaviors )
     assert isinstance( text, str )
     assert result.charset is not None
 
@@ -64,8 +63,8 @@ def test_120_attempt_decodes_python_default_codec( ):
     ''' Attempt decodes uses Python default codec when specified. '''
     behaviors = detextive.Behaviors(
         trial_codecs = ( detextive.CodecSpecifiers.PythonDefault, ) )
-    text, result = detextive.charsets.attempt_decodes(
-        UTF8_BASIC, behaviors = behaviors )
+    text, result = _charsets.attempt_decodes(
+        _patterns.UTF8_BASIC, behaviors = behaviors )
     assert isinstance( text, str )
     assert result.charset is not None
 
@@ -78,8 +77,8 @@ def test_200_codec_specifiers_os_default( ):
     ''' OsDefault codec specifier behavior in attempt_decodes. '''
     behaviors = detextive.Behaviors(
         trial_codecs = ( detextive.CodecSpecifiers.OsDefault, ) )
-    text, result = detextive.charsets.attempt_decodes(
-        UTF8_BASIC, behaviors = behaviors )
+    text, result = _charsets.attempt_decodes(
+        _patterns.UTF8_BASIC, behaviors = behaviors )
     assert isinstance( text, str )
     assert result.charset is not None
 
@@ -88,8 +87,8 @@ def test_210_codec_specifiers_python_default( ):
     ''' PythonDefault codec specifier behavior in attempt_decodes. '''
     behaviors = detextive.Behaviors(
         trial_codecs = ( detextive.CodecSpecifiers.PythonDefault, ) )
-    text, result = detextive.charsets.attempt_decodes(
-        UTF8_BASIC, behaviors = behaviors )
+    text, result = _charsets.attempt_decodes(
+        _patterns.UTF8_BASIC, behaviors = behaviors )
     assert isinstance( text, str )
     assert result.charset is not None
 
@@ -98,8 +97,8 @@ def test_220_codec_specifiers_user_supplement( ):
     ''' UserSupplement codec specifier behavior with supplement parameter. '''
     behaviors = detextive.Behaviors(
         trial_codecs = ( detextive.CodecSpecifiers.UserSupplement, ) )
-    text, result = detextive.charsets.attempt_decodes(
-        UTF8_BASIC, behaviors = behaviors, supplement = 'utf-8' )
+    text, result = _charsets.attempt_decodes(
+        _patterns.UTF8_BASIC, behaviors = behaviors, supplement = 'utf-8' )
     assert text == 'Hello, world!'
     assert result.charset == 'utf-8'
 
@@ -107,8 +106,8 @@ def test_220_codec_specifiers_user_supplement( ):
 def test_230_codec_specifiers_string_codec( ):
     ''' String codec names are handled directly in attempt_decodes. '''
     behaviors = detextive.Behaviors( trial_codecs = ( 'ascii', ) )
-    text, result = detextive.charsets.attempt_decodes(
-        UTF8_BASIC, behaviors = behaviors )
+    text, result = _charsets.attempt_decodes(
+        _patterns.UTF8_BASIC, behaviors = behaviors )
     assert text == 'Hello, world!'
     assert result.charset == 'ascii'
 
@@ -119,7 +118,7 @@ def test_240_invalid_codec_type_handling( ):
         trial_codecs = ( 42, 'utf-8' ),  # 42 is not str | CodecSpecifiers
     )
     content = b'test content'
-    text, result = detextive.charsets.attempt_decodes(
+    text, result = _charsets.attempt_decodes(
         content, behaviors = behaviors )
     assert text == 'test content'
     assert result.charset == 'utf-8'
@@ -135,5 +134,5 @@ def test_300_trial_decode_failure_without_inference( ):
     behaviors = detextive.Behaviors(
         trial_decode = detextive.BehaviorTristate.Never )
     with pytest.raises( detextive.exceptions.CharsetDetectFailure ):
-        detextive.charsets.trial_decode_as_confident(
+        _charsets.trial_decode_as_confident(
             content, behaviors = behaviors, confidence = 0.5 )

@@ -24,6 +24,7 @@
 import pytest
 
 import detextive
+import detextive.detectors as _detectors
 
 from .patterns import (
     EMPTY_CONTENT,
@@ -208,12 +209,12 @@ def test_240_detector_returns_not_implemented( ):
     ''' Charset detection continues when detector returns NotImplemented. '''
     def always_not_implemented( content, behaviors ):
         return NotImplemented
-    detextive.detectors.charset_detectors[ 'test-not-implemented' ] = (
+    _detectors.charset_detectors[ 'test-not-implemented' ] = (
         always_not_implemented )
     behaviors = detextive.Behaviors(
         charset_detectors_order = ( 'test-not-implemented', ),
         charset_on_detect_failure = detextive.DetectFailureActions.Default )
-    result = detextive.detectors.detect_charset_confidence(
+    result = _detectors.detect_charset_confidence(
         b'test content', behaviors = behaviors, default = 'utf-8' )
     assert result.charset == 'utf-8'
     assert result.confidence == 0.0
@@ -223,12 +224,12 @@ def test_250_trial_decode_charset_none_textual_mimetype( ):
     ''' Trial decode pathway when charset=None with textual mimetype. '''
     def charset_none_detector( content, behaviors ):
         return detextive.core.CharsetResult( charset = None, confidence = 0.8 )
-    detextive.detectors.charset_detectors[ 'test-charset-none' ] = (
+    _detectors.charset_detectors[ 'test-charset-none' ] = (
         charset_none_detector )
     behaviors = detextive.Behaviors(
         charset_detectors_order = ( 'test-charset-none', ),
         trial_decode = detextive.BehaviorTristate.Always )
-    result = detextive.detectors.detect_charset_confidence(
+    result = _detectors.detect_charset_confidence(
         b'test content', behaviors = behaviors,
         mimetype = 'text/plain', supplement = 'utf-8' )
     assert result.charset is not None
@@ -240,7 +241,7 @@ def test_260_charset_normalizer_execution( ):
         charset_detectors_order = ( 'charset-normalizer', ) )
     utf8_content = 'Hello, world! 你好世界'.encode( 'utf-8' )
     try:
-        result = detextive.detectors.detect_charset_confidence(
+        result = _detectors.detect_charset_confidence(
             utf8_content, behaviors = behaviors )
         assert result.charset is not None
         assert result.confidence > 0.0
