@@ -25,4 +25,5 @@ Test Plans
    :maxdepth: 2
 
    summary
-   core-functionality
+   v2-test-suite
+   content-patterns

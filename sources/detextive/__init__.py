@@ -23,21 +23,21 @@
 
 from . import __
 
-from .detection import (
-    detect_charset,
-    detect_mimetype,
-    detect_mimetype_and_charset,
-    is_textual_content,
-    is_textual_mimetype,
-)
-from .lineseparators import LineSeparators
+from .charsets import *
+from .core import *
+from .decoders import *
+from .detectors import *
+from .inference import *
+from .lineseparators import *
+from .mimetypes import *
+from .validation import *
 
 # --- BEGIN: Injected by Copier ---
 from . import exceptions
 # --- END: Injected by Copier ---
 
 
-__version__ = '1.1a0'
+__version__ = '2.0'
 
 
 __.immut.finalize_module( __name__, recursive = True )

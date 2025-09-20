@@ -97,6 +97,8 @@ Basic Usage
 
 **MIME Type and Charset Detection**:
 
+Load your content as bytes:
+
 .. code-block:: python
 
     import detextive
@@ -104,17 +106,25 @@ Basic Usage
     with open( 'document.txt', 'rb' ) as file:
         content = file.read( )
 
-    # Individual detection
-    mimetype = detextive.detect_mimetype( content, 'document.txt' )
+You can detect MIME type and charset individually:
+
+.. code-block:: python
+
+    mimetype = detextive.detect_mimetype( content, location = 'document.txt' )
     charset = detextive.detect_charset( content )
 
-    # Combined detection
-    mimetype, charset = detextive.detect_mimetype_and_charset(
-        content, 'document.txt' )
+Or use combined inference for better accuracy:
+
+.. code-block:: python
+
+    mimetype, charset = detextive.infer_mimetype_charset(
+        content, location = 'document.txt' )
     print( "Detected: {mimetype} with {charset} encoding".format(
         mimetype = mimetype, charset = charset ) )
 
 **Line Separator Processing**:
+
+Detect line separators in mixed content:
 
 .. code-block:: python
 
@@ -123,25 +133,56 @@ Basic Usage
     content = 'Line 1\r\nLine 2\rLine 3\n'
     separator = detextive.LineSeparators.detect_bytes( content.encode( ) )
 
-    # Normalize line separators to Python standard.
+Normalize line separators to Python standard:
+
+.. code-block:: python
+
     normalized = detextive.LineSeparators.normalize_universal( content )
 
-    # Convert to specific line separators.
+Convert to platform-specific line separators:
+
+.. code-block:: python
+
     native = detextive.LineSeparators.CRLF.nativize( normalized )
 
 **Content Classification**:
+
+Check if MIME types represent textual content:
 
 .. code-block:: python
 
     import detextive
 
-    # Check if MIME type represents textual content
     detextive.is_textual_mimetype( 'application/json' )  # True
     detextive.is_textual_mimetype( 'image/jpeg' )        # False
 
-    # Validate text content from bytes
-    detextive.is_textual_content( b'Hello world!' )      # True
-    detextive.is_textual_content( b'\x00\x01\x02\x03' )  # False
+Validate that decoded text content is reasonable:
+
+.. code-block:: python
+
+    text = "Hello world!"
+    detextive.is_valid_text( text )      # True
+
+Binary data that might decode as text but isn't valid fails validation:
+
+.. code-block:: python
+
+    binary_as_text = "Config file\x00\x00\x00data"
+    detextive.is_valid_text( binary_as_text )  # False
+
+**High-Level Decoding**:
+
+For complete bytes-to-text processing with automatic charset detection and validation:
+
+.. code-block:: python
+
+    import detextive
+
+    with open( 'document.txt', 'rb' ) as file:
+        content = file.read( )
+
+    text = detextive.decode( content, location = 'document.txt' )
+    print( f"Decoded text: {text}" )
 
 
 Contribution 🤝
@@ -161,7 +202,7 @@ For development guidance and standards, please see the `development guide
 <https://emcd.github.io/python-detextive/stable/sphinx-html/contribution.html#development>`_.
 
 
-`More Flair <https://www.imdb.com/title/tt0151804/characters/nm0431918>`_
+Additional Indicia
 ===============================================================================
 
 .. image:: https://img.shields.io/github/last-commit/emcd/python-detextive

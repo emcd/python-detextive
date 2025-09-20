@@ -1,5 +1,4 @@
 ---
-allowed-tools: [Read, Edit, MultiEdit, LS, Glob, Grep, Bash(hatch --env develop run:*), Bash(git status), Bash(ls:*), Bash(find:*), WebFetch]
 description: Analyze current project state and refresh manually-maintained sections of README.rst while preserving template content
 ---
 
@@ -69,17 +68,19 @@ Analyze the actual project functionality:
 
 ### 3. Content Generation Strategy
 Plan content updates based on project analysis:
-- Draft compelling project description replacing TODO placeholders
+- Draft compelling project description with emoji prefix (e.g., 🔧, 📊, 🌐, 🎯) matching project purpose
 - Identify key features based on actual implementation
-- Plan realistic examples demonstrating current functionality
+- Plan 1-2 concise examples that whet appetites without overwhelming
+- Avoid advanced showcase examples - focus on core value demonstration
 - Consider additional sections (Use Cases, Motivation, Configuration) appropriate for project complexity
 - Ensure content accuracy and professional tone
 
 ### 4. README Content Updates
 Update manual sections while preserving template content:
-- Replace ".. todo:: Provide project description" with accurate description
+- Replace ".. todo:: Provide project description" with emoji-prefixed compelling description
 - Add or update "Key Features ⭐" section with bullet points of actual capabilities
-- Generate "Examples 💡" section with working CLI/API usage examples
+- Generate concise "Examples 💡" section with 1-2 essential usage patterns only
+- Keep examples minimal and focused on core value, not comprehensive showcase
 - Add relevant sections like "Use Cases", "Motivation", or "Configuration" as appropriate
 - Preserve all template-generated sections (badges, installation, contribution, flair)
 
@@ -89,7 +90,8 @@ Verify accuracy of all updated content:
 - Verify feature claims are supported by actual implementation
 - Check that installation instructions match project configuration
 - Ensure RST formatting is correct and consistent
-- Validate that README length is appropriate for project complexity
+- Validate examples are concise and appetite-whetting, not overwhelming
+- Confirm README length is appropriate for project complexity
 
 ### 6. Final Review
 Complete final validation and formatting:

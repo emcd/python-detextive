@@ -62,11 +62,18 @@ The main Python package follows the standard ``sources/`` directory pattern:
     │   │   ├── __init__.py          # Re-exports core utilities
     │   │   ├── imports.py           # External library imports and ddoc alias
     │   │   └── nomina.py            # python-detextive-specific naming constants
+    │   ├── _typedecls/              # Type declaration utilities
     │   ├── __init__.py              # Package entry point
     │   ├── py.typed                 # Type checking marker
-    │   ├── detection.py             # Core detection function implementations
+    │   ├── core.py                  # Core types: Behaviors, Result, CodecSpecifiers
+    │   ├── charsets.py              # Charset decoding and trial decode logic
+    │   ├── decoders.py              # High-level decode() function
+    │   ├── detectors.py             # Core detection functions with confidence
     │   ├── exceptions.py            # Package exception hierarchy
-    │   └── lineseparators.py        # LineSeparators enum and utilities
+    │   ├── inference.py             # Charset and mimetype inference orchestration
+    │   ├── lineseparators.py        # LineSeparators enum and utilities
+    │   ├── mimetypes.py             # MIME type utilities and textuality checking
+    │   └── validation.py            # Text validation profiles and logic
     
 
 All package modules use the standard ``__`` import pattern as documented

@@ -31,10 +31,40 @@ Package ``detextive``
 .. automodule:: detextive
 
 
-Module ``detextive.detection``
+Module ``detextive.charsets``
 -------------------------------------------------------------------------------
 
-.. automodule:: detextive.detection
+.. automodule:: detextive.charsets
+
+
+Module ``detextive.core``
+-------------------------------------------------------------------------------
+
+.. automodule:: detextive.core
+
+
+Module ``detextive.decoders``
+-------------------------------------------------------------------------------
+
+.. automodule:: detextive.decoders
+
+
+Module ``detextive.detectors``
+-------------------------------------------------------------------------------
+
+.. automodule:: detextive.detectors
+
+
+Module ``detextive.exceptions``
+-------------------------------------------------------------------------------
+
+.. automodule:: detextive.exceptions
+
+
+Module ``detextive.inference``
+-------------------------------------------------------------------------------
+
+.. automodule:: detextive.inference
 
 
 Module ``detextive.lineseparators``
@@ -43,7 +73,19 @@ Module ``detextive.lineseparators``
 .. automodule:: detextive.lineseparators
 
 
-Module ``detextive.exceptions``
+Module ``detextive.mimetypes``
 -------------------------------------------------------------------------------
 
-.. automodule:: detextive.exceptions
+.. automodule:: detextive.mimetypes
+
+
+Module ``detextive.nomina``
+-------------------------------------------------------------------------------
+
+.. automodule:: detextive.nomina
+
+
+Module ``detextive.validation``
+-------------------------------------------------------------------------------
+
+.. automodule:: detextive.validation

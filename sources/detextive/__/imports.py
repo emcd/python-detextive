@@ -23,17 +23,21 @@
 # ruff: noqa: F401
 
 import collections.abc as   cabc
+import                      codecs
+import dataclasses as       dcls
 import                      enum
+import                      locale
 import                      mimetypes
 import                      os
+import                      sys
 import                      types
+import                      unicodedata
 
 from pathlib import Path
 
-import                      chardet
+import accretive as         accret
 import dynadoc as           ddoc
 import frigid as            immut
-import                      puremagic
 import typing_extensions as typx
 
 from absence import Absential, absent, is_absent

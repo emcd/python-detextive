@@ -1,0 +1,1 @@
+Platform: Improve Windows compatibility by using python-magic-bin to avoid Cygwin buffer issues and handle MIME type detection differences.

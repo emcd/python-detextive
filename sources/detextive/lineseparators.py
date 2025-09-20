@@ -35,7 +35,7 @@ class LineSeparators( __.enum.Enum ):
     def detect_bytes(
         selfclass,
         content: __.cabc.Sequence[ int ] | bytes,
-        limit: int = 1024
+        limit: int = 1024,
     ) -> __.typx.Optional[ 'LineSeparators' ]:
         ''' Detects line separator from byte content sample.
 
@@ -49,6 +49,28 @@ class LineSeparators( __.enum.Enum ):
                     if found_cr: return selfclass.CR
                     found_cr = True
                 case 0xa:  # linefeed
+                    if found_cr: return selfclass.CRLF
+                    return selfclass.LF
+                case _:
+                    if found_cr: return selfclass.CR
+        return None
+
+    @classmethod
+    def detect_text(
+        selfclass, text: str, limit: int = 1024
+    ) -> __.typx.Optional[ 'LineSeparators' ]:
+        ''' Detects line separator from text (Unicode string).
+
+            Returns detected LineSeparators enum member or None.
+        '''
+        sample = text[ : limit ]
+        found_cr = False
+        for c in sample:
+            match c:
+                case '\r':  # carriage return
+                    if found_cr: return selfclass.CR
+                    found_cr = True
+                case '\n':  # linefeed
                     if found_cr: return selfclass.CRLF
                     return selfclass.LF
                 case _:

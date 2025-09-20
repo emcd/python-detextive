@@ -25,7 +25,11 @@ Architectural Decision Records
    :maxdepth: 2
 
    001-faithful-functional-reproduction
-   002-deferred-extensibility-architecture
+   002-detector-registry-architecture
+   003-context-aware-detection-v2
+   004-error-class-provider-pattern
+   005-validation-behavior-configuration
+   006-default-return-behavior-pattern
 
 For ADR format and guidance, see the `architecture documentation guide
 <https://emcd.github.io/python-project-common/stable/sphinx-html/common/architecture.html>`_.

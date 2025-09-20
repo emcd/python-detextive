@@ -18,18 +18,32 @@
 #============================================================================#
 
 
-''' Assert correct function of common imports. '''
+''' Assert correct function of internal utilities and base functionality. '''
 
 
 import pytest
 
-from . import PACKAGE_NAME, cache_import_module
+from . import __
 
+
+# Basic Tests (000-099): Import verification and module accessibility
+# ========================================================================
 
 @pytest.mark.parametrize(
     'module_name', ( 'cabc', 'types', 'typx' )
 )
-def test_100_exports( module_name ):
-    ''' Module exports expected names. '''
-    module = cache_import_module( f"{PACKAGE_NAME}.__.imports" )
+def test_000_imports_module_exports( module_name ):
+    ''' Imports module exports expected common type names. '''
+    module = __.cache_import_module( f"{__.PACKAGE_NAME}.__.imports" )
     assert hasattr( module, module_name )
+
+
+# Nomina Module Tests (100-199): Public identifier utilities
+# ========================================================================
+
+def test_100_nomina_is_public_identifier( ):
+    ''' Nomina module correctly identifies public identifiers. '''
+    nomina = __.cache_import_module( f"{__.PACKAGE_NAME}.__.nomina" )
+    assert nomina.is_public_identifier( 'public_name' ) is True
+    assert nomina.is_public_identifier( '_private_name' ) is False
+    assert nomina.is_public_identifier( '__dunder__' ) is False

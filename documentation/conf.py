@@ -131,6 +131,10 @@ autodoc_use_type_comments = False
 # https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#configuration
 
 intersphinx_mapping = {
+    'accretive': (
+        'https://emcd.github.io/python-accretive/stable/sphinx-html', None),
+    'frigid': (
+        'https://emcd.github.io/python-frigid/stable/sphinx-html', None),
     'python': (
         'https://docs.python.org/3', None),
     'typing-extensions': (

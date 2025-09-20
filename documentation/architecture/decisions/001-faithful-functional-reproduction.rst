@@ -24,7 +24,12 @@
 Status
 ===============================================================================
 
-Accepted
+Superseded
+
+**Superseded By:** Version 2.0 implementation evolved significantly beyond faithful 
+reproduction. The sophisticated behavior configuration, context-aware detection, 
+and enhanced function interfaces represent a new architectural paradigm that 
+transcends simple consolidation of existing implementations.
 
 Context
 ===============================================================================
@@ -59,16 +64,13 @@ without architectural changes.
 
 Core components:
 
-**Direct Function Consolidation:**
+**Direct Function Consolidation (2.0 Implementation):**
 
-* ``detect_charset(content)`` - Consolidates charset detection with UTF-8 bias
-* ``detect_mimetype(content, location)`` - Consolidates MIME detection with 
-  fallback chains
-* ``detect_mimetype_and_charset(content, location, *, mimetype=absent, 
-  charset=absent)`` - Preserves complex parameter handling from mimeogram
+* ``detect_charset(content, /, *, behaviors=default, default=absent, mimetype=absent, location=absent)`` - Enhanced charset detection with configurable behaviors
+* ``detect_mimetype(content, /, *, behaviors=default, charset=absent, location=absent)`` - Enhanced MIME detection with context awareness
+* ``infer_mimetype_charset(content, /, *, behaviors=default, http_content_type=absent, location=absent, charset_default=absent, mimetype_default=absent)`` - Comprehensive inference with HTTP context support
 * ``is_textual_mimetype(mimetype)`` - Consolidates textual MIME validation
-* ``is_reasonable_text_content(content)`` - Preserves heuristic validation
-* ``LineSeparators`` enum - Direct migration from mimeogram implementation
+* ``LineSeparators`` enum - Enhanced line separator handling
 
 **Implementation Strategy:**
 * Copy proven logic from mimeogram acquirers.py and parts.py  

@@ -24,4 +24,6 @@ Designs
 .. toctree::
    :maxdepth: 2
 
-   001-python-api-design
+   001-python-api
+   002-detector-registry
+   003-default-return-behavior

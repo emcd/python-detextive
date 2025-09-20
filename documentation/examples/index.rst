@@ -21,7 +21,13 @@
 Examples
 *******************************************************************************
 
+This section provides comprehensive examples demonstrating detextive's text
+detection and processing capabilities, progressing from basic usage to
+advanced configuration and specialized scenarios.
+
 .. toctree::
    :maxdepth: 2
 
-   main
+   basic-usage
+   advanced-configuration
+   line-separators
