@@ -129,34 +129,14 @@ def test_175_content_decode_failure_with_path_location( ):
     assert str( exc ) == expected
 
 
-# def test_116_charset_detect_failure_absential_location( ):
-#     ''' CharsetDetectFailure handles absential location correctly. '''
-#     pass
-
-
-# def test_136_charset_infer_failure_absential_location( ):
-#     ''' CharsetInferFailure handles absential location correctly. '''
-#     pass
-
-
-# def test_156_mimetype_detect_failure_absential_location( ):
-#     ''' MimetypeDetectFailure handles absential location correctly. '''
-#     pass
-
-
-# def test_176_content_decode_failure_exception_chaining( ):
-#     ''' ContentDecodeFailure preserves exception chaining correctly. '''
-#     pass
-
-
-def test_175_content_decode_impossibility_without_location( ):
+def test_177_content_decode_impossibility_without_location( ):
     ''' ContentDecodeImpossibility constructs correctly without location. '''
     exc = detextive.exceptions.ContentDecodeImpossibility( )
     expected = "Could not decode probable non-textual content."
     assert str( exc ) == expected
 
 
-def test_176_content_decode_impossibility_with_string_location( ):
+def test_178_content_decode_impossibility_with_string_location( ):
     ''' ContentDecodeImpossibility constructs with string location. '''
     exc = detextive.exceptions.ContentDecodeImpossibility(
         location = 'test.bin' )
@@ -164,7 +144,7 @@ def test_176_content_decode_impossibility_with_string_location( ):
     assert str( exc ) == expected
 
 
-def test_177_content_decode_impossibility_with_path_location( ):
+def test_179_content_decode_impossibility_with_path_location( ):
     ''' ContentDecodeImpossibility constructs correctly with Path location. '''
     exc = detextive.exceptions.ContentDecodeImpossibility(
         location = Path( 'data/binary.dat' ) )
@@ -173,35 +153,43 @@ def test_177_content_decode_impossibility_with_path_location( ):
     assert str( exc ) == expected
 
 
-def test_178_mimetype_infer_failure_without_location( ):
+def test_180_exception_hierarchy_inheritance( ):
+    ''' Exception hierarchy follows expected inheritance pattern. '''
+    assert issubclass(
+        detextive.exceptions.Omnierror, detextive.exceptions.Omniexception )
+    assert issubclass( detextive.exceptions.Omniexception, BaseException )
+    assert issubclass( detextive.exceptions.Omnierror, Exception )
+
+
+def test_181_mimetype_infer_failure_without_location( ):
     ''' MimetypeInferFailure constructs correctly without location. '''
     exc = detextive.exceptions.MimetypeInferFailure( )
     expected = "Could not infer MIME type for content."
     assert str( exc ) == expected
 
 
-def test_179_mimetype_infer_failure_with_location( ):
+def test_182_mimetype_infer_failure_with_location( ):
     ''' MimetypeInferFailure constructs correctly with location. '''
     exc = detextive.exceptions.MimetypeInferFailure( location = 'test.dat' )
     expected = "Could not infer MIME type for content at 'test.dat'."
     assert str( exc ) == expected
 
 
-def test_180_text_invalidity_with_location( ):
+def test_183_text_invalidity_with_location( ):
     ''' TextInvalidity constructs correctly with location. '''
     exc = detextive.exceptions.TextInvalidity( location = 'invalid.txt' )
     expected = "Text is not valid at 'invalid.txt'."
     assert str( exc ) == expected
 
 
-def test_181_textual_mimetype_invalidity_without_location( ):
+def test_184_textual_mimetype_invalidity_without_location( ):
     ''' TextualMimetypeInvalidity constructs correctly without location. '''
     exc = detextive.exceptions.TextualMimetypeInvalidity( 'image/png' )
     expected = "MIME type '{mimetype}' is not textual for content."
     assert str( exc ) == expected
 
 
-def test_182_textual_mimetype_invalidity_with_location( ):
+def test_187_textual_mimetype_invalidity_with_location( ):
     ''' TextualMimetypeInvalidity constructs correctly with location. '''
     exc = detextive.exceptions.TextualMimetypeInvalidity(
         'application/pdf', location = 'document.pdf' )
@@ -209,24 +197,6 @@ def test_182_textual_mimetype_invalidity_with_location( ):
         "MIME type '{mimetype}' is not textual for content "
         "at 'document.pdf'." )
     assert str( exc ) == expected
-
-
-# def test_185_multiple_inheritance_builtin_exceptions( ):
-#     ''' Exception classes properly inherit from built-in types. '''
-#     pass
-
-
-# def test_186_exception_chaining_behavior( ):
-#     ''' Exception chaining with 'from' clauses works correctly. '''
-#     pass
-
-
-def test_180_exception_hierarchy_inheritance( ):
-    ''' Exception hierarchy follows expected inheritance pattern. '''
-    assert issubclass(
-        detextive.exceptions.Omnierror, detextive.exceptions.Omniexception )
-    assert issubclass( detextive.exceptions.Omniexception, BaseException )
-    assert issubclass( detextive.exceptions.Omnierror, Exception )
 
 
 def test_190_package_exception_catching( ):

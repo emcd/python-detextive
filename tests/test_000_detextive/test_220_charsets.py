@@ -30,12 +30,27 @@ from .patterns import (
 )
 
 
+#============================================================================#
+# Basic Tests (000-099): Module import verification
+#============================================================================#
+
 def test_000_imports( ):
     ''' Charset functions are accessible from main module. '''
     assert hasattr( detextive, 'charsets' )
 
 
-def test_100_attempt_decodes_os_default_codec( ):
+#============================================================================#
+# OS Charset Detection Tests (100-199): discover_os_charset_default function
+#============================================================================#
+
+def test_100_discover_os_charset_default( ):
+    ''' OS charset detection returns valid charset name. '''
+    charset = detextive.charsets.discover_os_charset_default( )
+    assert isinstance( charset, str )
+    assert len( charset ) > 0
+
+
+def test_110_attempt_decodes_os_default_codec( ):
     ''' Attempt decodes uses OS default codec when specified. '''
     behaviors = detextive.Behaviors(
         trial_codecs = ( detextive.CodecSpecifiers.OsDefault, ) )
@@ -45,7 +60,7 @@ def test_100_attempt_decodes_os_default_codec( ):
     assert result.charset is not None
 
 
-def test_110_attempt_decodes_python_default_codec( ):
+def test_120_attempt_decodes_python_default_codec( ):
     ''' Attempt decodes uses Python default codec when specified. '''
     behaviors = detextive.Behaviors(
         trial_codecs = ( detextive.CodecSpecifiers.PythonDefault, ) )
@@ -55,8 +70,32 @@ def test_110_attempt_decodes_python_default_codec( ):
     assert result.charset is not None
 
 
-def test_120_attempt_decodes_user_supplement_codec( ):
-    ''' Attempt decodes uses user supplement codec when provided. '''
+#============================================================================#
+# Codec Resolution Tests (200-299): CodecSpecifiers enum handling
+#============================================================================#
+
+def test_200_codec_specifiers_os_default( ):
+    ''' OsDefault codec specifier behavior in attempt_decodes. '''
+    behaviors = detextive.Behaviors(
+        trial_codecs = ( detextive.CodecSpecifiers.OsDefault, ) )
+    text, result = detextive.charsets.attempt_decodes(
+        UTF8_BASIC, behaviors = behaviors )
+    assert isinstance( text, str )
+    assert result.charset is not None
+
+
+def test_210_codec_specifiers_python_default( ):
+    ''' PythonDefault codec specifier behavior in attempt_decodes. '''
+    behaviors = detextive.Behaviors(
+        trial_codecs = ( detextive.CodecSpecifiers.PythonDefault, ) )
+    text, result = detextive.charsets.attempt_decodes(
+        UTF8_BASIC, behaviors = behaviors )
+    assert isinstance( text, str )
+    assert result.charset is not None
+
+
+def test_220_codec_specifiers_user_supplement( ):
+    ''' UserSupplement codec specifier behavior with supplement parameter. '''
     behaviors = detextive.Behaviors(
         trial_codecs = ( detextive.CodecSpecifiers.UserSupplement, ) )
     text, result = detextive.charsets.attempt_decodes(
@@ -65,8 +104,8 @@ def test_120_attempt_decodes_user_supplement_codec( ):
     assert result.charset == 'utf-8'
 
 
-def test_130_attempt_decodes_string_codec( ):
-    ''' Attempt decodes uses explicit string codec. '''
+def test_230_codec_specifiers_string_codec( ):
+    ''' String codec names are handled directly in attempt_decodes. '''
     behaviors = detextive.Behaviors( trial_codecs = ( 'ascii', ) )
     text, result = detextive.charsets.attempt_decodes(
         UTF8_BASIC, behaviors = behaviors )
@@ -74,22 +113,7 @@ def test_130_attempt_decodes_string_codec( ):
     assert result.charset == 'ascii'
 
 
-def test_200_trial_decode_failure_without_inference( ):
-    ''' Trial decode raises failure when inference is absent. '''
-    content = b'Hello, world!'
-    behaviors = detextive.Behaviors(
-        trial_decode = detextive.BehaviorTristate.Never )
-    with pytest.raises( detextive.exceptions.CharsetDetectFailure ):
-        detextive.charsets.trial_decode_as_confident(
-            content, behaviors = behaviors, confidence = 0.5 )
-
-
-# def test_210_codec_specifiers_from_inference( ):
-#     ''' FromInference codec specifier behaves correctly. '''
-#     pass
-
-
-def test_220_invalid_codec_type_handling( ):
+def test_240_invalid_codec_type_handling( ):
     ''' Invalid codec types are skipped correctly. '''
     behaviors = detextive.Behaviors(
         trial_codecs = ( 42, 'utf-8' ),  # 42 is not str | CodecSpecifiers
@@ -101,51 +125,15 @@ def test_220_invalid_codec_type_handling( ):
     assert result.charset == 'utf-8'
 
 
-# def test_300_attempt_decodes_valid_charset_inference( ):
-#     ''' Valid charset inference produces successful decoding attempts. '''
-#     pass
+#============================================================================#
+# Trial Decode Tests (300-399): attempt_decodes and trial_decode_as_confident
+#============================================================================#
 
-
-# def test_310_attempt_decodes_malformed_content( ):
-#     ''' Malformed content is handled during decoding attempts. '''
-#     pass
-
-
-# def test_320_attempt_decodes_unsupported_charset( ):
-#     ''' Unsupported charset names are handled during attempts. '''
-#     pass
-
-
-# def test_330_trial_decode_as_confident_behavior( ):
-#     ''' Trial decoding with confidence behaves correctly. '''
-#     pass
-
-
-# def test_340_confidence_calculation_trial_decoding( ):
-#     ''' Confidence calculation during trial decoding works correctly. '''
-#     pass
-
-
-# def test_350_exception_handling_decode_failures( ):
-#     ''' Decode failures are handled with appropriate exceptions. '''
-#     pass
-
-
-# def test_400_ascii_to_utf8_promotion( ):
-#     ''' ASCII charsets are promoted to UTF-8 correctly. '''
-#     pass
-
-
-# def test_410_utf8_to_utf8_sig_promotion( ):
-#     ''' UTF-8 charsets are promoted to UTF-8-sig when appropriate. '''
-#     pass
-
-
-# def test_420_custom_promotion_mapping( ):
-#     ''' Custom promotion mappings are handled correctly. '''
-#     pass
-
-
-# def test_430_promotion_precedence_conflict_resolution( ):
-#     ''' Promotion conflicts are resolved with correct precedence. '''
-#     pass
+def test_300_trial_decode_failure_without_inference( ):
+    ''' Trial decode raises failure when inference is absent. '''
+    content = b'Hello, world!'
+    behaviors = detextive.Behaviors(
+        trial_decode = detextive.BehaviorTristate.Never )
+    with pytest.raises( detextive.exceptions.CharsetDetectFailure ):
+        detextive.charsets.trial_decode_as_confident(
+            content, behaviors = behaviors, confidence = 0.5 )

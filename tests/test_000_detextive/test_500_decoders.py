@@ -30,10 +30,14 @@ from .patterns import (
 )
 
 
+# Basic Tests (000-099): Module import and function accessibility
+
 def test_000_imports( ):
     ''' Decode function is accessible from main module. '''
     assert hasattr( detextive, 'decode' )
 
+
+# High-Level Decode Tests (100-199): decode function with various parameters
 
 def test_100_decode_inference_failure_fallback_to_utf8_sig( ):
     ''' Inference failure falls back to utf-8-sig with confidence. '''
@@ -62,32 +66,6 @@ def test_110_decode_inference_failure_fallback_to_supplement( ):
     assert result == 'Hello, world!'
 
 
-def test_200_decode_empty_content_returns_empty_string( ):
-    ''' Empty content decoding returns empty string immediately. '''
-    result = detextive.decode( EMPTY_CONTENT )
-    assert result == ''
-
-
-# def test_150_decode_valid_content_detection( ):
-#     ''' Valid content is decoded correctly with proper detection. '''
-#     pass
-
-
-# def test_160_decode_malformed_content( ):
-#     ''' Malformed content is handled appropriately during decoding. '''
-#     pass
-
-
-# def test_170_decode_custom_charset_default( ):
-#     ''' Custom charset defaults are applied correctly during decoding. '''
-#     pass
-
-
-# def test_180_decode_custom_mimetype_default( ):
-#     ''' Custom MIME type defaults are applied correctly during decoding. '''
-#     pass
-
-
 def test_190_decode_validation_profile_parameters( ):
     ''' Validation profile parameters are applied correctly. '''
     content = b'\x00\x01\x02\xff'  # Binary content that fails text validation
@@ -99,65 +77,15 @@ def test_190_decode_validation_profile_parameters( ):
     assert text is not None  # Should succeed when validation is disabled
 
 
-# def test_210_custom_default_values( ):
-#     ''' Custom default values are applied correctly during decoding. '''
-#     pass
+# Default Parameter Tests (200-299): Custom default values and behaviors
+
+def test_200_decode_empty_content_returns_empty_string( ):
+    ''' Empty content decoding returns empty string immediately. '''
+    result = detextive.decode( EMPTY_CONTENT )
+    assert result == ''
 
 
-# def test_220_default_behavior_detection_failures( ):
-#     ''' Detection failures trigger appropriate default behavior. '''
-#     pass
-
-
-# def test_230_graceful_degradation_default_parameters( ):
-#     ''' Graceful degradation operates correctly with default parameters. '''
-#     pass
-
-
-# def test_240_default_parameter_precedence_validation( ):
-#     ''' Default parameter precedence is validated correctly. '''
-#     pass
-
-
-# def test_250_error_handling_insufficient_defaults( ):
-#     ''' Insufficient defaults trigger appropriate error handling. '''
-#     pass
-
-
-# def test_300_complete_detection_validation_decode_pipeline( ):
-#     ''' Complete detection to decode pipeline operates correctly. '''
-#     pass
-
-
-# def test_310_http_content_type_integration( ):
-#     ''' HTTP Content-Type information integrates correctly. '''
-#     pass
-
-
-# def test_320_location_context_usage( ):
-#     ''' Location context is used appropriately during decoding. '''
-#     pass
-
-
-# def test_330_supplement_parameter_propagation( ):
-#     ''' Supplement parameters propagate correctly through the pipeline. '''
-#     pass
-
-
-# def test_340_behavior_configuration_effects( ):
-#     ''' Behavior configuration affects decoding correctly. '''
-#     pass
-
-
-# def test_400_content_decode_failure_scenarios( ):
-#     ''' Content decode failures trigger appropriate exception scenarios. '''
-#     pass
-
-
-# def test_410_decode_error_recovery_fallback_charsets( ):
-#     ''' Decode errors trigger recovery with fallback charsets. '''
-#     pass
-
+# Error Handling Tests (400-499): Exception scenarios and recovery
 
 def test_420_validation_failure_handling( ):
     ''' Validation failures are handled correctly during decoding. '''
@@ -172,59 +100,22 @@ def test_420_validation_failure_handling( ):
 
 def test_430_content_decode_impossibility( ):
     ''' ContentDecodeImpossibility with charset=None and non-textual type. '''
-    # Test line 77->exit: charset_result.charset=None + non-textual mimetype
-
     # Use a custom detector that returns charset=None
     def charset_none_detector( content, behaviors ):
         return detextive.core.CharsetResult( charset = None, confidence = 0.8 )
-
     def mimetype_png_detector( content, behaviors ):
         return detextive.core.MimetypeResult(
             mimetype = 'image/png', confidence = 0.8 )
-
     # Register custom detectors
     detextive.detectors.charset_detectors[ 'test-decode-charset-none' ] = (
         charset_none_detector )
     detextive.detectors.mimetype_detectors[ 'test-decode-mimetype-png' ] = (
         mimetype_png_detector )
-
     content = b'some binary data'
-
     # Configure behaviors to use only our custom detectors
     behaviors = detextive.Behaviors(
         charset_detectors_order = ( 'test-decode-charset-none', ),
         mimetype_detectors_order = ( 'test-decode-mimetype-png', ) )
-
-    # This should trigger ContentDecodeImpossibility at line 77
+    # This should trigger ContentDecodeImpossibility
     with pytest.raises( detextive.exceptions.ContentDecodeImpossibility ):
         detextive.decode( content, behaviors = behaviors )
-
-
-# def test_430_exception_chaining_decode_failures( ):
-#     ''' Decode failures chain exceptions correctly. '''
-#     pass
-
-
-# def test_440_location_context_error_messages( ):
-#     ''' Location context appears correctly in error messages. '''
-#     pass
-
-
-# def test_500_large_content_decoding_performance( ):
-#     ''' Large content maintains acceptable decoding performance. '''
-#     pass
-
-
-# def test_510_memory_usage_large_content( ):
-#     ''' Large content decoding uses acceptable memory amounts. '''
-#     pass
-
-
-# def test_520_decode_timeout_behavior( ):
-#     ''' Decode timeout behavior operates correctly when applicable. '''
-#     pass
-
-
-# def test_530_streaming_decode_considerations( ):
-#     ''' Streaming decode considerations are handled appropriately. '''
-#     pass

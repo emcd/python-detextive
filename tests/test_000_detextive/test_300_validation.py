@@ -24,10 +24,14 @@
 import detextive
 
 
+# Basic Tests (000-099): Module import and function accessibility
+
 def test_000_imports( ):
     ''' Validation functions are accessible from main module. '''
     assert hasattr( detextive, 'validation' )
 
+
+# Text Validation Profile Tests (100-199): Default and custom profile behavior
 
 def test_100_is_valid_text_rejectable_families_edge_case( ):
     ''' Unicode category checking in rejectable families. '''
@@ -41,115 +45,20 @@ def test_100_is_valid_text_rejectable_families_edge_case( ):
 
 def test_110_validation_sample_quantity_none( ):
     ''' Validation with sample_quantity=None processes entire text. '''
-    # Test line 171->173: profile.sample_quantity is None, skip min() call
     profile = detextive.validation.Profile(
-        sample_quantity = None )  # This should skip the min() assignment
+        sample_quantity = None )
     text = 'Hello World! This is a test text.'
     result = detextive.validation.is_valid_text( text, profile )
     assert isinstance( result, bool )
-    assert result is True  # Normal text should be valid
+    assert result is True
 
 
 def test_120_validation_non_printable_unicode_category( ):
     ''' Validation with non-printable Unicode categories skips elif branch. '''
-    # Test line 194->196: character category not in _HYPERCATEGORIES_PRINTABLE
-    # Use a control character (category 'Cc') which is not printable
-    # \x00 is NULL character with category 'Cc', first letter 'C' not printable
     text = 'Hello\x00World'
     profile = detextive.validation.Profile(
-        acceptable_characters = frozenset( ),  # Don't accept control chars
-        rejectable_families = frozenset( ),    # Don't reject by family
-        rejectables_ratio_max = 0.5 )          # Allow some rejectables
+        acceptable_characters = frozenset( ),
+        rejectable_families = frozenset( ),
+        rejectables_ratio_max = 0.5 )
     result = detextive.validation.is_valid_text( text, profile )
     assert isinstance( result, bool )
-    # Result depends on validation logic, just ensure branch is hit
-
-
-# def test_200_default_profile_behavior( ):
-#     ''' Default validation profile behaves correctly. '''
-#     pass
-
-
-# def test_210_custom_profile_creation( ):
-#     ''' Custom validation profiles are created and applied correctly. '''
-#     pass
-
-
-# def test_130_profile_parameter_validation( ):
-#     ''' Validation profile parameters are validated correctly. '''
-#     pass
-
-
-# def test_140_immutable_profile_handling( ):
-#     ''' Immutable validation profiles are handled correctly. '''
-#     pass
-
-
-# def test_200_is_valid_text_normal_content( ):
-#     ''' Normal textual content validates as acceptable text. '''
-#     pass
-
-
-# def test_210_is_valid_text_control_character_heavy( ):
-#     ''' Control character heavy content is handled correctly. '''
-#     pass
-
-
-# def test_220_is_valid_text_whitespace_only( ):
-#     ''' Whitespace-only content is validated appropriately. '''
-#     pass
-
-
-# def test_230_is_valid_text_binary_data_rejection( ):
-#     ''' Binary data is rejected during text validation. '''
-#     pass
-
-
-# def test_240_unicode_normalization_considerations( ):
-#     ''' Unicode normalization is considered during validation. '''
-#     pass
-
-
-# def test_250_very_long_text_validation_performance( ):
-#     ''' Very long text maintains acceptable validation performance. '''
-#     pass
-
-
-# def test_300_bom_detection_handling( ):
-#     ''' BOM sequences are detected and handled during validation. '''
-#     pass
-
-
-# def test_310_utf8_utf16_utf32_bom_recognition( ):
-#     ''' Unicode BOMs are recognized correctly across encodings. '''
-#     pass
-
-
-# def test_320_bom_removal_validation_process( ):
-#     ''' BOM sequences are removed during validation processing. '''
-#     pass
-
-
-# def test_330_invalid_bom_sequence_handling( ):
-#     ''' Invalid BOM sequences are handled appropriately. '''
-#     pass
-
-
-# def test_400_character_ratio_calculations_boundaries( ):
-#     ''' Character ratio calculations work correctly at boundaries. '''
-#     pass
-
-
-# def test_410_threshold_validation_ratio_limits( ):
-#     ''' Ratio threshold validation operates within proper limits. '''
-#     pass
-
-
-# def test_420_edge_cases_minimal_content( ):
-#     ''' Minimal content edge cases are handled correctly. '''
-#     pass
-
-
-# def test_430_ratio_calculation_various_charsets( ):
-#     ''' Ratio calculations work across various character sets. '''
-#     pass
