@@ -107,6 +107,7 @@ python = '3.10'
 description = ''' Development environment. '''
 dependencies = [
   'Jinja2',
+  'click < 8.3.0',  # Pin Click for stability (8.3.0 has known compatibility issues)
   'coverage[toml]',
   'detextive[all]',
   'furo',
