@@ -1,0 +1,1 @@
+API: Add comprehensive type aliases for function arguments with PEP 593 annotations for improved API documentation and semantic clarity.

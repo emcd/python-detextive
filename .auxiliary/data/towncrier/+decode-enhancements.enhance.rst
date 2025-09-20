@@ -1,0 +1,1 @@
+API: Enhance ``decode()`` function with intelligent MIME type validation, graceful error fallback, and single-pass decoding efficiency.
