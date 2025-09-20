@@ -1,1 +1,0 @@
-API: Add confidence-based detection with new functions ``detect_charset_confidence()``, ``detect_mimetype_confidence()``, ``infer_charset_confidence()``, and ``infer_mimetype_charset_confidence()`` returning Result objects with confidence scores.

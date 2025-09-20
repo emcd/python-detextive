@@ -1,1 +1,0 @@
-API: Rename ``detect_mimetype_and_charset()`` to ``infer_mimetype_charset()`` and ``is_textual_content()`` to ``is_valid_text()`` for improved clarity.
