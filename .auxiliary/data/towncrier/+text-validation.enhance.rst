@@ -1,1 +1,0 @@
-API: Implement comprehensive text validation system with Unicode-aware profiles including TEXTUAL, TERMINAL, TERMINAL_ANSI, and PRINTER configurations.
