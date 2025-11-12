@@ -169,20 +169,28 @@ def detect_mimetype_confidence(
     ''' Detects MIME type candidates with confidence scores. '''
     if b'' == content:
         return _MimetypeResult( mimetype = 'text/plain', confidence = 1.0 )
+    result: _MimetypeResult | __.types.NotImplementedType = NotImplemented
     for name in behaviors.mimetype_detectors_order:
         detector = mimetype_detectors.get( name )
         if detector is None: continue
         result = detector( content, behaviors )
-        if result is NotImplemented: continue
-        return result
-    if __.is_absent( charset ):
-        match behaviors.mimetype_on_detect_failure:
-            case _DetectFailureActions.Default:
-                return _MimetypeResult( mimetype = default, confidence = 0.0 )
-            case _:
-                raise _exceptions.MimetypeDetectFailure( location = location )
-    return _detect_mimetype_from_charset(
-        content, behaviors, charset, default = default, location = location )
+        if result is not NotImplemented: break
+    try_charset = (
+        result is NotImplemented or (
+                not _mimetypes.is_textual_mimetype( result.mimetype )
+            and result.confidence < behaviors.trial_decode_confidence ) )
+    if try_charset and not __.is_absent( charset ):
+        result_from_charset = _detect_mimetype_from_charset(
+            content, behaviors, charset,
+            default = default, location = location )
+        if result_from_charset.mimetype == 'text/plain':
+            return result_from_charset
+    if result is not NotImplemented: return result
+    match behaviors.mimetype_on_detect_failure:
+        case _DetectFailureActions.Default:
+            return _MimetypeResult( mimetype = default, confidence = 0.0 )
+        case _:
+            raise _exceptions.MimetypeDetectFailure( location = location )
 
 
 def _confirm_charset_detection( # noqa: PLR0911

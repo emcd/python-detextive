@@ -212,7 +212,7 @@ Apply validation profiles during high-level decoding:
     >>> text
     'Text for terminal display'
 
-Validation failures raise appropriate exceptions:
+Validation failures raise appropriate exceptions. Note that we provide ``http_content_type`` here to bypass MIME type detection, which would reject this content as binary before text validation runs:
 
 .. doctest:: AdvancedConfiguration
 

@@ -66,7 +66,7 @@ TEXT_XML = b'<?xml version="1.0"?><root><element>value</element></root>'
 # JSON Content
 JSON_SIMPLE = b'{"key": "value", "number": 42, "array": [1, 2, 3]}'
 JSON_UNICODE = (
-    b'{"message": "\u00c9\u00e9\u00e8\u00e0", "emoji": "\ud83d\udc4b"}' )
+    rb'{"message": "\u00c9\u00e9\u00e8\u00e0", "emoji": "\ud83d\udc4b"}' )
 JSON_NESTED = b'{"outer": {"inner": {"deep": "value"}}, "list": [{"item": 1}]}'
 
 # Binary Content with Magic Bytes
