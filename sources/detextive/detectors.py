@@ -37,6 +37,7 @@ from .core import ( # isort: skip
     Behaviors as                    _Behaviors,
     BehaviorsArgument as            _BehaviorsArgument,
     CharsetResult as                _CharsetResult,
+    CodecSpecifiers as              _CodecSpecifiers,
     DetectFailureActions as         _DetectFailureActions,
     MimetypeResult as               _MimetypeResult,
 )
@@ -180,8 +181,11 @@ def detect_mimetype_confidence(
                 not _mimetypes.is_textual_mimetype( result.mimetype )
             and result.confidence < behaviors.trial_decode_confidence ) )
     if try_charset and not __.is_absent( charset ):
+        # For charset validation, only try specified charset (no OS default)
+        behaviors_charset_only = __.dcls.replace(
+            behaviors, trial_codecs = ( _CodecSpecifiers.FromInference, ) )
         result_from_charset = _detect_mimetype_from_charset(
-            content, behaviors, charset,
+            content, behaviors_charset_only, charset,
             default = default, location = location )
         if result_from_charset.mimetype == 'text/plain':
             return result_from_charset
