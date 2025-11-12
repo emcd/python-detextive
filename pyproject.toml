@@ -131,6 +131,7 @@ post-install-commands = [
   # --- END: Injected by Copier ---
 ]
 [tool.hatch.envs.develop.env-vars]
+PYTHONIOENCODING = 'utf-8' # TODO: Only for coverage/doctest.
 PYTHONUNBUFFERED = 'TRUE' # TODO: Only for coverage/pytest.
 # --- BEGIN: Injected by Copier ---
 # --- END: Injected by Copier ---
