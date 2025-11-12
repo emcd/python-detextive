@@ -75,12 +75,10 @@ def decode( # noqa: PLR0913
             charset = charset, confidence = confidence )
     else:
         if (    not _mimetypes.is_textual_mimetype( mimetype_result.mimetype )
-            and (   charset_result.charset is None
-                or  charset_result.confidence
-                    < behaviors.trial_decode_confidence )
+            and charset_result.charset is None
         ): raise _exceptions.ContentDecodeImpossibility( location = location )
-        # When any reasonable doubt exists and we have sufficient confidence in
-        # information that we have gathered, we perform trial decodes.
+        # When any reasonable doubt exists, we attempt decodes.
+        # Trial decodes and text validation is the only way to be certain.
     text, result = _charsets.attempt_decodes(
         content,
         behaviors = behaviors,
