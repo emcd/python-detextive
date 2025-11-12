@@ -25,12 +25,7 @@ from . import __
 from . import nomina as _nomina
 
 
-class Omniexception(
-    __.immut.Object, BaseException,
-    instances_mutables = ( '__cause__', '__context__' ),
-    instances_visibles = (
-        '__cause__', '__context__', __.is_public_identifier ),
-):
+class Omniexception( __.immut.exceptions.Omniexception ):
     ''' Base for all exceptions raised by package API. '''
 
 

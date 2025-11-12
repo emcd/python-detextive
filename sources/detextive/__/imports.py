@@ -36,11 +36,13 @@ import                      unicodedata
 from pathlib import Path
 
 import accretive as         accret
-import dynadoc as           ddoc
-import frigid as            immut
 import typing_extensions as typx
 
-from absence import Absential, absent, is_absent
+# --- BEGIN: Injected by Copier ---
+import dynadoc as           ddoc
+import frigid as            immut
+# --- END: Injected by Copier ---
 
 # --- BEGIN: Injected by Copier ---
+from absence import Absential, absent, is_absent
 # --- END: Injected by Copier ---
