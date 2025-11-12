@@ -136,3 +136,16 @@ def test_300_trial_decode_failure_without_inference( ):
     with pytest.raises( detextive.exceptions.CharsetDetectFailure ):
         _charsets.trial_decode_as_confident(
             content, behaviors = behaviors, confidence = 0.5 )
+
+
+def test_310_from_inference_codec_skipped_when_absent( ):
+    ''' FromInference codec is skipped when inference parameter is absent. '''
+    content = b'Hello, world!'
+    behaviors = detextive.Behaviors(
+        trial_codecs = (
+            detextive.CodecSpecifiers.FromInference,
+            detextive.CodecSpecifiers.OsDefault,
+        ) )
+    text, result = _charsets.attempt_decodes( content, behaviors = behaviors )
+    assert text == 'Hello, world!'
+    assert result.charset is not None

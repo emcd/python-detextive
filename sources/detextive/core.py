@@ -125,7 +125,11 @@ class Behaviors( __.immut.DataclassObject ):
     trial_codecs: __.typx.Annotated[
         __.cabc.Sequence[ str | CodecSpecifiers ],
         __.ddoc.Doc( ''' Sequence of codec names or specifiers. ''' ),
-    ] = ( CodecSpecifiers.FromInference, CodecSpecifiers.UserSupplement )
+    ] = (
+        CodecSpecifiers.OsDefault,
+        CodecSpecifiers.UserSupplement,
+        CodecSpecifiers.FromInference,
+    )
     trial_decode: __.typx.Annotated[
         BehaviorTristate,
         __.ddoc.Doc(

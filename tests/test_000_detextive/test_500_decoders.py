@@ -72,9 +72,12 @@ def test_190_decode_validation_profile_parameters( ):
     content = b'\x00\x01\x02\xff'  # Binary content that fails text validation
     behaviors = detextive.Behaviors(
         text_validate = detextive.BehaviorTristate.Never )
+    # Use http_content_type to override MIME detection (which would detect as
+    # application/octet-stream and reject). This tests that text_validate=Never
+    # allows content that would otherwise fail text validation.
     text = _decoders.decode(
         content, behaviors = behaviors,
-        charset_default = 'latin-1' )
+        http_content_type = 'text/plain; charset=iso-8859-1' )
     assert text is not None  # Should succeed when validation is disabled
 
 
@@ -93,10 +96,12 @@ def test_420_validation_failure_handling( ):
     content = b'\x00\x01\x02\xff'  # Binary content that fails text validation
     behaviors = detextive.Behaviors(
         text_validate = detextive.BehaviorTristate.Always )
+    # Use http_content_type to override MIME detection, so we can test that
+    # text validation properly rejects the content
     with pytest.raises( detextive.exceptions.TextInvalidity ):
         _decoders.decode(
             content, behaviors = behaviors,
-            charset_default = 'latin-1' )
+            http_content_type = 'text/plain; charset=iso-8859-1' )
 
 
 def test_430_content_decode_impossibility( ):

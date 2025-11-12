@@ -219,7 +219,10 @@ Validation failures raise appropriate exceptions:
     >>> import detextive.exceptions
     >>> problematic = b'Text with\x00null bytes'
     >>> try:
-    ...     detextive.decode( problematic, profile = detextive.PROFILE_TERMINAL_SAFE )
+    ...     detextive.decode(
+    ...         problematic,
+    ...         profile = detextive.PROFILE_TERMINAL_SAFE,
+    ...         http_content_type = 'text/plain' )
     ... except detextive.exceptions.TextInvalidity as exception:
     ...     print( "Text validation failed" )
     Text validation failed

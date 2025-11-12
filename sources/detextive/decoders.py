@@ -74,15 +74,14 @@ def decode( # noqa: PLR0913
         charset_result = _CharsetResult(
             charset = charset, confidence = confidence )
     else:
-        if (    charset_result.charset is None
-            and not _mimetypes.is_textual_mimetype( mimetype_result.mimetype )
-        ): raise _exceptions.ContentDecodeImpossibility( location = location )
+        if not _mimetypes.is_textual_mimetype( mimetype_result.mimetype ):
+            raise _exceptions.ContentDecodeImpossibility( location = location )
     text, result = _charsets.attempt_decodes(
         content,
         behaviors = behaviors,
-        inference = (
-            'utf-8-sig' if charset_result.charset is None
-            else charset_result.charset ),
+          inference = (
+              'utf-8-sig' if charset_result.charset is None
+              else charset_result.charset ),
         supplement = charset_supplement,
         location = location )
     should_validate = False

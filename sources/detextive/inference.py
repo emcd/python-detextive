@@ -36,6 +36,7 @@ from .core import ( # isort: skip
     Behaviors as            _Behaviors,
     BehaviorsArgument as    _BehaviorsArgument,
     CharsetResult as        _CharsetResult,
+    CodecSpecifiers as      _CodecSpecifiers,
     MimetypeResult as       _MimetypeResult,
 )
 
@@ -228,9 +229,12 @@ def _validate_http_content_type(
     elif charset is None:
         charset_result = _CharsetResult( charset = None, confidence = 0.9 )
     else:
+        # HTTP header provides explicit charset - only try that, not OS default
+        behaviors_http = __.dcls.replace(
+            behaviors, trial_codecs = ( _CodecSpecifiers.FromInference, ) )
         charset_result = _charsets.trial_decode_as_confident(
             content,
-            behaviors = behaviors,
+            behaviors = behaviors_http,
             inference = charset,
             supplement = charset_supplement )
     if __.is_absent( mimetype ): mimetype_result = __.absent
