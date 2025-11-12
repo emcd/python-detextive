@@ -27,3 +27,4 @@ Designs
    001-python-api
    002-detector-registry
    003-default-return-behavior
+   004-trial-codecs-usage-patterns

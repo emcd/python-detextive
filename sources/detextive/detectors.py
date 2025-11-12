@@ -209,9 +209,14 @@ def _confirm_charset_detection( # noqa: PLR0911
     charset, confidence = result.charset, result.confidence
     charset = behaviors.charset_promotions.get( charset, charset )
     if charset.startswith( 'utf-' ):
+        behaviors_no_fallback = __.dcls.replace(
+            behaviors,
+            trial_codecs = (
+                _CodecSpecifiers.UserSupplement,
+                _CodecSpecifiers.FromInference ) )
         result = _charsets.trial_decode_as_confident(
             content,
-            behaviors = behaviors,
+            behaviors = behaviors_no_fallback,
             supplement = supplement,
             inference = charset,
             confidence = confidence,
@@ -224,10 +229,16 @@ def _confirm_charset_detection( # noqa: PLR0911
             if charset == _charsets.discover_os_charset_default( ):
                 # Allow 'windows-1252', etc..., as appropriate.
                 return result  # pragma: no cover
+            # Try UTF-8 to shake out false positives, but not OS default.
+            behaviors_utf8_only = __.dcls.replace(
+                behaviors,
+                trial_codecs = (
+                    _CodecSpecifiers.UserSupplement,
+                   _CodecSpecifiers.FromInference ) )
             try:
                 _, result_ = _charsets.attempt_decodes(
                     content,
-                    behaviors = behaviors,
+                    behaviors = behaviors_utf8_only,
                     inference = 'utf-8-sig',
                     supplement = supplement,
                     location = location )
