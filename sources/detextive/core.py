@@ -114,6 +114,9 @@ class Behaviors( __.immut.DataclassObject ):
                 'codecs' module.
             ''' ),
     ] = 'strict'
+    remove_bom: __.typx.Annotated[
+        bool, __.ddoc.Doc( ''' Remove byte-ordering mark? ''' )
+    ] = True
     text_validate: __.typx.Annotated[
         BehaviorTristate,
         __.ddoc.Doc( ''' When to validate text. ''' ),
