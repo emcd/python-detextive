@@ -24,6 +24,7 @@
 
 import collections.abc as   cabc
 import                      codecs
+import contextlib as        ctxl
 import dataclasses as       dcls
 import                      enum
 import                      locale

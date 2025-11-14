@@ -116,7 +116,7 @@ def detect_charset_confidence( # noqa: PLR0913
 ) -> _CharsetResult:
     ''' Detects character set candidates with confidence scores. '''
     if b'' == content:
-        return _CharsetResult( charset = 'utf-8', confidence = 1.0 )
+        return _CharsetResult( charset = default, confidence = 1.0 )
     for name in behaviors.charset_detectors_order:
         detector = charset_detectors.get( name )
         if detector is None: continue
