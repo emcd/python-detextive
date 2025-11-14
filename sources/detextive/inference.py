@@ -200,6 +200,17 @@ def parse_http_content_type(
     return __.absent, __.absent
 
 
+def validate_httpct_charset(
+    content: _nomina.Content,
+    charset: str, /, *,
+    behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
+) -> __.Absential[ _CharsetResult ]:
+    behaviors_ = __.dcls.replace(
+        behaviors, trial_codecs = ( _CodecSpecifiers.FromInference, ) )
+    return _charsets.trial_decode_as_confident(
+        content, behaviors = behaviors_, inference = charset )
+
+
 def _determine_parse_detect(
     detect_tristate: _BehaviorTristate, should_parse = False
 ) -> tuple[ bool, bool ]:
@@ -229,14 +240,8 @@ def _validate_http_content_type(
     elif charset is None:
         charset_result = _CharsetResult( charset = None, confidence = 0.9 )
     else:
-        # HTTP header provides explicit charset - only try that, not OS default
-        behaviors_http = __.dcls.replace(
-            behaviors, trial_codecs = ( _CodecSpecifiers.FromInference, ) )
-        charset_result = _charsets.trial_decode_as_confident(
-            content,
-            behaviors = behaviors_http,
-            inference = charset,
-            supplement = charset_supplement )
+        charset_result = validate_httpct_charset(
+            content, charset, behaviors = behaviors )
     if __.is_absent( mimetype ): mimetype_result = __.absent
     else:
         mimetype_result = _MimetypeResult(
