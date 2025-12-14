@@ -60,13 +60,16 @@ calling codec trial functions:
 ```python
 # Authoritative validation
 behaviors_strict = __.dcls.replace(
-    behaviors, trial_codecs = ( _CodecSpecifiers.FromInference, ) )
+    behaviors,
+    trial_codecs = ( _CodecSpecifiers.FromInference, ) )
 
 # Detection confirmation
 behaviors_no_os = __.dcls.replace(
     behaviors,
-    trial_codecs = ( _CodecSpecifiers.UserSupplement,
-                     _CodecSpecifiers.FromInference ) )
+    trial_codecs = (
+        _CodecSpecifiers.UserSupplement,
+        _CodecSpecifiers.FromInference,
+    ) )
 ```
 
 ### Platform Considerations
