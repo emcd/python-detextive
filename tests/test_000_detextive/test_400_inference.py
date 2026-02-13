@@ -62,7 +62,7 @@ def test_120_infer_charset_confidence_http_content_type_parsing( ):
     http_content_type = 'text/plain; charset=iso-8859-1'
     result = _inference.infer_charset_confidence(
         content, http_content_type = http_content_type )
-    assert result.charset == 'iso-8859-1'
+    assert result.charset == 'iso8859-1'
 
 
 def test_130_infer_charset_confidence_detection_fallback( ):
@@ -131,7 +131,7 @@ def test_200_http_content_type_parsing_success( ):
             utf8_content, behaviors = behaviors,
             http_content_type = 'text/plain; charset=utf-8' ) )
     assert mimetype_result.mimetype == 'text/plain'
-    assert charset_result.charset == 'utf-8'
+    assert charset_result.charset == 'utf-8-sig'
 
 
 def test_210_location_based_mimetype_inference( ):
@@ -305,7 +305,7 @@ def test_340_http_validation_mimetype_present( ):
             content,
             http_content_type = 'application/json; charset=utf-8' ) )
     assert mimetype_result.mimetype == 'application/json'
-    assert charset_result.charset == 'utf-8'
+    assert charset_result.charset == 'utf-8-sig'
 
 
 def test_350_http_validation_mimetype_not_absent( ):
@@ -317,6 +317,4 @@ def test_350_http_validation_mimetype_not_absent( ):
             http_content_type = 'application/json; charset=utf-8' ) )
     assert mimetype_result.mimetype == 'application/json'
     assert mimetype_result.confidence == 0.9
-    assert charset_result.charset == 'utf-8'
-
-
+    assert charset_result.charset == 'utf-8-sig'

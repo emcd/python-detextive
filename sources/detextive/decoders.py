@@ -32,7 +32,6 @@ from . import validation as _validation
 from .core import ( # isort: skip
     BEHAVIORS_DEFAULT as            _BEHAVIORS_DEFAULT,
     CHARSET_DEFAULT as              _CHARSET_DEFAULT,
-    MIMETYPE_DEFAULT as             _MIMETYPE_DEFAULT,
     BehaviorTristate as             _BehaviorTristate,
     BehaviorsArgument as            _BehaviorsArgument,
     CharsetResult as                _CharsetResult,
@@ -45,15 +44,13 @@ def decode( # noqa: PLR0913
     behaviors: _BehaviorsArgument = _BEHAVIORS_DEFAULT,
     profile: _validation.ProfileArgument = _validation.PROFILE_TEXTUAL,
     charset_default: _nomina.CharsetDefaultArgument = _CHARSET_DEFAULT,
-    mimetype_default: _nomina.MimetypeDefaultArgument = _MIMETYPE_DEFAULT,
     http_content_type: _nomina.HttpContentTypeArgument = __.absent,
     location: _nomina.LocationArgument = __.absent,
     charset_supplement: _nomina.CharsetSupplementArgument = __.absent,
-    mimetype_supplement: _nomina.MimetypeSupplementArgument = __.absent,
 ) -> str:
     ''' Decodes bytes array to Unicode text. '''
-    # TODO: Deprecation warnings for 'mimetype_*' arguments.
     if content == b'': return ''
+    charset: __.Absential[ str ] = __.absent
     result: __.Absential[ _CharsetResult ] = __.absent
     text: __.Absential[ str ] = __.absent
     if not __.is_absent( http_content_type ):
@@ -71,12 +68,21 @@ def decode( # noqa: PLR0913
                 default = charset_default,
                 supplement = charset_supplement,
                 location = location )
-    return _attempt_decodes(
-        content, result,
+            if (    result.charset
+                and result.confidence >= behaviors.trial_decode_confidence
+            ): charset = result.charset
+    validator = __.funct.partial(
+        _validate_text_in_decode_attempt,
         behaviors = behaviors,
         profile = profile,
-        supplement = charset_supplement,
         location = location )
+    return _charsets.attempt_decodes(
+        content,
+        behaviors = behaviors,
+        inference = charset,
+        supplement = charset_supplement,
+        location = location,
+        validator = validator )[ 0 ]
 
 
 def _attempt_decode_http_content_type(
@@ -107,104 +113,6 @@ def _attempt_decode_http_content_type(
     return __.absent
 
 
-def _append_charset(
-    permissives: list[ str ],
-    restrictives: list[ str ],
-    charset: str,
-    bom_cognizant: bool,
-) -> None:
-    charset_ = _charsets.normalize_charset(
-        charset, bom_cognizant = bom_cognizant )
-    if _charsets.is_permissive_charset( charset_ ):
-        if charset_ in permissives: return
-        permissives.append( charset_ )
-    else:
-        if charset_ in restrictives: return
-        restrictives.append( charset_ )
-
-
-def _attempt_decodes(  # noqa: PLR0913
-    content: _nomina.Content,
-    detection: __.Absential[ _CharsetResult ], /, *,
-    behaviors: _BehaviorsArgument,
-    profile: _validation.ProfileArgument,
-    supplement: __.Absential[ str ],
-    location: _nomina.LocationArgument,
-) -> str:
-    error = _exceptions.ContentDecodeImpossibility( location = location )
-    permissives, restrictives = _prepare_charsets(
-        detection, behaviors = behaviors, supplement = supplement )
-    on_decode_error = behaviors.on_decode_error
-    # Try restrictive charsets before permissive charsets, since:
-    # (1) Restrictive charsets can have decoding errors from invalid byte
-    #     sequences.
-    # (2) Restrictive charsets can produce shorter strings, if the are
-    #     multi-byte encodings. Permissive charsets decoding the same byte
-    #     sequences will likly result in mojibake.
-    for charset in restrictives:
-        try: text = content.decode( charset, errors = on_decode_error )
-        except UnicodeDecodeError: continue
-        try:
-            return _validate_text(
-                text, 0.0,
-                behaviors = behaviors, profile = profile, location = location )
-        except _exceptions.TextInvalidity: continue
-    for charset in permissives:
-        try: text = content.decode( charset, errors = on_decode_error )
-        except UnicodeDecodeError: continue
-        try:
-            return _validate_text(
-                text, 0.0,
-                behaviors = behaviors, profile = profile, location = location )
-        except _exceptions.TextInvalidity: continue
-    raise error
-
-
-def _prepare_charsets(
-    detection: __.Absential[ _CharsetResult ], /, *,
-    behaviors: _BehaviorsArgument,
-    supplement: __.Absential[ str ],
-) -> tuple[ tuple[ str, ... ], tuple[ str, ... ] ]:
-    permissives: list[ str ] = [ ]
-    restrictives: list[ str ] = [ ]
-    os_charset = _charsets.discover_os_charset_default( )
-    _append_charset(
-        permissives, restrictives, os_charset, behaviors.remove_bom )
-    python_charset = __.locale.getpreferredencoding( )
-    _append_charset(
-        permissives, restrictives, python_charset, behaviors.remove_bom )
-    if not __.is_absent( supplement ):
-        _prepend_charset(
-            permissives, restrictives, supplement, behaviors.remove_bom )
-    if not __.is_absent( detection ) and detection.charset is not None:
-        # Suspicious charset detections go at end.
-        if detection.confidence < behaviors.trial_decode_confidence:
-            _append_charset(
-                permissives, restrictives, detection.charset,
-                behaviors.remove_bom )
-        else:
-            _prepend_charset(
-                permissives, restrictives, detection.charset,
-                behaviors.remove_bom )
-    return tuple( permissives ), tuple( restrictives )
-
-
-def _prepend_charset(
-    permissives: list[ str ],
-    restrictives: list[ str ],
-    charset: str,
-    bom_cognizant: bool,
-) -> None:
-    charset_ = _charsets.normalize_charset(
-        charset, bom_cognizant = bom_cognizant )
-    if _charsets.is_permissive_charset( charset_ ):
-        if charset_ in permissives: return
-        permissives.insert( 0, charset_ )
-    else:
-        if charset_ in restrictives: return
-        restrictives.insert( 0, charset_ )
-
-
 def _validate_text(
     text: str, confidence: float, /, *,
     behaviors: _BehaviorsArgument,
@@ -221,3 +129,16 @@ def _validate_text(
         case _BehaviorTristate.Never: pass
     if should_validate and not profile( text ): raise error
     return text
+
+
+def _validate_text_in_decode_attempt(
+    text: str, result: _CharsetResult, /, *,
+    behaviors: _BehaviorsArgument,
+    profile: _validation.ProfileArgument,
+    location: _nomina.LocationArgument,
+) -> None:
+    _validate_text(
+        text, 0.0,
+        behaviors = behaviors,
+        profile = profile,
+        location = location )

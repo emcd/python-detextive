@@ -104,8 +104,11 @@ def test_420_validation_failure_handling( ):
             http_content_type = 'text/plain; charset=iso-8859-1' )
 
 
-def test_430_content_decode_impossibility( ):
-    ''' ContentDecodeImpossibility with charset=None and non-textual type. '''
+def test_430_decode_ignores_mimetype_context( ):
+    ''' Decode path remains charset-driven.
+
+        Even with non-textual MIME signal.
+    '''
     # Use a custom detector that returns charset=None
     def charset_none_detector( content, behaviors ):
         return detextive.core.CharsetResult( charset = None, confidence = 0.8 )
@@ -122,6 +125,5 @@ def test_430_content_decode_impossibility( ):
     behaviors = detextive.Behaviors(
         charset_detectors_order = ( 'test-decode-charset-none', ),
         mimetype_detectors_order = ( 'test-decode-mimetype-png', ) )
-    # This should trigger ContentDecodeImpossibility
-    with pytest.raises( detextive.exceptions.ContentDecodeImpossibility ):
-        _decoders.decode( content, behaviors = behaviors )
+    text = _decoders.decode( content, behaviors = behaviors )
+    assert text == 'some binary data'

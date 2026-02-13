@@ -133,7 +133,7 @@ Let HTTP header inform detection:
     >>> mimetype
     'application/json'
     >>> charset
-    'utf-8'
+    'utf-8-sig'
 
 Location-Based Inference
 ===============================================================================
@@ -212,7 +212,9 @@ Apply validation profiles during high-level decoding:
     >>> text
     'Text for terminal display'
 
-Validation failures raise appropriate exceptions. Note that we provide ``http_content_type`` here to bypass MIME type detection, which would reject this content as binary before text validation runs:
+Validation filtering can exhaust all decode attempts and raise a decode error.
+Note that we provide ``http_content_type`` here to bypass MIME type detection,
+which would reject this content as binary before decoding runs:
 
 .. doctest:: AdvancedConfiguration
 
@@ -223,9 +225,9 @@ Validation failures raise appropriate exceptions. Note that we provide ``http_co
     ...         problematic,
     ...         profile = detextive.PROFILE_TERMINAL_SAFE,
     ...         http_content_type = 'text/plain' )
-    ... except detextive.exceptions.TextInvalidity as exception:
-    ...     print( "Text validation failed" )
-    Text validation failed
+    ... except detextive.exceptions.ContentDecodeFailure as exception:
+    ...     print( "Decode failed after validation filtering" )
+    Decode failed after validation filtering
 
 Error Handling
 ===============================================================================

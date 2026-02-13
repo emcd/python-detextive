@@ -129,9 +129,11 @@ class Behaviors( __.immut.DataclassObject ):
         __.cabc.Sequence[ str | CodecSpecifiers ],
         __.ddoc.Doc( ''' Sequence of codec names or specifiers. ''' ),
     ] = (
-        CodecSpecifiers.OsDefault,
         CodecSpecifiers.UserSupplement,
+        'utf-8',
         CodecSpecifiers.FromInference,
+        CodecSpecifiers.OsDefault,
+        CodecSpecifiers.PythonDefault,
     )
     trial_decode: __.typx.Annotated[
         BehaviorTristate,

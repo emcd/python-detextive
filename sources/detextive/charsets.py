@@ -35,15 +35,15 @@ from .core import ( # isort: skip
 )
 
 
-_charsets_permissive: dict[ str, bool ] = { }  # TODO: Accretive dictionary.
-
-
-def attempt_decodes(  # noqa: PLR0915
+def attempt_decodes(  # noqa: C901,PLR0912,PLR0913,PLR0915
     content: _nomina.Content, /, *,
     behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
     inference: __.Absential[ str ] = __.absent,
     supplement: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
+    validator: __.Absential[
+        __.cabc.Callable[ [ str, _CharsetResult ], None ]
+    ] = __.absent,
 ) -> tuple[ str, _CharsetResult ]:
     ''' Attempts to decode content with various character sets.
 
@@ -75,6 +75,9 @@ def attempt_decodes(  # noqa: PLR0915
         except UnicodeDecodeError: continue
         finally: trials.add( charset )
         result = _CharsetResult( charset = charset, confidence = confidence )
+        if not __.is_absent( validator ):
+            try: validator( text, result )
+            except _exceptions.TextInvalidity: continue
         return text, result
     raise _exceptions.ContentDecodeFailure(
         charset = tuple( trials ), location = location )
@@ -85,28 +88,6 @@ def discover_os_charset_default( ) -> str:
     discoverer = getattr(
         __.locale, 'getencoding', __.sys.getfilesystemencoding )
     return normalize_charset( discoverer( ) )
-
-
-def is_permissive_charset( charset: str ) -> bool:
-    ''' Checks if charset accepts all byte sequences (8-bit encoding).
-
-        Returns ``True`` for ISO-8859-*, etc....
-        Returns ``False`` for ASCII, CP1252, UTF-8, SHIFT-JIS, etc....
-    '''
-    charset_ = normalize_charset( charset )
-    if charset_ in _charsets_permissive:
-        return _charsets_permissive[ charset_ ]
-    try:
-        texta = bytes( range( 256 ) ).decode(
-            charset_, errors = 'strict' )
-        textd = bytes( range( 255, -1, -1 ) ).decode(
-            charset_, errors = 'strict' )
-    except ( UnicodeDecodeError, LookupError ):
-        _charsets_permissive[ charset_ ] = False
-        return False
-    permissivity = ( len( texta ) == len( textd ) == 256 )  # noqa: PLR2004
-    _charsets_permissive[ charset_ ] = permissivity
-    return permissivity
 
 
 def normalize_charset( charset: str, bom_cognizant: bool = False ) -> str:

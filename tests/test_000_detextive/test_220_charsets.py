@@ -100,7 +100,7 @@ def test_220_codec_specifiers_user_supplement( ):
     text, result = _charsets.attempt_decodes(
         _patterns.UTF8_BASIC, behaviors = behaviors, supplement = 'utf-8' )
     assert text == 'Hello, world!'
-    assert result.charset == 'utf-8'
+    assert result.charset == 'utf-8-sig'
 
 
 def test_230_codec_specifiers_string_codec( ):
@@ -121,7 +121,7 @@ def test_240_invalid_codec_type_handling( ):
     text, result = _charsets.attempt_decodes(
         content, behaviors = behaviors )
     assert text == 'test content'
-    assert result.charset == 'utf-8'
+    assert result.charset == 'utf-8-sig'
 
 
 #============================================================================#
