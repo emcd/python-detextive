@@ -89,6 +89,16 @@ def test_200_decode_empty_content_returns_empty_string( ):
     assert result == ''
 
 
+def test_210_decode_no_default_fallback_on_detection_failure( ):
+    ''' Decode does not use inference-style default charset fallbacks. '''
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( 'nonexistent-detector', ),
+        charset_on_detect_failure = detextive.DetectFailureActions.Default,
+        trial_codecs = ( 'utf-8', ) )
+    with pytest.raises( detextive.exceptions.ContentDecodeFailure ):
+        _decoders.decode( b'\xa0', behaviors = behaviors )
+
+
 # Error Handling Tests (400-499): Exception scenarios and recovery
 
 def test_420_validation_failure_handling( ):

@@ -50,7 +50,12 @@ def infer_charset( # noqa: PLR0913
     mimetype_supplement: _nomina.MimetypeSupplementArgument = __.absent,
     location: _nomina.LocationArgument = __.absent,
 ) -> __.typx.Optional[ str ]:
-    ''' Infers charset through various means. '''
+    ''' Infers charset through various means.
+
+        ``charset_default`` is the returned fallback when inference cannot
+        determine another charset. ``charset_supplement`` is a user-supplied
+        hint used during inference/validation.
+    '''
     result = infer_charset_confidence(
         content,
         behaviors = behaviors,
@@ -71,7 +76,12 @@ def infer_charset_confidence( # noqa: PLR0913
     mimetype_supplement: _nomina.MimetypeSupplementArgument = __.absent,
     location: _nomina.LocationArgument = __.absent,
 ) -> _CharsetResult:
-    ''' Infers charset with confidence level through various means. '''
+    ''' Infers charset with confidence level through various means.
+
+        ``charset_default`` is the returned fallback when inference cannot
+        determine another charset. ``charset_supplement`` is a user-supplied
+        hint used during inference/validation.
+    '''
     if content == b'':
         return _CharsetResult( charset = 'utf-8', confidence = 1.0 )
     should_parse, should_detect = (
@@ -107,7 +117,12 @@ def infer_mimetype_charset( # noqa: PLR0913
     charset_supplement: _nomina.CharsetSupplementArgument = __.absent,
     mimetype_supplement: _nomina.MimetypeSupplementArgument = __.absent,
 ) -> tuple[ str, __.typx.Optional[ str ] ]:
-    ''' Infers MIME type and charset through various means. '''
+    ''' Infers MIME type and charset through various means.
+
+        ``*_default`` values are returned fallbacks on inference failure.
+        ``*_supplement`` values are user-supplied hints used to guide
+        inference before fallback behavior is applied.
+    '''
     mimetype_result, charset_result = (
         infer_mimetype_charset_confidence(
             content,
@@ -131,7 +146,12 @@ def infer_mimetype_charset_confidence( # noqa: PLR0913
     charset_supplement: _nomina.CharsetSupplementArgument = __.absent,
     mimetype_supplement: _nomina.MimetypeSupplementArgument = __.absent,
 ) -> tuple[ _MimetypeResult, _CharsetResult ]:
-    ''' Infers MIME type and charset through various means. '''
+    ''' Infers MIME type and charset through various means.
+
+        ``*_default`` values are returned fallbacks on inference failure.
+        ``*_supplement`` values are user-supplied hints used to guide
+        inference before fallback behavior is applied.
+    '''
     should_parse, should_detect_charset = (
         _determine_parse_detect( behaviors.charset_detect ) )
     should_parse, should_detect_mimetype = (

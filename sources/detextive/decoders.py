@@ -31,7 +31,6 @@ from . import validation as _validation
 
 from .core import ( # isort: skip
     BEHAVIORS_DEFAULT as            _BEHAVIORS_DEFAULT,
-    CHARSET_DEFAULT as              _CHARSET_DEFAULT,
     BehaviorTristate as             _BehaviorTristate,
     BehaviorsArgument as            _BehaviorsArgument,
     CharsetResult as                _CharsetResult,
@@ -43,12 +42,16 @@ def decode( # noqa: PLR0913
     content: _nomina.Content, /, *,
     behaviors: _BehaviorsArgument = _BEHAVIORS_DEFAULT,
     profile: _validation.ProfileArgument = _validation.PROFILE_TEXTUAL,
-    charset_default: _nomina.CharsetDefaultArgument = _CHARSET_DEFAULT,
     http_content_type: _nomina.HttpContentTypeArgument = __.absent,
     location: _nomina.LocationArgument = __.absent,
     charset_supplement: _nomina.CharsetSupplementArgument = __.absent,
 ) -> str:
-    ''' Decodes bytes array to Unicode text. '''
+    ''' Decodes bytes array to Unicode text.
+
+        Uses trial decoding and validation; does not provide default-return
+        semantics. The ``charset_supplement`` parameter is a trial hint and
+        not a fallback return value.
+    '''
     if content == b'': return ''
     charset: __.Absential[ str ] = __.absent
     result: __.Absential[ _CharsetResult ] = __.absent
@@ -65,7 +68,6 @@ def decode( # noqa: PLR0913
             result = _detectors.detect_charset_confidence(
                 content,
                 behaviors = behaviors_,
-                default = charset_default,
                 supplement = charset_supplement,
                 location = location )
             if (    result.charset

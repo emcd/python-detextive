@@ -40,12 +40,14 @@ CharsetAssumptionArgument: __.typx.TypeAlias = __.typx.Annotated[
 ]
 CharsetDefaultArgument: __.typx.TypeAlias = __.typx.Annotated[
     str,
-    __.ddoc.Doc( ''' Default character set to use when detection fails. ''' ),
+    __.ddoc.Doc(
+        ''' Fallback character set returned on inference/detection
+            failure. ''' ),
 ]
 CharsetSupplementArgument: __.typx.TypeAlias = __.typx.Annotated[
     __.Absential[ str ],
     __.ddoc.Doc(
-        ''' Supplemental character set to use for trial decodes. ''' ),
+        ''' User-supplied character set hint for trial decode attempts. ''' ),
 ]
 HttpContentTypeArgument: __.typx.TypeAlias = __.typx.Annotated[
     __.Absential[ str ],
@@ -62,9 +64,10 @@ MimetypeAssumptionArgument: __.typx.TypeAlias = __.typx.Annotated[
 ]
 MimetypeDefaultArgument: __.typx.TypeAlias = __.typx.Annotated[
     str,
-    __.ddoc.Doc( ''' Default MIME type to use when detection fails. ''' ),
+    __.ddoc.Doc(
+        ''' Fallback MIME type returned on inference/detection failure. ''' ),
 ]
 MimetypeSupplementArgument: __.typx.TypeAlias = __.typx.Annotated[
     __.Absential[ str ],
-    __.ddoc.Doc( ''' Supplemental MIME type to use for inference. ''' ),
+    __.ddoc.Doc( ''' User-supplied MIME type hint for inference. ''' ),
 ]
