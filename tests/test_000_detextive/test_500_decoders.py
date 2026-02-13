@@ -36,6 +36,8 @@ from .patterns import (
 def test_000_imports( ):
     ''' Decode function is accessible from main module. '''
     assert hasattr( detextive, 'decode' )
+    assert hasattr( detextive, 'decode_inform' )
+    assert hasattr( _decoders, 'DecodeInformResult' )
 
 
 # High-Level Decode Tests (100-199): decode function with various parameters
@@ -65,6 +67,53 @@ def test_110_decode_inference_failure_fallback_to_supplement( ):
     result = _decoders.decode(
         content, behaviors = behaviors, charset_supplement = 'ascii' )
     assert result == 'Hello, world!'
+
+
+def test_120_decode_inform_reports_decode_and_metadata( ):
+    ''' decode_inform returns text, charset, mimetype, and linesep. '''
+    content = b'Hello,\nworld!\n'
+    result = _decoders.decode_inform( content, location = 'test.txt' )
+    assert result.text == 'Hello,\nworld!\n'
+    assert result.charset.charset is not None
+    assert result.mimetype.mimetype == 'text/plain'
+    assert result.linesep == detextive.LineSeparators.LF
+
+
+def test_130_decode_inform_honors_http_content_type( ):
+    ''' decode_inform prefers HTTP Content-Type metadata when available. '''
+    content = b'{"message": "hello"}'
+    result = _decoders.decode_inform(
+        content,
+        http_content_type = 'application/json; charset=utf-8' )
+    assert result.text == '{"message": "hello"}'
+    assert result.charset.charset == 'utf-8-sig'
+    assert result.mimetype.mimetype == 'application/json'
+
+
+def test_140_decode_inform_empty_content( ):
+    ''' decode_inform returns deterministic metadata for empty content. '''
+    result = _decoders.decode_inform( b'' )
+    assert result.text == ''
+    assert result.charset.charset == 'utf-8'
+    assert result.charset.confidence == 1.0
+    assert result.mimetype.mimetype == 'text/plain'
+    assert result.linesep is None
+
+
+def test_150_decode_inform_mimetype_inference_fallback( ):
+    ''' decode_inform falls back to text/plain on inference absence. '''
+    behaviors = detextive.Behaviors(
+        mimetype_detect = detextive.BehaviorTristate.Never )
+    result = _decoders.decode_inform( b'hello', behaviors = behaviors )
+    assert result.mimetype.mimetype == 'text/plain'
+
+
+def test_160_decode_inform_non_textual_mimetype_coerced( ):
+    ''' decode_inform coerces non-textual mimetype to text/plain. '''
+    result = _decoders.decode_inform(
+        b'hello',
+        location = 'artifact.png' )
+    assert result.mimetype.mimetype == 'text/plain'
 
 
 def test_190_decode_validation_profile_parameters( ):
