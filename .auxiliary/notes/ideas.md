@@ -1,6 +1,10 @@
-# Future Ideas for Detextive
+# Future Ideas for Detextive (Post v3.0+)
 
-## Postprocessors for v2.1+
+## Scope
+
+These are intentionally deferred until after v3.0 stabilization.
+
+## Post-v3.0+ Postprocessors
 
 Text postprocessing features to enhance decoded content:
 

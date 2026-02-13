@@ -96,7 +96,7 @@ But this is wrong because:
 All charsets can represent control characters:
 - UTF-8: `\x00`, `\x01`, `\x02`, etc.
 - CP1252: Control chars in 0x00-0x1F range
-- ISO-8859-1: Fully permissive, decodes everything
+- ISO-8859-1: Decodes a very broad range of byte values
 
 There's no charset-based reason to skip validation.
 

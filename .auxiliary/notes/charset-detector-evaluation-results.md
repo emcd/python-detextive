@@ -11,10 +11,9 @@ Both detectors have strengths and weaknesses:
 - **Overall accuracy**: Tied at 65% on ground-truth tests
 - **Performance**: chardet is generally faster (19 vs 4 wins in speed tests)
 
-**Recommendation**: Consider using **both** detectors with fallback logic:
-1. Try charset-normalizer first for UTF-8 preference
-2. Fall back to chardet if low confidence or decode fails
-3. Apply `is_permissive_charset()` filtering to both
+**Recommendation**: Treat this as detector-behavior reference data. For decode
+selection, prefer deterministic trial ordering plus textual validation rather
+than complex detector arbitration.
 
 ## Detailed Findings
 
@@ -131,55 +130,20 @@ Both detectors have strengths and weaknesses:
 
 ## Recommendation for Detextive
 
-### Proposed Strategy
+### Practical Strategy
 
-Use a **hybrid approach** with situational logic:
+1. Keep detector results as hints, not authoritative truth.
+2. Use straightforward trial order in decode.
+3. Validate decoded text to reject non-textual output.
+4. Use HTTP charset when explicitly provided and decodable.
 
-```python
-def detect_charset_reliable(content, behaviors):
-    """Reliable charset detection using hybrid approach."""
+### Detector Choice Guidance
 
-    # 1. Try charset-normalizer first (UTF-8 preference)
-    norm_result = detect_via_charset_normalizer(content)
-
-    # 2. If normalizer detected UTF-8 or other multi-byte, trust it
-    if norm_result.charset and not is_permissive_charset(norm_result.charset):
-        return norm_result
-
-    # 3. For 8-bit or uncertain, try chardet
-    chardet_result = detect_via_chardet(content)
-
-    # 4. Apply logic:
-    # - If chardet detected multi-byte non-8-bit, prefer it
-    # - If chardet detected 8-bit, verify with trial decode
-    # - If both detected 8-bit, treat as uncertain
-
-    if chardet_result.charset and not is_permissive_charset(chardet_result.charset):
-        # chardet found informative charset
-        if chardet_result.confidence >= behaviors.charset_confidence_threshold:
-            return chardet_result
-
-    # 5. Fall back to defaults with trial decode
-    return try_defaults(content, behaviors)
-```
-
-### Why This Works
-
-1. **UTF-8 preference**: normalizer catches modern UTF-8 content that chardet misses
-2. **8-bit accuracy**: chardet catches Latin-1/Win1252 that normalizer mangles
-3. **Safety net**: `is_permissive_charset()` prevents accepting uninformative 8-bit
-4. **Confidence gating**: Only trust chardet when confidence is high
-
-### Alternative: Just Use chardet
-
-If hybrid is too complex, **stick with chardet**:
+If a single detector is preferred, **chardet remains a reasonable default**:
 - More consistent behavior across encoding types
 - Better confidence scores
 - Faster performance
-- We can compensate for UTF-8 issues with:
-  - Always trying UTF-8 first in trial decode
-  - Using shortest-wins heuristic
-  - Text validation
+- Compensate for UTF-8 misses with trial order and text validation.
 
 ## Test Scripts
 
