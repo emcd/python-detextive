@@ -225,7 +225,7 @@ BOMs (Byte Order Marks) provide near-certainty for UTF-8/UTF-16 detection regard
 ### Pure ASCII
 
 Small pure ASCII samples (like `b"Hello"`) get scaled down confidence, but:
-- ASCII is promoted to UTF-8 via `charset_promotions`
+- UTF-8 trial ordering still keeps decode behavior deterministic
 - Small ASCII content is cheap to validate
 - Erring on the side of validation is fine
 

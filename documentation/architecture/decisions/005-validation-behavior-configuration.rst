@@ -81,7 +81,6 @@ configuration object.
         mimetype_detect: BehaviorTristate = BehaviorTristate.AsNeeded
         
         # Charset handling sophistication
-        charset_promotions: Mapping[str, str] = {'ascii': 'utf-8'}
         charset_trial_codecs: Sequence[str | CodecSpecifiers] = (
             CodecSpecifiers.Inference, CodecSpecifiers.UserDefault)
         charset_trial_decode: BehaviorTristate = BehaviorTristate.AsNeeded
@@ -94,7 +93,6 @@ configuration object.
 
 **Advanced Charset Handling:**
 
-* **charset_promotions**: Mapping for upgrading detected charsets (e.g., ASCII→UTF-8)
 * **charset_trial_codecs**: Sequence of codecs to try during trial decoding
 * **CodecSpecifiers**: Enum for dynamic codec resolution (Inference, OsDefault, UserDefault)
 

@@ -25,12 +25,6 @@ from . import __
 from . import nomina as _nomina
 
 
-_STANDARD_CHARSET_PROMOTIONS = (
-    ( 'ascii', 'utf-8-sig' ),
-    ( 'utf-8', 'utf-8-sig' ),
-)
-
-
 CHARSET_DEFAULT = 'utf-8'
 MIMETYPE_DEFAULT = 'application/octet-stream'
 
@@ -80,16 +74,6 @@ class Behaviors( __.immut.DataclassObject ):
         DetectFailureActions,
         __.ddoc.Doc( ''' Action to take on charset detection failure. ''' ),
     ] = DetectFailureActions.Default
-    charset_promotions: __.typx.Annotated[
-        __.cabc.Mapping[ str, str ],
-        __.ddoc.Doc(
-            ''' Which detected charsets to promote to other charsets.
-
-                E.g., 7-bit ASCII to UTF-8.
-            ''' ),
-    ] = __.dcls.field(
-        default_factory = (
-            lambda: __.immut.Dictionary( _STANDARD_CHARSET_PROMOTIONS ) ) )
     mimetype_detect: __.typx.Annotated[
         BehaviorTristate,
         __.ddoc.Doc( ''' When to detect MIME type from content. ''' ),

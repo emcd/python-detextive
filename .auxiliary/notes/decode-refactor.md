@@ -50,8 +50,7 @@ behavior with explicit user controls is easier to reason about and maintain.
 
 ## Deferred Follow-ups
 
-1. Evaluate whether `charset_promotions` should remain.
-2. Continue API-shape work for single-call metadata-rich decode
+1. Continue API-shape work for single-call metadata-rich decode
    (`decode_inform` direction).
-3. Keep detector-confidence refinements scoped separately from core decode
+2. Keep detector-confidence refinements scoped separately from core decode
    simplification.
