@@ -10,9 +10,11 @@ Omnierror              # unused base exception class for derivation
 # Refactor 2.0 - public API functions not yet exposed in __init__.py
 detect_charset          # public API function
 detect_mimetype         # public API function
+decode_inform          # public API function
 infer_charset           # public API function
 infer_mimetype_charset  # public API function
 is_valid_text           # public API function
+DecodeInformResult      # public API result type
 
 # Exception classes for public API
 TextualMimetypeInvalidity  # exception class for public API

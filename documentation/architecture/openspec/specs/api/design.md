@@ -265,18 +265,14 @@ def decode(
     content: Content, /, *,
     behaviors: Behaviors = BEHAVIORS_DEFAULT,
     profile: TextValidationProfile = PROFILE_TEXTUAL,
-    charset_default: str = CHARSET_DEFAULT,
-    mimetype_default: str = MIMETYPE_DEFAULT,
     http_content_type: __.Absential[ str ] = __.absent,
     location: __.Absential[ Location ] = __.absent,
     charset_supplement: __.Absential[ str ] = __.absent,
-    mimetype_supplement: __.Absential[ str ] = __.absent,
 ) -> str:
     ''' High-level bytes-to-text decoding with validation.
 
         Performs comprehensive detection, decoding, and validation
-        for robust text extraction from byte content. Supports
-        configurable default values for graceful degradation.
+        for robust text extraction from byte content.
     '''
 ```
 

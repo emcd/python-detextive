@@ -116,7 +116,7 @@ def detect_charset_confidence( # noqa: PLR0913
 ) -> _CharsetResult:
     ''' Detects character set candidates with confidence scores. '''
     if b'' == content:
-        return _CharsetResult( charset = 'utf-8', confidence = 1.0 )
+        return _CharsetResult( charset = default, confidence = 1.0 )
     for name in behaviors.charset_detectors_order:
         detector = charset_detectors.get( name )
         if detector is None: continue
@@ -207,7 +207,6 @@ def _confirm_charset_detection( # noqa: PLR0911
     result = _normalize_charset_detection( content, behaviors, result )
     if result.charset is None: return result  # pragma: no cover
     charset, confidence = result.charset, result.confidence
-    charset = behaviors.charset_promotions.get( charset, charset )
     if charset.startswith( 'utf-' ):
         behaviors_no_fallback = __.dcls.replace(
             behaviors,
@@ -222,7 +221,6 @@ def _confirm_charset_detection( # noqa: PLR0911
             confidence = confidence,
             location = location )
         return _normalize_charset_detection( content, behaviors, result )
-    result = _CharsetResult( charset = charset, confidence = confidence )
     match behaviors.trial_decode:
         case _BehaviorTristate.Never: return result
         case _: # Shake out false positives, like 'MacRoman'.
@@ -244,6 +242,8 @@ def _confirm_charset_detection( # noqa: PLR0911
                     location = location )
             except _exceptions.ContentDecodeFailure: return result
             if charset == result_.charset: return result  # pragma: no cover
+            result_ = _CharsetResult(
+                charset = result_.charset, confidence = confidence )
             return _normalize_charset_detection( content, behaviors, result_ )
 
 

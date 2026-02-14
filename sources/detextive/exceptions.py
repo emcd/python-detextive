@@ -33,6 +33,14 @@ class Omnierror( Omniexception, Exception ):
     ''' Base for error exceptions raised by package API. '''
 
 
+class BehaviorsInvalidity( Omnierror, TypeError, ValueError ):
+
+    def __init__( self, attribute: str, expectation: str ) -> None:
+        message = (
+            f"Behaviors attribute '{attribute}' must be {expectation}" )
+        super( ).__init__( f"{message}." )
+
+
 class CharsetDetectFailure( Omnierror, TypeError, ValueError ):
 
     def __init__(

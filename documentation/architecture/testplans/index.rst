@@ -25,5 +25,6 @@ Test Plans
    :maxdepth: 2
 
    summary
+   v3-coverage-strategy
    v2-test-suite
    content-patterns

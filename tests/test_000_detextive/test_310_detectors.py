@@ -295,6 +295,19 @@ def test_330_detect_mimetype_decode_failure_error_behavior( ):
             behaviors = behaviors, charset = 'utf-8' )
 
 
+def test_335_detect_mimetype_trial_decode_never_error_behavior( ):
+    ''' MIME type detection raises when trial decode is disabled. '''
+    behaviors = detextive.Behaviors(
+        mimetype_detectors_order = ( 'nonexistent-detector', ),
+        trial_decode = detextive.BehaviorTristate.Never,
+        mimetype_on_detect_failure = detextive.DetectFailureActions.Error )
+    with pytest.raises( detextive.exceptions.MimetypeDetectFailure ):
+        detextive.detect_mimetype_confidence(
+            b'test content',
+            behaviors = behaviors,
+            charset = 'utf-8' )
+
+
 def test_340_detect_mimetype_text_validation_never( ):
     ''' MIME type detection respects text validation disabled setting. '''
     behaviors = detextive.Behaviors(

@@ -189,6 +189,34 @@ Location context improves decoding decisions:
     >>> text
     'Sample content for analysis'
 
+Combined Decode and Metadata
+-------------------------------------------------------------------------------
+
+The ``decode_inform`` function returns decoded text with charset/MIME metadata:
+
+.. doctest:: BasicUsage
+
+    >>> import detextive
+    >>> result = detextive.decode_inform( b'Hello, world!\n', location = 'notes.txt' )
+    >>> result.text
+    'Hello, world!\n'
+    >>> result.mimetype.mimetype
+    'text/plain'
+    >>> result.charset.charset
+    'utf-8-sig'
+    >>> result.linesep
+    <LineSeparators.LF: '\n'>
+
+HTTP header context is honored when textual:
+
+.. doctest:: BasicUsage
+
+    >>> result = detextive.decode_inform(
+    ...     b'{"message":"ok"}',
+    ...     http_content_type = 'application/json; charset=utf-8' )
+    >>> result.mimetype.mimetype
+    'application/json'
+
 Content Validation
 ===============================================================================
 

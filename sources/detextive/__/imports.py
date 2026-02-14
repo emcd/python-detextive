@@ -24,8 +24,10 @@
 
 import collections.abc as   cabc
 import                      codecs
+import contextlib as        ctxl
 import dataclasses as       dcls
 import                      enum
+import functools as         funct
 import                      locale
 import                      mimetypes
 import                      os
