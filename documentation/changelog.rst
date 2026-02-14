@@ -23,6 +23,40 @@ Release Notes
 
 .. towncrier release notes start
 
+detextive 3.0 (2026-02-13)
+==========================
+
+Enhancements
+------------
+
+- API: Add ``decode_inform`` to return decoded text together with charset, MIME
+  type, and line-separator metadata in a single call.
+- API: Honor supplied textual ``http_content_type`` metadata consistently across
+  decode and inference paths, including header-guided charset trial decode.
+
+
+Removals
+--------
+
+- API: Remove ``charset_default``, ``mimetype_default``, and
+  ``mimetype_supplement`` parameters from ``decode`` so decoding follows
+  decode-or-error semantics instead of fallback-return inference semantics.
+- API: Replace ``Behaviors.charset_detect`` and ``Behaviors.mimetype_detect``
+  tristates with booleans; pass ``True`` or ``False`` instead of
+  ``BehaviorTristate`` values.
+
+
+Repairs
+-------
+
+- Fix UTF-8 content incorrectly decoded when charset detector misidentifies encoding, causing mojibake with non-ASCII characters and emoji.
+- Fix malformed ``http_content_type`` parameter parsing so inference no longer
+  raises raw ``ValueError`` for invalid header parameter syntax.
+  Also include the resolved MIME type value in ``TextualMimetypeInvalidity``
+  messages.
+- Reject binary content with non-textual MIME types instead of attempting to decode, preventing false positives where binary data was incorrectly decoded as text.
+
+
 detextive 2.0 (2025-09-20)
 ==========================
 
