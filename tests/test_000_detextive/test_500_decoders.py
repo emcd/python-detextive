@@ -25,6 +25,7 @@ import pytest
 
 import detextive
 import detextive.decoders as _decoders
+import detextive.detectors as _detectors
 
 from .patterns import (
     EMPTY_CONTENT,
@@ -101,7 +102,7 @@ def test_140_decode_inform_empty_content( ):
 
 
 def test_150_decode_inform_mimetype_inference_fallback( ):
-    ''' decode_inform falls back to text/plain on inference absence. '''
+    ''' Falls back to text/plain when MIME inference is unavailable. '''
     behaviors = detextive.Behaviors(
         mimetype_detect = detextive.BehaviorTristate.Never )
     result = _decoders.decode_inform( b'hello', behaviors = behaviors )
@@ -109,10 +110,39 @@ def test_150_decode_inform_mimetype_inference_fallback( ):
 
 
 def test_160_decode_inform_non_textual_mimetype_coerced( ):
-    ''' decode_inform coerces non-textual mimetype to text/plain. '''
+    ''' Coerces non-textual location MIME to text/plain. '''
     result = _decoders.decode_inform(
         b'hello',
         location = 'artifact.png' )
+    assert result.mimetype.mimetype == 'text/plain'
+
+
+def test_170_decode_inform_non_textual_http_header_rejected( ):
+    ''' Rejects non-textual HTTP Content-Type values with charset. '''
+    with pytest.raises( detextive.exceptions.ContentDecodeImpossibility ):
+        _decoders.decode_inform(
+            b'hello',
+            http_content_type = 'image/png; charset=utf-8' )
+
+
+def test_180_decode_inform_header_charset_fallback_to_trials( ):
+    ''' Falls back to standard decode trials when HTTP charset decode fails.'''
+    result = _decoders.decode_inform(
+        b'Caf\xc3\xa9',
+        http_content_type = 'text/plain; charset=ascii' )
+    assert result.text == 'Café'
+
+
+def test_185_decode_inform_detector_non_textual_coerced_to_default( ):
+    ''' Coerces non-textual detector MIME result to textual default. '''
+    detector_name = 'test-decode-inform-image-png'
+    def mimetype_png_detector( content, behaviors ):
+        return detextive.core.MimetypeResult(
+            mimetype = 'image/png', confidence = 0.9 )
+    _detectors.mimetype_detectors[ detector_name ] = mimetype_png_detector
+    behaviors = detextive.Behaviors(
+        mimetype_detectors_order = ( detector_name, ) )
+    result = _decoders.decode_inform( b'hello', behaviors = behaviors )
     assert result.mimetype.mimetype == 'text/plain'
 
 

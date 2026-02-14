@@ -123,7 +123,6 @@ def _attempt_decode_http_content_type(
     httpct_charset: __.Absential[ __.typx.Optional[ str ] ],
     location: _nomina.LocationArgument,
 ) -> __.Absential[ tuple[ str, _CharsetResult ] ]:
-    result: __.Absential[ _CharsetResult ] = __.absent
     error = _exceptions.ContentDecodeImpossibility( location = location )
     if httpct_charset is None: raise error
     if __.is_absent( httpct_charset ): return __.absent
@@ -136,13 +135,10 @@ def _attempt_decode_http_content_type(
             inference = httpct_charset,
             location = location )
     except _exceptions.ContentDecodeFailure: return __.absent
-    # Allow other errors propagate.
-    if not __.is_absent( text ) and not __.is_absent( result ):
-        text = _validate_text(
-            text, result.confidence,
-            behaviors = behaviors, profile = profile, location = location )
-        return text, result
-    return __.absent
+    _validate_text(
+        text, result.confidence,
+        behaviors = behaviors, profile = profile, location = location )
+    return text, result
 
 
 def _decode_content_charset_result( # noqa: PLR0913
@@ -162,18 +158,17 @@ def _decode_content_charset_result( # noqa: PLR0913
         content, behaviors, profile,
         httpct_charset = httpct_charset, location = location )
     if not __.is_absent( httpct_result ): return httpct_result
-    if __.is_absent( result ):
-        behaviors_ = __.dcls.replace(
-            behaviors, trial_decode = _BehaviorTristate.Never )
-        with __.ctxl.suppress( _exceptions.CharsetDetectFailure ):
-            result = _detectors.detect_charset_confidence(
-                content,
-                behaviors = behaviors_,
-                supplement = charset_supplement,
-                location = location )
-            if (    result.charset
-                and result.confidence >= behaviors.trial_decode_confidence
-            ): charset = result.charset
+    behaviors_ = __.dcls.replace(
+        behaviors, trial_decode = _BehaviorTristate.Never )
+    with __.ctxl.suppress( _exceptions.CharsetDetectFailure ):
+        result = _detectors.detect_charset_confidence(
+            content,
+            behaviors = behaviors_,
+            supplement = charset_supplement,
+            location = location )
+        if (    result.charset
+            and result.confidence >= behaviors.trial_decode_confidence
+        ): charset = result.charset
     validator = __.funct.partial(
         _validate_text_in_decode_attempt,
         behaviors = behaviors,
@@ -234,7 +229,7 @@ def _validate_text(
     behaviors: _BehaviorsArgument,
     profile: _validation.ProfileArgument,
     location: _nomina.LocationArgument,
-) -> str:
+) -> None:
     error = _exceptions.TextInvalidity( location = location )
     should_validate = False
     match behaviors.text_validate:
@@ -244,7 +239,6 @@ def _validate_text(
             should_validate = confidence < behaviors.text_validate_confidence
         case _BehaviorTristate.Never: pass
     if should_validate and not profile( text ): raise error
-    return text
 
 
 def _validate_text_in_decode_attempt(
