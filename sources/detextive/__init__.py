@@ -37,7 +37,7 @@ from . import exceptions
 # --- END: Injected by Copier ---
 
 
-__version__ = '2.1a0'
+__version__ = '3.0a0'
 
 
 __.immut.finalize_module( __name__, recursive = True )
