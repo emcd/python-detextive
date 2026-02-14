@@ -132,7 +132,7 @@ class TextualMimetypeInvalidity( Omnierror, ValueError ):
         mimetype: str,
         location: __.Absential[ _nomina.Location ] = __.absent,
     ) -> None:
-        message = "MIME type '{mimetype}' is not textual for content"
+        message = f"MIME type '{mimetype}' is not textual for content"
         if not __.is_absent( location ):
             message = f"{message} at '{location}'"
         super( ).__init__( f"{message}." )

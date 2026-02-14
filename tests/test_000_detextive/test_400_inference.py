@@ -330,6 +330,25 @@ def test_330_http_content_type_no_charset_param( ):
     assert _internals.is_absent( charset )
 
 
+def test_332_http_content_type_malformed_charset_param( ):
+    ''' Malformed charset parameter is treated as absent. '''
+    mimetype, charset = _inference.parse_http_content_type(
+        'text/plain; charset' )
+    assert mimetype == 'text/plain'
+    assert _internals.is_absent( charset )
+
+
+def test_334_http_validation_malformed_charset_param( ):
+    ''' Malformed charset parameter falls back to standard inference. '''
+    content = b'test content'
+    mimetype_result, charset_result = (
+        _inference.infer_mimetype_charset_confidence(
+            content,
+            http_content_type = 'text/plain; charset' ) )
+    assert mimetype_result.mimetype == 'text/plain'
+    assert isinstance( charset_result.charset, str )
+
+
 def test_340_http_validation_mimetype_present( ):
     ''' HTTP validation when mimetype is present (not absent). '''
     content = b'test content'

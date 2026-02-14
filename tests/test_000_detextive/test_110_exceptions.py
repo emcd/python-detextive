@@ -227,10 +227,7 @@ def test_184_textual_mimetype_invalidity_without_location( ):
     ''' TextualMimetypeInvalidity constructs correctly without location. '''
     exc = _exceptions.TextualMimetypeInvalidity( 'image/png' )
     exc_str = str( exc )
-    assert "MIME type '" in exc_str
-    assert "' is not textual for content." in exc_str
-    # Note: Currently has bug using literal {mimetype}
-    assert '{mimetype}' in exc_str
+    assert exc_str == "MIME type 'image/png' is not textual for content."
 
 
 def test_187_textual_mimetype_invalidity_with_location( ):
@@ -238,11 +235,10 @@ def test_187_textual_mimetype_invalidity_with_location( ):
     exc = _exceptions.TextualMimetypeInvalidity(
         'application/pdf', location = 'document.pdf' )
     exc_str = str( exc )
-    assert "MIME type '" in exc_str
-    assert "' is not textual for content at '" in exc_str
+    assert (
+        "MIME type 'application/pdf' is not textual for content at '"
+        in exc_str )
     assert exc_str.endswith( "'." )
-    # Note: Currently has bug using literal {mimetype}
-    assert '{mimetype}' in exc_str
     assert 'document.pdf' in exc_str
 
 

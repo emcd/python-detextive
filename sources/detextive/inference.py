@@ -202,9 +202,12 @@ def parse_http_content_type(
         mimetype = mimetype.strip( ).lower( )
         if _mimetypes.is_textual_mimetype( mimetype ):
             for param in params:
-                name, value = param.split( '=' )
+                name, separator, value = param.partition( '=' )
+                if separator != '=': continue
                 if 'charset' == name.strip( ).lower( ):
-                    return mimetype, value.strip( ).lower( )
+                    charset = value.strip( ).lower( )
+                    if charset: return mimetype, charset
+                    return mimetype, __.absent
             return mimetype, __.absent
         return mimetype, None  # non-textual type, charset irrelevant
     return __.absent, __.absent
