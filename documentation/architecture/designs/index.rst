@@ -21,9 +21,11 @@
 Designs
 *******************************************************************************
 
+This section contains technical design specifications for capabilities.
+Each design documents Python-specific architecture, interface contracts, module organization, and implementation patterns.
+
 .. toctree::
    :maxdepth: 2
+   :glob:
 
-   001-python-api
-   002-detector-registry
-   003-default-return-behavior
+   ../openspec/specs/*/design

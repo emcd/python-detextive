@@ -25,17 +25,20 @@ from . import __
 from . import nomina as _nomina
 
 
-class Omniexception(
-    __.immut.Object, BaseException,
-    instances_mutables = ( '__cause__', '__context__' ),
-    instances_visibles = (
-        '__cause__', '__context__', __.is_public_identifier ),
-):
+class Omniexception( __.immut.exceptions.Omniexception ):
     ''' Base for all exceptions raised by package API. '''
 
 
 class Omnierror( Omniexception, Exception ):
     ''' Base for error exceptions raised by package API. '''
+
+
+class BehaviorsInvalidity( Omnierror, TypeError, ValueError ):
+
+    def __init__( self, attribute: str, expectation: str ) -> None:
+        message = (
+            f"Behaviors attribute '{attribute}' must be {expectation}" )
+        super( ).__init__( f"{message}." )
 
 
 class CharsetDetectFailure( Omnierror, TypeError, ValueError ):
@@ -129,7 +132,7 @@ class TextualMimetypeInvalidity( Omnierror, ValueError ):
         mimetype: str,
         location: __.Absential[ _nomina.Location ] = __.absent,
     ) -> None:
-        message = "MIME type '{mimetype}' is not textual for content"
+        message = f"MIME type '{mimetype}' is not textual for content"
         if not __.is_absent( location ):
             message = f"{message} at '{location}'"
         super( ).__init__( f"{message}." )

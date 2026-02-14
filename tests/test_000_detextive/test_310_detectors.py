@@ -295,6 +295,19 @@ def test_330_detect_mimetype_decode_failure_error_behavior( ):
             behaviors = behaviors, charset = 'utf-8' )
 
 
+def test_335_detect_mimetype_trial_decode_never_error_behavior( ):
+    ''' MIME type detection raises when trial decode is disabled. '''
+    behaviors = detextive.Behaviors(
+        mimetype_detectors_order = ( 'nonexistent-detector', ),
+        trial_decode = detextive.BehaviorTristate.Never,
+        mimetype_on_detect_failure = detextive.DetectFailureActions.Error )
+    with pytest.raises( detextive.exceptions.MimetypeDetectFailure ):
+        detextive.detect_mimetype_confidence(
+            b'test content',
+            behaviors = behaviors,
+            charset = 'utf-8' )
+
+
 def test_340_detect_mimetype_text_validation_never( ):
     ''' MIME type detection respects text validation disabled setting. '''
     behaviors = detextive.Behaviors(
@@ -366,6 +379,24 @@ def test_400_not_implemented_handling( ):
         b'test content', behaviors = behaviors )
     assert result is not None
     assert result.confidence >= 0.0
+
+
+# Charset Confirmation Tests (500-599): _confirm_charset_detection behavior
+
+def test_500_confirm_charset_detection_trial_decode_never( ):
+    ''' Non-UTF charset with trial_decode=Never returns without validation. '''
+    def custom_detector( content, behaviors ):
+        return detextive.core.CharsetResult(
+            charset = 'iso-8859-1', confidence = 0.5 )
+    _detectors.charset_detectors[ 'test-iso-detector' ] = custom_detector
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( 'test-iso-detector', ),
+        trial_decode = detextive.BehaviorTristate.Never )
+    content = b'test content'
+    result = _detectors.detect_charset_confidence(
+        content, behaviors = behaviors, default = 'utf-8' )
+    assert result.charset == 'iso8859-1'
+    assert result.confidence == 0.5
 
 
 # Windows Compatibility Tests (600-699): Cross-platform differences

@@ -1,0 +1,1 @@
+Fix UTF-8 content incorrectly decoded when charset detector misidentifies encoding, causing mojibake with non-ASCII characters and emoji.

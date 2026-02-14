@@ -22,13 +22,8 @@
 
 
 from . import __
+from . import exceptions as _exceptions
 from . import nomina as _nomina
-
-
-_STANDARD_CHARSET_PROMOTIONS = (
-    ( 'ascii', 'utf-8-sig' ),
-    ( 'utf-8', 'utf-8-sig' ),
-)
 
 
 CHARSET_DEFAULT = 'utf-8'
@@ -68,9 +63,9 @@ class Behaviors( __.immut.DataclassObject ):
             ''' Minimum number of bytes for full detection confidence. ''' ),
     ] = 1024
     charset_detect: __.typx.Annotated[
-        BehaviorTristate,
-        __.ddoc.Doc( ''' When to detect charset from content. ''' ),
-    ] = BehaviorTristate.AsNeeded
+        bool,
+        __.ddoc.Doc( ''' Whether to detect charset from content. ''' ),
+    ] = True
     charset_detectors_order: __.typx.Annotated[
         __.cabc.Sequence[ str ],
         __.ddoc.Doc(
@@ -80,20 +75,10 @@ class Behaviors( __.immut.DataclassObject ):
         DetectFailureActions,
         __.ddoc.Doc( ''' Action to take on charset detection failure. ''' ),
     ] = DetectFailureActions.Default
-    charset_promotions: __.typx.Annotated[
-        __.cabc.Mapping[ str, str ],
-        __.ddoc.Doc(
-            ''' Which detected charsets to promote to other charsets.
-
-                E.g., 7-bit ASCII to UTF-8.
-            ''' ),
-    ] = __.dcls.field(
-        default_factory = (
-            lambda: __.immut.Dictionary( _STANDARD_CHARSET_PROMOTIONS ) ) )
     mimetype_detect: __.typx.Annotated[
-        BehaviorTristate,
-        __.ddoc.Doc( ''' When to detect MIME type from content. ''' ),
-    ] = BehaviorTristate.AsNeeded
+        bool,
+        __.ddoc.Doc( ''' Whether to detect MIME type from content. ''' ),
+    ] = True
     mimetype_detectors_order: __.typx.Annotated[
         __.cabc.Sequence[ str ],
         __.ddoc.Doc(
@@ -114,6 +99,9 @@ class Behaviors( __.immut.DataclassObject ):
                 'codecs' module.
             ''' ),
     ] = 'strict'
+    remove_bom: __.typx.Annotated[
+        bool, __.ddoc.Doc( ''' Remove byte-ordering mark? ''' )
+    ] = True
     text_validate: __.typx.Annotated[
         BehaviorTristate,
         __.ddoc.Doc( ''' When to validate text. ''' ),
@@ -125,7 +113,13 @@ class Behaviors( __.immut.DataclassObject ):
     trial_codecs: __.typx.Annotated[
         __.cabc.Sequence[ str | CodecSpecifiers ],
         __.ddoc.Doc( ''' Sequence of codec names or specifiers. ''' ),
-    ] = ( CodecSpecifiers.FromInference, CodecSpecifiers.UserSupplement )
+    ] = (
+        CodecSpecifiers.UserSupplement,
+        'utf-8',
+        CodecSpecifiers.FromInference,
+        CodecSpecifiers.OsDefault,
+        CodecSpecifiers.PythonDefault,
+    )
     trial_decode: __.typx.Annotated[
         BehaviorTristate,
         __.ddoc.Doc(
@@ -134,6 +128,14 @@ class Behaviors( __.immut.DataclassObject ):
     trial_decode_confidence: __.typx.Annotated[
         float, __.ddoc.Doc( ''' Minimum confidence to skip trial decode. ''')
     ] = 0.80
+
+    def __post_init__( self ) -> None:
+        if not isinstance( self.charset_detect, bool ):
+            raise _exceptions.BehaviorsInvalidity(
+                'charset_detect', 'a boolean' )
+        if not isinstance( self.mimetype_detect, bool ):
+            raise _exceptions.BehaviorsInvalidity(
+                'mimetype_detect', 'a boolean' )
 
 
 BehaviorsArgument: __.typx.TypeAlias = __.typx.Annotated[

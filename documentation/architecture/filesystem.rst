@@ -67,7 +67,7 @@ The main Python package follows the standard ``sources/`` directory pattern:
     │   ├── py.typed                 # Type checking marker
     │   ├── core.py                  # Core types: Behaviors, Result, CodecSpecifiers
     │   ├── charsets.py              # Charset decoding and trial decode logic
-    │   ├── decoders.py              # High-level decode() function
+    │   ├── decoders.py              # High-level decode/decode_inform APIs
     │   ├── detectors.py             # Core detection functions with confidence
     │   ├── exceptions.py            # Package exception hierarchy
     │   ├── inference.py             # Charset and mimetype inference orchestration

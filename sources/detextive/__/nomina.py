@@ -30,8 +30,3 @@ PositionalArguments: __.typx.TypeAlias = __.cabc.Sequence[ __.typx.Any ]
 
 
 package_name = __name__.split( '.', maxsplit = 1 )[ 0 ]
-
-
-def is_public_identifier( name: str ) -> bool:
-    ''' Is Python identifier public? '''
-    return not name.startswith( '_' )

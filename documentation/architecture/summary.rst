@@ -21,155 +21,107 @@
 System Overview
 *******************************************************************************
 
-The **detextive** library implements a faithful functional reproduction to
-consolidate text detection capabilities from multiple packages. The first
-iteration prioritizes behavioral fidelity and minimal migration effort over
-architectural sophistication.
+The **detextive** library consolidates MIME detection, charset inference,
+text decoding, and line-separator utilities behind a unified functional API.
 
 Major Components
 ===============================================================================
 
-Core Detection Functions
+Public API
 -------------------------------------------------------------------------------
 
-**Public Functional API**
-  Core detection and inference functions with confidence-aware behavior:
-  
-  * ``detect_charset(content, *, behaviors=BEHAVIORS_DEFAULT, ...)`` - Character encoding detection
-  * ``detect_charset_confidence(content, *, behaviors=BEHAVIORS_DEFAULT, ...)`` - Charset detection with confidence scoring  
-  * ``detect_mimetype(content, *, behaviors=BEHAVIORS_DEFAULT, ...)`` - MIME type detection
-  * ``detect_mimetype_confidence(content, *, behaviors=BEHAVIORS_DEFAULT, ...)`` - MIME type detection with confidence scoring
-  * ``infer_charset(content, *, behaviors=BEHAVIORS_DEFAULT, ...)`` - Charset inference with validation
-  * ``infer_charset_confidence(content, *, behaviors=BEHAVIORS_DEFAULT, ...)`` - Charset inference with confidence scoring
-  * ``infer_mimetype_charset(content, *, behaviors=BEHAVIORS_DEFAULT, ...)`` - Combined MIME type and charset inference
-  * ``infer_mimetype_charset_confidence(content, *, behaviors=BEHAVIORS_DEFAULT, ...)`` - Combined detection with confidence scoring
-  * ``decode(content, *, behaviors=BEHAVIORS_DEFAULT, ...)`` - High-level bytes-to-text decoding with validation
-  * ``is_textual_mimetype(mimetype)`` - Textual MIME type validation  
-  * ``is_valid_text(text, profile=PROFILE_TEXTUAL)`` - Unicode-aware text validation
+The public API is composed of confidence-aware detection functions,
+inference orchestration functions, and high-level decode functions:
 
-**Core Types and Configuration**
-  Shared data structures for confidence-aware behavior:
+* ``detect_charset`` / ``detect_charset_confidence``
+* ``detect_mimetype`` / ``detect_mimetype_confidence``
+* ``infer_charset`` / ``infer_charset_confidence``
+* ``infer_mimetype_charset`` / ``infer_mimetype_charset_confidence``
+* ``decode``
+* ``decode_inform``
+* ``is_textual_mimetype``
+* ``is_valid_text``
+* ``LineSeparators`` utilities
 
-  * ``CharsetResult(charset, confidence)`` - Charset detection results with confidence scoring (0.0-1.0)
-  * ``MimetypeResult(mimetype, confidence)`` - MIME type detection results with confidence scoring (0.0-1.0)
-  * ``Behaviors`` - Configurable detection behavior with confidence thresholds and failure handling
-  * ``BehaviorTristate`` - When to apply behaviors (Never/AsNeeded/Always)
-  * ``CodecSpecifiers`` - Dynamic codec resolution (FromInference/OsDefault/UserSupplement/etc.)
-  * ``DetectFailureActions`` - Failure handling strategy (Default/Error) for graceful degradation
+Core Types and Configuration
+-------------------------------------------------------------------------------
 
-**Text Validation System**
-  Unicode-aware text validation with configurable profiles:
-  
-  * ``TextValidationProfile`` - Validation rules and character acceptance policies
-  * ``PROFILE_TEXTUAL`` - General textuality validation (lenient)
-  * ``PROFILE_TERMINAL_SAFE`` - Terminal output safety (strict)
-  * ``PROFILE_PRINTER_SAFE`` - Printer output safety (form feed allowed)
+* ``Behaviors`` - policy object controlling parse/detect/trial/validation
+  behaviors and confidence thresholds.
+* ``BehaviorTristate`` - execution mode for selected behavior paths
+  (Never/AsNeeded/Always).
+* ``DetectFailureActions`` - fallback policy on detector failure
+  (Default/Error).
+* ``CodecSpecifiers`` - dynamic trial codec slots
+  (FromInference/OsDefault/PythonDefault/UserSupplement).
+* ``CharsetResult`` - charset with confidence score.
+* ``MimetypeResult`` - MIME type with confidence score.
+* ``DecodeInformResult`` - decoded text plus charset/mimetype/line-separator
+  metadata.
 
-**Line Separator Processing**
-  Direct migration of proven enumeration and utilities:
-  
-  * ``LineSeparators`` enum - Detection, normalization, and nativization methods
-
-Component Relationships
+Layered Runtime Architecture
 ===============================================================================
 
-**v2.0 Layered Architecture**
+.. code-block:: text
 
-.. code-block::
+    ┌──────────────────────────────────────────────────────┐
+    │ Public API (__init__.py re-exports)                 │
+    └──────────────────────────────────────────────────────┘
+                          │
+    ┌──────────────────────────────────────────────────────┐
+    │ Decoding Layer (decoders.py)                        │
+    │ decode(), decode_inform()                           │
+    │ - HTTP Content-Type parse + charset-first attempt   │
+    │ - detector-assisted trial decode + text validation  │
+    │ - optional MIME/line-separator metadata             │
+    └──────────────────────────────────────────────────────┘
+                          │
+    ┌──────────────────────────────────────────────────────┐
+    │ Inference Layer (inference.py)                      │
+    │ infer_*() orchestration + header/location context   │
+    └──────────────────────────────────────────────────────┘
+                          │
+    ┌──────────────────────────────────────────────────────┐
+    │ Detection Layer (detectors.py)                      │
+    │ detector registries + confidence results            │
+    └──────────────────────────────────────────────────────┘
+                          │
+    ┌──────────────────────────────────────────────────────┐
+    │ Support Layer                                        │
+    │ charsets.py, mimetypes.py, validation.py,           │
+    │ lineseparators.py                                   │
+    └──────────────────────────────────────────────────────┘
 
-    ┌─────────────────────────────────────────────────┐
-    │        Public API Layer (decoders.py)         │
-    │  decode() - High-level bytes-to-text function  │
-    └─────────────────────────────────────────────────┘
-                            │
-    ┌─────────────────────────────────────────────────┐
-    │     Inference Layer (inference.py)            │
-    │  infer_charset_confidence()  infer_mimetype()   │
-    │  Context-aware orchestration + HTTP parsing    │
-    └─────────────────────────────────────────────────┘
-                            │
-    ┌─────────────────────────────────────────────────┐
-    │   Detection Layer (detectors.py)              │
-    │  detect_charset_confidence()  detect_mimetype() │
-    │  Core detection with confidence scoring        │
-    └─────────────────────────────────────────────────┘
-                            │
-    ┌─────────────────────────────────────────────────┐
-    │  Support Modules (charsets.py, validation.py) │
-    │  Trial decoding + Text validation + MIME utils │
-    └─────────────────────────────────────────────────┘
-                            │
-    ┌─────────────────────────────────────────────────┐
-    │            External Dependencies               │
-    │  chardet  charset-normalizer  puremagic        │
-    │  python-magic  mimetypes (stdlib) [optional]   │
-    └─────────────────────────────────────────────────┘
-
-**v2.0 Data Flow**
-
-1. **Input Processing**: Functions receive byte content, behaviors configuration, optional default values, and HTTP/location context
-2. **Registry-Based Detection**: Core detectors iterate through configured backends (chardet, charset-normalizer, puremagic, python-magic) returning CharsetResult/MimetypeResult objects with confidence scores
-3. **Smart Decision Making**: Confidence thresholds drive AsNeeded behavior for trial decode and text validation
-4. **Failure Handling**: DetectFailureActions configuration determines whether to return default values (graceful degradation) or raise exceptions
-5. **Layered Inference**: Higher-level functions orchestrate detection, validation, and configurable error handling
-6. **Validated Output**: Text validation ensures decoded content meets specified profiles for safety/quality
-
-Integration Patterns
+Decoder Flow (v3)
 ===============================================================================
 
-**Drop-in Replacement Strategy**
-  Existing code can replace imports with minimal changes:
-  
-  .. code-block:: python
-  
-      # Before: from mimeogram.acquirers import _detect_charset
-      # After:  from detextive import detect_charset
-      charset = detect_charset(content_bytes)
+``decode`` and ``decode_inform`` share the same decoding core:
 
-**Behavioral Fidelity**
-  Preserves exact existing behavior:
-  
-  * UTF-8 bias with validation from mimeogram charset detection
-  * Extensible textual MIME type patterns from all implementations
-  * Fallback chains (puremagic → mimetypes) from mimeogram  
-  * Complex parameter handling from ``detect_mimetype_and_charset``
-  * Heuristic validation from ``is_reasonable_text_content``
-  * Error handling and exception types maintained
+1. Parse ``http_content_type`` when provided.
+2. If header MIME is non-textual, raise ``ContentDecodeImpossibility``.
+3. If header charset is textual and decodable, decode with that charset first.
+4. Otherwise, run detector-assisted trial decodes in configured codec order.
+5. Apply text validation according to ``Behaviors.text_validate`` and
+   ``Behaviors.text_validate_confidence``.
+6. Return text (``decode``) or structured metadata (``decode_inform``).
 
-**Implementation Strategy**
-  * Direct consolidation of proven function logic
-  * Minimal abstraction to preserve performance characteristics
-  * Same dependencies and detection libraries as existing implementations
-
-Architectural Patterns
+Inference Flow
 ===============================================================================
 
-**Faithful Functional Reproduction**
-  Direct consolidation of existing functional implementations without
-  architectural changes (see ADR-001).
+``infer_*`` functions use contextual hints and detection orchestration:
 
-**Consolidation Pattern**
-  Multiple implementations merged into single functions:
-  
-  * **chardet**: Statistical charset detection with UTF-8 bias
-  * **puremagic**: Pure Python magic byte detection (primary)  
-  * **mimetypes**: Standard library extension-based fallback
-  * **LineSeparators**: Byte-level line ending detection and normalization
+1. Optionally parse ``http_content_type`` depending on behavior settings.
+2. Consider ``location``-based MIME hints.
+3. Run registered detectors for MIME and charset as configured.
+4. Apply ``*_default`` values only for fallback return semantics.
+5. Use ``*_supplement`` values as hints to guide detection/validation.
 
-**v2.0 Evolution**
-  ADR-003 and ADR-006 document the context-aware detection architecture for v2.0 that
-  addresses real-world integration challenges:
+Integration Notes
+===============================================================================
 
-  * Context-driven detection utilizing HTTP headers, location, and content analysis
-  * Confidence-based result types with specific CharsetResult/MimetypeResult objects
-  * Configurable validation behaviors for performance and security requirements
-  * Default return behavior pattern enabling graceful degradation for detection failures
-  * Enhanced function interfaces maintaining backward compatibility
-
-**Detector Registry Architecture**
-  ADR-002 documents the implemented pluggable backend system:
-
-  * Dynamic detector registration with type aliases for CharsetDetector/MimetypeDetector functions
-  * Configurable detector precedence via Behaviors.charset_detectors_order and mimetype_detectors_order
-  * Graceful degradation with NotImplemented return pattern for missing optional dependencies
-  * Registry dictionaries (charset_detectors, mimetype_detectors) enabling runtime backend selection
+* ``decode`` is authoritative for byte-to-text conversion and raises on
+  irrecoverable decode failure.
+* ``decode_inform`` is intended for callers that need text plus consistent
+  decode metadata in one call.
+* Detector registries are pluggable and backend-optional by design.
+* Trial codec ordering is behavior-driven and can be overridden by callers.

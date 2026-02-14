@@ -35,12 +35,15 @@ from .core import ( # isort: skip
 )
 
 
-def attempt_decodes(
+def attempt_decodes(  # noqa: C901,PLR0912,PLR0913,PLR0915
     content: _nomina.Content, /, *,
     behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
     inference: __.Absential[ str ] = __.absent,
     supplement: __.Absential[ str ] = __.absent,
     location: __.Absential[ _nomina.Location ] = __.absent,
+    validator: __.Absential[
+        __.cabc.Callable[ [ str, _CharsetResult ], None ]
+    ] = __.absent,
 ) -> tuple[ str, _CharsetResult ]:
     ''' Attempts to decode content with various character sets.
 
@@ -50,7 +53,7 @@ def attempt_decodes(
     confidence = _core.confidence_from_bytes_quantity(
         content, behaviors = behaviors )
     on_decode_error = behaviors.on_decode_error
-    trials: list[ str ] = [ ]
+    trials: set[ str ] = set( )
     for codec in behaviors.trial_codecs:
         match codec:
             case _CodecSpecifiers.FromInference:
@@ -65,14 +68,19 @@ def attempt_decodes(
                 charset = supplement
             case str( ): charset = codec
             case _: continue
+        charset = normalize_charset(
+            charset, bom_cognizant = behaviors.remove_bom )
+        if charset in trials: continue
         try: text = content.decode( charset, errors = on_decode_error )
-        except UnicodeDecodeError:
-            trials.append( charset )
-            continue
+        except UnicodeDecodeError: continue
+        finally: trials.add( charset )
         result = _CharsetResult( charset = charset, confidence = confidence )
+        if not __.is_absent( validator ):
+            try: validator( text, result )
+            except _exceptions.TextInvalidity: continue
         return text, result
     raise _exceptions.ContentDecodeFailure(
-        charset = trials, location = location )
+        charset = tuple( trials ), location = location )
 
 
 def discover_os_charset_default( ) -> str:
@@ -82,9 +90,11 @@ def discover_os_charset_default( ) -> str:
     return normalize_charset( discoverer( ) )
 
 
-def normalize_charset( charset: str ) -> str:
+def normalize_charset( charset: str, bom_cognizant: bool = False ) -> str:
     ''' Normalizes character set encoding names. '''
-    return __.codecs.lookup( charset ).name
+    charset_ = __.codecs.lookup( charset ).name
+    if bom_cognizant and charset_ == 'utf-8': return 'utf-8-sig'
+    return charset_
 
 
 def trial_decode_as_confident( # noqa: PLR0913

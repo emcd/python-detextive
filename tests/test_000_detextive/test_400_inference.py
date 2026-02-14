@@ -62,13 +62,27 @@ def test_120_infer_charset_confidence_http_content_type_parsing( ):
     http_content_type = 'text/plain; charset=iso-8859-1'
     result = _inference.infer_charset_confidence(
         content, http_content_type = http_content_type )
-    assert result.charset == 'iso-8859-1'
+    assert result.charset == 'iso8859-1'
+
+
+def test_125_infer_charset_httpct_honored_with_detect_enabled( ):
+    ''' Header charset is honored when charset detection is enabled. '''
+    content = 'Café'.encode( 'iso-8859-1' )
+    behaviors = detextive.Behaviors(
+        charset_detect = True,
+        charset_detectors_order = ( 'nonexistent-detector', ),
+        charset_on_detect_failure = detextive.DetectFailureActions.Error )
+    result = _inference.infer_charset_confidence(
+        content,
+        behaviors = behaviors,
+        http_content_type = 'text/plain; charset=iso-8859-1' )
+    assert result.charset == 'iso8859-1'
 
 
 def test_130_infer_charset_confidence_detection_fallback( ):
     ''' Falls back to detection when no other methods work. '''
     behaviors = detextive.Behaviors(
-        charset_detect = detextive.BehaviorTristate.Always )
+        charset_detect = True )
     result = _inference.infer_charset_confidence(
         UTF8_BASIC, behaviors = behaviors )
     assert result.charset is not None
@@ -78,7 +92,7 @@ def test_130_infer_charset_confidence_detection_fallback( ):
 def test_140_infer_charset_confidence_failure_when_no_detection( ):
     ''' Raises CharsetInferFailure when no detection methods available. '''
     behaviors = detextive.Behaviors(
-        charset_detect = detextive.BehaviorTristate.Never,
+        charset_detect = False,
         charset_detectors_order = ( 'nonexistent-detector', ),
         charset_on_detect_failure = detextive.DetectFailureActions.Error )
     with pytest.raises( detextive.exceptions.CharsetInferFailure ):
@@ -92,7 +106,7 @@ def test_150_charset_result_early_return( ):
     charset_result = _inference.infer_charset_confidence(
         content,
         behaviors = detextive.Behaviors(
-            charset_detect = detextive.BehaviorTristate.Always ),
+            charset_detect = True ),
         http_content_type = 'text/plain; charset=utf-8' )
     assert hasattr( charset_result, 'charset' )
     assert charset_result.charset is not None
@@ -131,7 +145,26 @@ def test_200_http_content_type_parsing_success( ):
             utf8_content, behaviors = behaviors,
             http_content_type = 'text/plain; charset=utf-8' ) )
     assert mimetype_result.mimetype == 'text/plain'
-    assert charset_result.charset == 'utf-8'
+    assert charset_result.charset == 'utf-8-sig'
+
+
+def test_205_httpct_honored_with_both_detect_enabled( ):
+    ''' Header parse is honored when both detect behaviors are enabled. '''
+    content = UTF8_BASIC
+    behaviors = detextive.Behaviors(
+        charset_detect = True,
+        mimetype_detect = True,
+        charset_detectors_order = ( 'nonexistent-detector', ),
+        mimetype_detectors_order = ( 'nonexistent-detector', ),
+        charset_on_detect_failure = detextive.DetectFailureActions.Error,
+        mimetype_on_detect_failure = detextive.DetectFailureActions.Error )
+    mimetype_result, charset_result = (
+        _inference.infer_mimetype_charset_confidence(
+            content,
+            behaviors = behaviors,
+            http_content_type = 'text/plain; charset=utf-8' ) )
+    assert mimetype_result.mimetype == 'text/plain'
+    assert charset_result.charset == 'utf-8-sig'
 
 
 def test_210_location_based_mimetype_inference( ):
@@ -163,11 +196,11 @@ def test_220_inference_failure_scenarios( ):
             content, behaviors = behaviors )
 
 
-def test_230_behavior_tristate_never( ):
-    ''' BehaviorTristate.Never disables detection. '''
+def test_230_mimetype_detection_disabled( ):
+    ''' Disabled MIME detection bypasses detector execution. '''
     content = b'test content'
     behaviors = detextive.Behaviors(
-        mimetype_detect = detextive.BehaviorTristate.Never,
+        mimetype_detect = False,
         charset_on_detect_failure = detextive.DetectFailureActions.Default,
         mimetype_on_detect_failure = detextive.DetectFailureActions.Default )
     mimetype_result, _ = _inference.infer_mimetype_charset_confidence(
@@ -202,7 +235,7 @@ def test_260_charset_infer_failure_exception( ):
     ''' CharsetInferFailure raised when charset inference completely fails. '''
     content = b'test content'
     behaviors = detextive.Behaviors(
-        charset_detect = detextive.BehaviorTristate.Never,
+        charset_detect = False,
         charset_on_detect_failure = detextive.DetectFailureActions.Error )
     with pytest.raises( detextive.exceptions.CharsetInferFailure ):
         _inference.infer_mimetype_charset_confidence(
@@ -215,7 +248,7 @@ def test_270_mimetype_infer_failure_exception( ):
     ''' MimetypeInferFailure raised when mimetype inference fails. '''
     content = b'test content'
     behaviors = detextive.Behaviors(
-        mimetype_detect = detextive.BehaviorTristate.Never,
+        mimetype_detect = False,
         mimetype_on_detect_failure = detextive.DetectFailureActions.Error )
     with pytest.raises( detextive.exceptions.MimetypeInferFailure ):
         _inference.infer_mimetype_charset_confidence(
@@ -225,11 +258,11 @@ def test_270_mimetype_infer_failure_exception( ):
 
 
 def test_280_should_parse_false_branch( ):
-    ''' should_parse=False skips parsing and goes to detection. '''
+    ''' Absent HTTP header uses regular detection paths. '''
     content = b'test content'
     behaviors = detextive.Behaviors(
-        charset_detect = detextive.BehaviorTristate.Always,
-        mimetype_detect = detextive.BehaviorTristate.Always )
+        charset_detect = True,
+        mimetype_detect = True )
     result = _inference.infer_mimetype_charset_confidence(
         content,
         behaviors = behaviors,
@@ -242,7 +275,7 @@ def test_290_location_mimetype_absent_branch( ):
     ''' Location-based mimetype inference when mimetype is absent. '''
     content = b'test content'
     behaviors = detextive.Behaviors(
-        mimetype_detect = detextive.BehaviorTristate.AsNeeded )
+        mimetype_detect = True )
     result = _inference.infer_mimetype_charset_confidence(
         content,
         behaviors = behaviors,
@@ -276,11 +309,11 @@ def test_310_http_validation_charset_absent( ):
     assert isinstance( charset_result.charset, str )
 
 
-def test_320_behavior_tristate_never_detection( ):
-    ''' BehaviorTristate.Never disables detection correctly. '''
+def test_320_mimetype_detection_disabled( ):
+    ''' Disabled MIME detection still honors parsed HTTP metadata. '''
     content = b'test content'
     behaviors = detextive.Behaviors(
-        mimetype_detect = detextive.BehaviorTristate.Never )
+        mimetype_detect = False )
     result = _inference.infer_mimetype_charset_confidence(
         content,
         behaviors = behaviors,
@@ -297,6 +330,25 @@ def test_330_http_content_type_no_charset_param( ):
     assert _internals.is_absent( charset )
 
 
+def test_332_http_content_type_malformed_charset_param( ):
+    ''' Malformed charset parameter is treated as absent. '''
+    mimetype, charset = _inference.parse_http_content_type(
+        'text/plain; charset' )
+    assert mimetype == 'text/plain'
+    assert _internals.is_absent( charset )
+
+
+def test_334_http_validation_malformed_charset_param( ):
+    ''' Malformed charset parameter falls back to standard inference. '''
+    content = b'test content'
+    mimetype_result, charset_result = (
+        _inference.infer_mimetype_charset_confidence(
+            content,
+            http_content_type = 'text/plain; charset' ) )
+    assert mimetype_result.mimetype == 'text/plain'
+    assert isinstance( charset_result.charset, str )
+
+
 def test_340_http_validation_mimetype_present( ):
     ''' HTTP validation when mimetype is present (not absent). '''
     content = b'test content'
@@ -305,7 +357,7 @@ def test_340_http_validation_mimetype_present( ):
             content,
             http_content_type = 'application/json; charset=utf-8' ) )
     assert mimetype_result.mimetype == 'application/json'
-    assert charset_result.charset == 'utf-8'
+    assert charset_result.charset == 'utf-8-sig'
 
 
 def test_350_http_validation_mimetype_not_absent( ):
@@ -317,6 +369,4 @@ def test_350_http_validation_mimetype_not_absent( ):
             http_content_type = 'application/json; charset=utf-8' ) )
     assert mimetype_result.mimetype == 'application/json'
     assert mimetype_result.confidence == 0.9
-    assert charset_result.charset == 'utf-8'
-
-
+    assert charset_result.charset == 'utf-8-sig'

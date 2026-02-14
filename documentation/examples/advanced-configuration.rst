@@ -133,7 +133,7 @@ Let HTTP header inform detection:
     >>> mimetype
     'application/json'
     >>> charset
-    'utf-8'
+    'utf-8-sig'
 
 Location-Based Inference
 ===============================================================================
@@ -157,10 +157,16 @@ Use Path objects for precise location context:
     >>> mimetype in ('application/json', 'text/plain')  # text/plain on Windows with python-magic-bin
     True
 
-Default Value Handling
+Default and Supplement Semantics
 -------------------------------------------------------------------------------
 
-Specify fallback values when detection confidence is insufficient:
+Use the parameters with distinct intent:
+
+* ``*_supplement``: user-supplied hint to guide inference.
+* ``*_default``: fallback value returned when inference cannot determine a
+  better result.
+
+Supplements guide inference but are not fallback return values:
 
 .. code-block:: python
 
@@ -171,8 +177,26 @@ Specify fallback values when detection confidence is insufficient:
         mimetype_supplement = 'text/plain',
         charset_supplement = 'utf-8' )
 
-    print( f"Result (with defaults): {mimetype}, {charset}" )
-    # Output: Result (with defaults): text/plain, utf-8
+    print( f"Result (with supplements): {mimetype}, {charset}" )
+
+Defaults provide fallback return values when detectors do not produce a result:
+
+.. code-block:: python
+
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( 'nonexistent-detector', ),
+        mimetype_detectors_order = ( 'nonexistent-detector', ),
+        charset_on_detect_failure = detextive.DetectFailureActions.Default,
+        mimetype_on_detect_failure = detextive.DetectFailureActions.Default )
+
+    mimetype, charset = detextive.infer_mimetype_charset(
+        b'\x80\x81\x82',
+        behaviors = behaviors,
+        mimetype_default = 'text/plain',
+        charset_default = 'latin-1' )
+
+    print( f"Fallback result: {mimetype}, {charset}" )
+    # Output: Fallback result: text/plain, latin-1
 
 Text Validation Profiles
 ===============================================================================
@@ -212,17 +236,22 @@ Apply validation profiles during high-level decoding:
     >>> text
     'Text for terminal display'
 
-Validation failures raise appropriate exceptions:
+Validation filtering can exhaust all decode attempts and raise a decode error.
+Note that we provide ``http_content_type`` here to bypass MIME type detection,
+which would reject this content as binary before decoding runs:
 
 .. doctest:: AdvancedConfiguration
 
     >>> import detextive.exceptions
     >>> problematic = b'Text with\x00null bytes'
     >>> try:
-    ...     detextive.decode( problematic, profile = detextive.PROFILE_TERMINAL_SAFE )
-    ... except detextive.exceptions.TextInvalidity as exception:
-    ...     print( "Text validation failed" )
-    Text validation failed
+    ...     detextive.decode(
+    ...         problematic,
+    ...         profile = detextive.PROFILE_TERMINAL_SAFE,
+    ...         http_content_type = 'text/plain' )
+    ... except detextive.exceptions.ContentDecodeFailure as exception:
+    ...     print( "Decode failed after validation filtering" )
+    Decode failed after validation filtering
 
 Error Handling
 ===============================================================================

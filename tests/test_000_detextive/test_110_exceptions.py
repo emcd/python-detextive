@@ -28,6 +28,7 @@ import detextive.exceptions as _exceptions
 
 def test_000_imports( ):
     ''' Exception classes are accessible from main module. '''
+    assert hasattr( _exceptions, 'BehaviorsInvalidity' )
     assert hasattr( _exceptions, 'CharsetDetectFailure' )
     assert hasattr( _exceptions, 'CharsetInferFailure' )
     assert hasattr( _exceptions, 'MimetypeDetectFailure' )
@@ -186,6 +187,16 @@ def test_180_exception_hierarchy_inheritance( ):
     assert issubclass( _exceptions.Omnierror, Exception )
 
 
+def test_180_behaviors_invalidity_hierarchy_and_message( ):
+    ''' BehaviorsInvalidity uses package family and type semantics. '''
+    exc = _exceptions.BehaviorsInvalidity( 'charset_detect', 'a boolean' )
+    assert isinstance( exc, _exceptions.Omnierror )
+    assert isinstance( exc, TypeError )
+    assert (
+        str( exc )
+        == "Behaviors attribute 'charset_detect' must be a boolean." )
+
+
 def test_181_mimetype_infer_failure_without_location( ):
     ''' MimetypeInferFailure constructs correctly without location. '''
     exc = _exceptions.MimetypeInferFailure( )
@@ -216,10 +227,7 @@ def test_184_textual_mimetype_invalidity_without_location( ):
     ''' TextualMimetypeInvalidity constructs correctly without location. '''
     exc = _exceptions.TextualMimetypeInvalidity( 'image/png' )
     exc_str = str( exc )
-    assert "MIME type '" in exc_str
-    assert "' is not textual for content." in exc_str
-    # Note: Currently has bug using literal {mimetype}
-    assert '{mimetype}' in exc_str
+    assert exc_str == "MIME type 'image/png' is not textual for content."
 
 
 def test_187_textual_mimetype_invalidity_with_location( ):
@@ -227,11 +235,10 @@ def test_187_textual_mimetype_invalidity_with_location( ):
     exc = _exceptions.TextualMimetypeInvalidity(
         'application/pdf', location = 'document.pdf' )
     exc_str = str( exc )
-    assert "MIME type '" in exc_str
-    assert "' is not textual for content at '" in exc_str
+    assert (
+        "MIME type 'application/pdf' is not textual for content at '"
+        in exc_str )
     assert exc_str.endswith( "'." )
-    # Note: Currently has bug using literal {mimetype}
-    assert '{mimetype}' in exc_str
     assert 'document.pdf' in exc_str
 
 

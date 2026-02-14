@@ -37,6 +37,7 @@ from .core import ( # isort: skip
     Behaviors as                    _Behaviors,
     BehaviorsArgument as            _BehaviorsArgument,
     CharsetResult as                _CharsetResult,
+    CodecSpecifiers as              _CodecSpecifiers,
     DetectFailureActions as         _DetectFailureActions,
     MimetypeResult as               _MimetypeResult,
 )
@@ -115,7 +116,7 @@ def detect_charset_confidence( # noqa: PLR0913
 ) -> _CharsetResult:
     ''' Detects character set candidates with confidence scores. '''
     if b'' == content:
-        return _CharsetResult( charset = 'utf-8', confidence = 1.0 )
+        return _CharsetResult( charset = default, confidence = 1.0 )
     for name in behaviors.charset_detectors_order:
         detector = charset_detectors.get( name )
         if detector is None: continue
@@ -169,20 +170,31 @@ def detect_mimetype_confidence(
     ''' Detects MIME type candidates with confidence scores. '''
     if b'' == content:
         return _MimetypeResult( mimetype = 'text/plain', confidence = 1.0 )
+    result: _MimetypeResult | __.types.NotImplementedType = NotImplemented
     for name in behaviors.mimetype_detectors_order:
         detector = mimetype_detectors.get( name )
         if detector is None: continue
         result = detector( content, behaviors )
-        if result is NotImplemented: continue
-        return result
-    if __.is_absent( charset ):
-        match behaviors.mimetype_on_detect_failure:
-            case _DetectFailureActions.Default:
-                return _MimetypeResult( mimetype = default, confidence = 0.0 )
-            case _:
-                raise _exceptions.MimetypeDetectFailure( location = location )
-    return _detect_mimetype_from_charset(
-        content, behaviors, charset, default = default, location = location )
+        if result is not NotImplemented: break
+    try_charset = (
+        result is NotImplemented or (
+                not _mimetypes.is_textual_mimetype( result.mimetype )
+            and result.confidence < behaviors.trial_decode_confidence ) )
+    if try_charset and not __.is_absent( charset ):
+        # For charset validation, only try specified charset (no OS default)
+        behaviors_charset_only = __.dcls.replace(
+            behaviors, trial_codecs = ( _CodecSpecifiers.FromInference, ) )
+        result_from_charset = _detect_mimetype_from_charset(
+            content, behaviors_charset_only, charset,
+            default = default, location = location )
+        if result_from_charset.mimetype == 'text/plain':
+            return result_from_charset
+    if result is not NotImplemented: return result
+    match behaviors.mimetype_on_detect_failure:
+        case _DetectFailureActions.Default:
+            return _MimetypeResult( mimetype = default, confidence = 0.0 )
+        case _:
+            raise _exceptions.MimetypeDetectFailure( location = location )
 
 
 def _confirm_charset_detection( # noqa: PLR0911
@@ -195,32 +207,43 @@ def _confirm_charset_detection( # noqa: PLR0911
     result = _normalize_charset_detection( content, behaviors, result )
     if result.charset is None: return result  # pragma: no cover
     charset, confidence = result.charset, result.confidence
-    charset = behaviors.charset_promotions.get( charset, charset )
     if charset.startswith( 'utf-' ):
+        behaviors_no_fallback = __.dcls.replace(
+            behaviors,
+            trial_codecs = (
+                _CodecSpecifiers.UserSupplement,
+                _CodecSpecifiers.FromInference ) )
         result = _charsets.trial_decode_as_confident(
             content,
-            behaviors = behaviors,
+            behaviors = behaviors_no_fallback,
             supplement = supplement,
             inference = charset,
             confidence = confidence,
             location = location )
         return _normalize_charset_detection( content, behaviors, result )
-    result = _CharsetResult( charset = charset, confidence = confidence )
     match behaviors.trial_decode:
         case _BehaviorTristate.Never: return result
         case _: # Shake out false positives, like 'MacRoman'.
             if charset == _charsets.discover_os_charset_default( ):
                 # Allow 'windows-1252', etc..., as appropriate.
                 return result  # pragma: no cover
+            # Try UTF-8 to shake out false positives, but not OS default.
+            behaviors_utf8_only = __.dcls.replace(
+                behaviors,
+                trial_codecs = (
+                    _CodecSpecifiers.UserSupplement,
+                   _CodecSpecifiers.FromInference ) )
             try:
                 _, result_ = _charsets.attempt_decodes(
                     content,
-                    behaviors = behaviors,
+                    behaviors = behaviors_utf8_only,
                     inference = 'utf-8-sig',
                     supplement = supplement,
                     location = location )
             except _exceptions.ContentDecodeFailure: return result
             if charset == result_.charset: return result  # pragma: no cover
+            result_ = _CharsetResult(
+                charset = result_.charset, confidence = confidence )
             return _normalize_charset_detection( content, behaviors, result_ )
 
 

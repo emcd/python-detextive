@@ -100,7 +100,7 @@ def test_220_codec_specifiers_user_supplement( ):
     text, result = _charsets.attempt_decodes(
         _patterns.UTF8_BASIC, behaviors = behaviors, supplement = 'utf-8' )
     assert text == 'Hello, world!'
-    assert result.charset == 'utf-8'
+    assert result.charset == 'utf-8-sig'
 
 
 def test_230_codec_specifiers_string_codec( ):
@@ -121,7 +121,7 @@ def test_240_invalid_codec_type_handling( ):
     text, result = _charsets.attempt_decodes(
         content, behaviors = behaviors )
     assert text == 'test content'
-    assert result.charset == 'utf-8'
+    assert result.charset == 'utf-8-sig'
 
 
 #============================================================================#
@@ -136,3 +136,16 @@ def test_300_trial_decode_failure_without_inference( ):
     with pytest.raises( detextive.exceptions.CharsetDetectFailure ):
         _charsets.trial_decode_as_confident(
             content, behaviors = behaviors, confidence = 0.5 )
+
+
+def test_310_from_inference_codec_skipped_when_absent( ):
+    ''' FromInference codec is skipped when inference parameter is absent. '''
+    content = b'Hello, world!'
+    behaviors = detextive.Behaviors(
+        trial_codecs = (
+            detextive.CodecSpecifiers.FromInference,
+            detextive.CodecSpecifiers.OsDefault,
+        ) )
+    text, result = _charsets.attempt_decodes( content, behaviors = behaviors )
+    assert text == 'Hello, world!'
+    assert result.charset is not None
