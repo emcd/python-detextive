@@ -104,7 +104,7 @@ def test_140_decode_inform_empty_content( ):
 def test_150_decode_inform_mimetype_inference_fallback( ):
     ''' Falls back to text/plain when MIME inference is unavailable. '''
     behaviors = detextive.Behaviors(
-        mimetype_detect = detextive.BehaviorTristate.Never )
+        mimetype_detect = False )
     result = _decoders.decode_inform( b'hello', behaviors = behaviors )
     assert result.mimetype.mimetype == 'text/plain'
 

@@ -22,6 +22,7 @@
 
 
 from . import __
+from . import exceptions as _exceptions
 from . import nomina as _nomina
 
 
@@ -62,9 +63,9 @@ class Behaviors( __.immut.DataclassObject ):
             ''' Minimum number of bytes for full detection confidence. ''' ),
     ] = 1024
     charset_detect: __.typx.Annotated[
-        BehaviorTristate,
-        __.ddoc.Doc( ''' When to detect charset from content. ''' ),
-    ] = BehaviorTristate.AsNeeded
+        bool,
+        __.ddoc.Doc( ''' Whether to detect charset from content. ''' ),
+    ] = True
     charset_detectors_order: __.typx.Annotated[
         __.cabc.Sequence[ str ],
         __.ddoc.Doc(
@@ -75,9 +76,9 @@ class Behaviors( __.immut.DataclassObject ):
         __.ddoc.Doc( ''' Action to take on charset detection failure. ''' ),
     ] = DetectFailureActions.Default
     mimetype_detect: __.typx.Annotated[
-        BehaviorTristate,
-        __.ddoc.Doc( ''' When to detect MIME type from content. ''' ),
-    ] = BehaviorTristate.AsNeeded
+        bool,
+        __.ddoc.Doc( ''' Whether to detect MIME type from content. ''' ),
+    ] = True
     mimetype_detectors_order: __.typx.Annotated[
         __.cabc.Sequence[ str ],
         __.ddoc.Doc(
@@ -127,6 +128,14 @@ class Behaviors( __.immut.DataclassObject ):
     trial_decode_confidence: __.typx.Annotated[
         float, __.ddoc.Doc( ''' Minimum confidence to skip trial decode. ''')
     ] = 0.80
+
+    def __post_init__( self ) -> None:
+        if not isinstance( self.charset_detect, bool ):
+            raise _exceptions.BehaviorsInvalidity(
+                'charset_detect', 'a boolean' )
+        if not isinstance( self.mimetype_detect, bool ):
+            raise _exceptions.BehaviorsInvalidity(
+                'mimetype_detect', 'a boolean' )
 
 
 BehaviorsArgument: __.typx.TypeAlias = __.typx.Annotated[

@@ -41,8 +41,8 @@ CharsetAssumptionArgument: __.typx.TypeAlias = __.typx.Annotated[
 CharsetDefaultArgument: __.typx.TypeAlias = __.typx.Annotated[
     str,
     __.ddoc.Doc(
-        ''' Fallback character set returned on inference/detection
-            failure. ''' ),
+        ''' Fallback character set returned on inference/detection failure.
+        ''' ),
 ]
 CharsetSupplementArgument: __.typx.TypeAlias = __.typx.Annotated[
     __.Absential[ str ],

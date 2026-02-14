@@ -77,8 +77,8 @@ configuration object.
 
     class Behaviors(immut.Dataclass):
         # Core detection controls
-        charset_detect: BehaviorTristate = BehaviorTristate.AsNeeded
-        mimetype_detect: BehaviorTristate = BehaviorTristate.AsNeeded
+        charset_detect: bool = True
+        mimetype_detect: bool = True
 
         # Trial decoding and validation controls
         trial_decode: BehaviorTristate = BehaviorTristate.AsNeeded
@@ -107,8 +107,8 @@ configuration object.
 
 **Sophisticated Detection Control:**
 
-* **charset_detect**: Controls when charset detection from content occurs
-* **mimetype_detect**: Controls when MIME type detection from content occurs
+* **charset_detect**: Enables/disables charset detection from content
+* **mimetype_detect**: Enables/disables MIME type detection from content
 * **trial_decode**: Controls when trial decoding runs
 * **text_validate**: Controls when decoded text is validated
 

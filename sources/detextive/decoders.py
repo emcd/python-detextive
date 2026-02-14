@@ -203,7 +203,7 @@ def _infer_mimetype( # noqa: PLR0913
             and _mimetypes.is_textual_mimetype( mimetype )
         ):
             return _MimetypeResult( mimetype = mimetype, confidence = 0.9 )
-    if behaviors.mimetype_detect is not _BehaviorTristate.Never:
+    if behaviors.mimetype_detect:
         result = _detectors.detect_mimetype_confidence(
             content,
             behaviors = behaviors,

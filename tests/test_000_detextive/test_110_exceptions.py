@@ -28,6 +28,7 @@ import detextive.exceptions as _exceptions
 
 def test_000_imports( ):
     ''' Exception classes are accessible from main module. '''
+    assert hasattr( _exceptions, 'BehaviorsInvalidity' )
     assert hasattr( _exceptions, 'CharsetDetectFailure' )
     assert hasattr( _exceptions, 'CharsetInferFailure' )
     assert hasattr( _exceptions, 'MimetypeDetectFailure' )
@@ -184,6 +185,16 @@ def test_180_exception_hierarchy_inheritance( ):
         _exceptions.Omnierror, _exceptions.Omniexception )
     assert issubclass( _exceptions.Omniexception, BaseException )
     assert issubclass( _exceptions.Omnierror, Exception )
+
+
+def test_180_behaviors_invalidity_hierarchy_and_message( ):
+    ''' BehaviorsInvalidity uses package family and type semantics. '''
+    exc = _exceptions.BehaviorsInvalidity( 'charset_detect', 'a boolean' )
+    assert isinstance( exc, _exceptions.Omnierror )
+    assert isinstance( exc, TypeError )
+    assert (
+        str( exc )
+        == "Behaviors attribute 'charset_detect' must be a boolean." )
 
 
 def test_181_mimetype_infer_failure_without_location( ):
