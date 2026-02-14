@@ -89,14 +89,14 @@ class Behaviors( __.immut.DataclassObject ):
     ] = DetectFailureActions.Default
 
     charset_detect: __.typx.Annotated[
-        BehaviorTristate,
-        __.ddoc.Doc( ''' When to detect charset from content. ''' ),
-    ] = BehaviorTristate.AsNeeded
+        bool,
+        __.ddoc.Doc( ''' Whether to detect charset from content. ''' ),
+    ] = True
 
     mimetype_detect: __.typx.Annotated[
-        BehaviorTristate,
-        __.ddoc.Doc( ''' When to detect MIME type from content. ''' ),
-    ] = BehaviorTristate.AsNeeded
+        bool,
+        __.ddoc.Doc( ''' Whether to detect MIME type from content. ''' ),
+    ] = True
 ```
 
 #### Simple String-Based Detection Functions
