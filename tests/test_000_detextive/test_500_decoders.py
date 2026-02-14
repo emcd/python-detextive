@@ -160,6 +160,32 @@ def test_190_decode_validation_profile_parameters( ):
     assert text is not None  # Should succeed when validation is disabled
 
 
+def test_195_decode_attempts_skip_validation_above_confidence_threshold( ):
+    ''' As-needed validation skips high-confidence decode attempts. '''
+    content = b'Text with\x00null bytes'
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( 'nonexistent-detector', ),
+        charset_on_detect_failure = detextive.DetectFailureActions.Error,
+        bytes_quantity_confidence_divisor = 1,
+        text_validate = detextive.BehaviorTristate.AsNeeded,
+        text_validate_confidence = 0.8 )
+    text = _decoders.decode( content, behaviors = behaviors )
+    assert text == 'Text with\x00null bytes'
+
+
+def test_196_decode_attempts_validate_below_confidence_threshold( ):
+    ''' As-needed validation runs for low-confidence decode attempts. '''
+    content = b'Text with\x00null bytes'
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( 'nonexistent-detector', ),
+        charset_on_detect_failure = detextive.DetectFailureActions.Error,
+        bytes_quantity_confidence_divisor = 10_000,
+        text_validate = detextive.BehaviorTristate.AsNeeded,
+        text_validate_confidence = 0.8 )
+    with pytest.raises( detextive.exceptions.ContentDecodeFailure ):
+        _decoders.decode( content, behaviors = behaviors )
+
+
 # Default Parameter Tests (200-299): Custom default values and behaviors
 
 def test_200_decode_empty_content_returns_empty_string( ):
