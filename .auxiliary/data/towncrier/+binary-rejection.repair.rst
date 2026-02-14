@@ -1,1 +1,0 @@
-Reject binary content with non-textual MIME types instead of attempting to decode, preventing false positives where binary data was incorrectly decoded as text.
