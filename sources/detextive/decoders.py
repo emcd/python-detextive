@@ -248,7 +248,7 @@ def _validate_text_in_decode_attempt(
     location: _nomina.LocationArgument,
 ) -> None:
     _validate_text(
-        text, result.confidence,
+        text, 0.0,
         behaviors = behaviors,
         profile = profile,
         location = location )

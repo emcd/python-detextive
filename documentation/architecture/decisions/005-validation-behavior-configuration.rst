@@ -72,18 +72,26 @@ configuration object.
 
     class BehaviorTristate(enum.Enum):
         Never = enum.auto()
-        AsNeeded = enum.auto()  
+        AsNeeded = enum.auto()
         Always = enum.auto()
 
     class Behaviors(immut.Dataclass):
         # Core detection controls
         charset_detect: BehaviorTristate = BehaviorTristate.AsNeeded
         mimetype_detect: BehaviorTristate = BehaviorTristate.AsNeeded
-        
-        # Charset handling sophistication
-        charset_trial_codecs: Sequence[str | CodecSpecifiers] = (
-            CodecSpecifiers.Inference, CodecSpecifiers.UserDefault)
-        charset_trial_decode: BehaviorTristate = BehaviorTristate.AsNeeded
+
+        # Trial decoding and validation controls
+        trial_decode: BehaviorTristate = BehaviorTristate.AsNeeded
+        trial_decode_confidence: float = 0.80
+        text_validate: BehaviorTristate = BehaviorTristate.AsNeeded
+        text_validate_confidence: float = 0.80
+        trial_codecs: Sequence[str | CodecSpecifiers] = (
+            CodecSpecifiers.UserSupplement,
+            'utf-8',
+            CodecSpecifiers.FromInference,
+            CodecSpecifiers.OsDefault,
+            CodecSpecifiers.PythonDefault,
+        )
 
 **BehaviorTristate Control:**
 
@@ -93,35 +101,37 @@ configuration object.
 
 **Advanced Charset Handling:**
 
-* **charset_trial_codecs**: Sequence of codecs to try during trial decoding
-* **CodecSpecifiers**: Enum for dynamic codec resolution (Inference, OsDefault, UserDefault)
+* **trial_codecs**: Sequence of codecs to try during trial decoding
+* **CodecSpecifiers**: Enum for dynamic codec resolution
+  (FromInference, OsDefault, PythonDefault, UserSupplement)
 
 **Sophisticated Detection Control:**
 
 * **charset_detect**: Controls when charset detection from content occurs
 * **mimetype_detect**: Controls when MIME type detection from content occurs
-* **charset_trial_decode**: Controls when trial decoding validation occurs
+* **trial_decode**: Controls when trial decoding runs
+* **text_validate**: Controls when decoded text is validated
 
 **Integration Pattern:**
 
 .. code-block:: python
 
-    def detect_mimetype_charset(
+    def infer_mimetype_charset(
         content: Content,
         location: Absential[Location] = absent, *,
-        behaviors: Absential[Behaviors] = absent,
+        behaviors: Behaviors = BEHAVIORS_DEFAULT,
         # ... other parameters
-    ) -> tuple[Absential[str], Absential[str]]:
+    ) -> tuple[str, Optional[str]]:
 
 **Default Behavior Design:**
 
 .. code-block:: python
 
     BEHAVIORS_DEFAULT = Behaviors(
-        trial_decode='as-needed',
-        validate_printable='as-needed', 
-        printable_threshold=0.0,
-        assume_utf8_superset=True,
+        trial_decode=BehaviorTristate.AsNeeded,
+        trial_decode_confidence=0.80,
+        text_validate=BehaviorTristate.AsNeeded,
+        text_validate_confidence=0.80,
     )
 
 Alternatives
@@ -183,8 +193,8 @@ Consequences
 
     # Quick charset detection for decoding
     fast_behaviors = Behaviors(
-        trial_decode='never',
-        validate_printable='never',
+        trial_decode=BehaviorTristate.Never,
+        text_validate=BehaviorTristate.Never,
     )
 
 **Security-Focused Configuration:**
@@ -193,9 +203,8 @@ Consequences
 
     # Comprehensive validation for untrusted content
     secure_behaviors = Behaviors(
-        trial_decode='always',
-        validate_printable='always',
-        printable_threshold=0.05,  # Allow 5% non-printable
+        trial_decode=BehaviorTristate.Always,
+        text_validate=BehaviorTristate.Always,
     )
 
 **Content-Specific Configuration:**
@@ -204,8 +213,8 @@ Consequences
 
     # Relaxed validation for code/data content
     code_behaviors = Behaviors(
-        printable_threshold=0.15,  # Allow more control characters
-        validate_printable='as-needed',
+        text_validate=BehaviorTristate.AsNeeded,
+        text_validate_confidence=0.40,
     )
 
 **Conditional Logic Implementation:**
@@ -214,17 +223,18 @@ Internal implementation will evaluate behavior configuration to determine
 which validation steps to execute, maintaining performance characteristics 
 appropriate for each configuration profile.
 
-**Integration with Error Class Provider:**
+**Integration with Failure Policies:**
 
-Behaviors configuration works in conjunction with error class provider pattern 
-to provide complete control over validation execution and error handling:
+Behaviors configuration works in conjunction with detect-failure actions
+to provide control over validation execution and fallback behavior:
 
 .. code-block:: python
 
-    result = detect_mimetype_charset(
+    result = infer_mimetype_charset(
         content, location,
-        behaviors=secure_behaviors,
-        error_class_provider=security_error_mapper,
+        behaviors = secure_behaviors,
+        charset_default = 'utf-8',
+        mimetype_default = 'text/plain',
     )
 
 This decision provides the foundation for performance-aware and context-sensitive 
