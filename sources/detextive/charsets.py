@@ -35,7 +35,7 @@ from .core import ( # isort: skip
 )
 
 
-def attempt_decodes(  # noqa: C901,PLR0912,PLR0913,PLR0915
+def attempt_decodes( # noqa: PLR0913
     content: _nomina.Content, /, *,
     behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
     inference: __.Absential[ str ] = __.absent,
@@ -52,33 +52,19 @@ def attempt_decodes(  # noqa: C901,PLR0912,PLR0913,PLR0915
     '''
     confidence = _core.confidence_from_bytes_quantity(
         content, behaviors = behaviors )
-    on_decode_error = behaviors.on_decode_error
+    trial_codecs = _collect_trial_codecs(
+        content,
+        behaviors = behaviors,
+        inference = inference,
+        supplement = supplement )
     trials: set[ str ] = set( )
-    for codec in behaviors.trial_codecs:
-        match codec:
-            case _CodecSpecifiers.FromInference:
-                if __.is_absent( inference ): continue
-                charset = inference
-            case _CodecSpecifiers.OsDefault:
-                charset = discover_os_charset_default( )
-            case _CodecSpecifiers.PythonDefault:
-                charset = __.locale.getpreferredencoding( )
-            case _CodecSpecifiers.UserSupplement:
-                if __.is_absent( supplement ): continue
-                charset = supplement
-            case str( ): charset = codec
-            case _: continue
-        charset = normalize_charset( charset )
-        if _is_ambiguous_utf_trial( content, charset, behaviors ): continue
-        charset_decode = charset
-        if behaviors.remove_bom and charset == 'utf-8':
-            charset_decode = 'utf-8-sig'
-        if charset_decode in trials: continue
-        try: text = content.decode( charset_decode, errors = on_decode_error )
+    for trial_codec in trial_codecs:
+        try: text = content.decode(
+            trial_codec, errors = behaviors.on_decode_error )
         except UnicodeDecodeError: continue
-        finally: trials.add( charset_decode )
+        finally: trials.add( trial_codec )
         result = _CharsetResult(
-            charset = normalize_charset_for_content( content, charset_decode ),
+            charset = normalize_charset_for_content( content, trial_codec ),
             confidence = confidence )
         if not __.is_absent( validator ):
             try: validator( text, result )
@@ -150,6 +136,25 @@ def trial_decode_as_confident( # noqa: PLR0913
     return _CharsetResult( charset = inference, confidence = confidence )
 
 
+def _collect_trial_codecs(
+    content: _nomina.Content, /, *,
+    behaviors: _Behaviors,
+    inference: __.Absential[ str ],
+    supplement: __.Absential[ str ],
+) -> tuple[ str, ... ]:
+    codecs: list[ str ] = [ ]  # No set needed; this candidate list is tiny.
+    for codec in behaviors.trial_codecs:
+        charset = _resolve_trial_codec(
+            codec, inference = inference, supplement = supplement )
+        if __.is_absent( charset ): continue
+        charset = normalize_charset( charset )
+        if _is_ambiguous_utf_trial( content, charset, behaviors ): continue
+        if behaviors.remove_bom and charset == 'utf-8': charset = 'utf-8-sig'
+        if charset in codecs: continue
+        codecs.append( charset )
+    return tuple( codecs )
+
+
 def _discover_utf_bom_charset(
     content: _nomina.Content
 ) -> __.typx.Optional[ str ]:
@@ -174,3 +179,23 @@ def _is_ambiguous_utf_trial(
             bom_charset = _discover_utf_bom_charset( content )
             return bom_charset not in ( 'utf-32-le', 'utf-32-be' )
         case _: return False
+
+
+def _resolve_trial_codec(
+    codec: __.typx.Any, /, *,
+    inference: __.Absential[ str ],
+    supplement: __.Absential[ str ],
+) -> __.Absential[ str ]:
+    charset: __.Absential[ str ] = __.absent
+    match codec:
+        case _CodecSpecifiers.FromInference:
+            if not __.is_absent( inference ): charset = inference
+        case _CodecSpecifiers.OsDefault:
+            charset = discover_os_charset_default( )
+        case _CodecSpecifiers.PythonDefault:
+            charset = __.locale.getpreferredencoding( )
+        case _CodecSpecifiers.UserSupplement:
+            if not __.is_absent( supplement ): charset = supplement
+        case str( ): charset = codec
+        case _: pass
+    return charset

@@ -207,3 +207,34 @@ def test_340_strict_mode_allows_explicit_endianness_utf_trials( ):
             content, behaviors = behaviors )
         assert text == 'Hello, world!'
         assert result.charset == expected
+
+
+def test_350_collect_trial_codecs_preserves_order_and_deduplicates( ):
+    ''' Trial codec collection preserves order and deduplicates candidates. '''
+    behaviors = detextive.Behaviors(
+        remove_bom = True,
+        trial_codecs = (
+            detextive.CodecSpecifiers.UserSupplement,
+            'utf-8',
+            detextive.CodecSpecifiers.FromInference,
+            'utf-8-sig',
+        ) )
+    trial_codecs = _charsets._collect_trial_codecs(
+        b'hello',
+        behaviors = behaviors,
+        inference = 'utf-8',
+        supplement = 'iso-8859-1' )
+    assert trial_codecs == ( 'iso8859-1', 'utf-8-sig' )
+
+
+def test_360_collect_trial_codecs_filters_ambiguous_utf_families( ):
+    ''' Strict mode codec collection rejects ambiguous UTF-16/32 families. '''
+    behaviors = detextive.Behaviors(
+        utf_16_32_requires_byte_order = True,
+        trial_codecs = ( 'utf-16', 'utf-16-le', 'utf-32', 'utf-32-le' ) )
+    trial_codecs = _charsets._collect_trial_codecs(
+        _patterns.UTF16_LE_NO_BOM,
+        behaviors = behaviors,
+        inference = 'utf-8',
+        supplement = 'utf-8' )
+    assert trial_codecs == ( 'utf-16-le', 'utf-32-le' )
