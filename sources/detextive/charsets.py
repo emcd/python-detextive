@@ -68,13 +68,17 @@ def attempt_decodes(  # noqa: C901,PLR0912,PLR0913,PLR0915
                 charset = supplement
             case str( ): charset = codec
             case _: continue
-        charset = normalize_charset(
-            charset, bom_cognizant = behaviors.remove_bom )
-        if charset in trials: continue
-        try: text = content.decode( charset, errors = on_decode_error )
+        charset = normalize_charset( charset )
+        charset_decode = charset
+        if behaviors.remove_bom and charset == 'utf-8':
+            charset_decode = 'utf-8-sig'
+        if charset_decode in trials: continue
+        try: text = content.decode( charset_decode, errors = on_decode_error )
         except UnicodeDecodeError: continue
-        finally: trials.add( charset )
-        result = _CharsetResult( charset = charset, confidence = confidence )
+        finally: trials.add( charset_decode )
+        result = _CharsetResult(
+            charset = normalize_charset_for_content( content, charset_decode ),
+            confidence = confidence )
         if not __.is_absent( validator ):
             try: validator( text, result )
             except _exceptions.TextInvalidity: continue
@@ -95,6 +99,16 @@ def normalize_charset( charset: str, bom_cognizant: bool = False ) -> str:
     charset_ = __.codecs.lookup( charset ).name
     if bom_cognizant and charset_ == 'utf-8': return 'utf-8-sig'
     return charset_
+
+
+def normalize_charset_for_content(
+    content: _nomina.Content, charset: str
+) -> str:
+    ''' Normalizes charset reporting based on byte-order mark provenance. '''
+    charset_ = normalize_charset( charset )
+    if charset_ not in ( 'utf-8', 'utf-8-sig' ): return charset_
+    if content.startswith( __.codecs.BOM_UTF8 ): return 'utf-8-sig'
+    return 'utf-8'
 
 
 def trial_decode_as_confident( # noqa: PLR0913

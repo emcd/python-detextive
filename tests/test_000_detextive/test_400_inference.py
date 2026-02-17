@@ -30,6 +30,7 @@ import detextive.inference as _inference
 from .patterns import (
     EMPTY_CONTENT,
     UTF8_BASIC,
+    UTF8_WITH_BOM,
 )
 
 
@@ -145,7 +146,7 @@ def test_200_http_content_type_parsing_success( ):
             utf8_content, behaviors = behaviors,
             http_content_type = 'text/plain; charset=utf-8' ) )
     assert mimetype_result.mimetype == 'text/plain'
-    assert charset_result.charset == 'utf-8-sig'
+    assert charset_result.charset == 'utf-8'
 
 
 def test_205_httpct_honored_with_both_detect_enabled( ):
@@ -164,7 +165,24 @@ def test_205_httpct_honored_with_both_detect_enabled( ):
             behaviors = behaviors,
             http_content_type = 'text/plain; charset=utf-8' ) )
     assert mimetype_result.mimetype == 'text/plain'
-    assert charset_result.charset == 'utf-8-sig'
+    assert charset_result.charset == 'utf-8'
+
+
+def test_206_httpct_utf8_charset_reports_bom_provenance( ):
+    ''' HTTP charset validation reports UTF-8 BOM provenance. '''
+    cases = (
+        ( True, UTF8_BASIC, 'utf-8' ),
+        ( True, UTF8_WITH_BOM, 'utf-8-sig' ),
+        ( False, UTF8_BASIC, 'utf-8' ),
+        ( False, UTF8_WITH_BOM, 'utf-8-sig' ),
+    )
+    for remove_bom, content, expected in cases:
+        behaviors = detextive.Behaviors( remove_bom = remove_bom )
+        _, charset_result = _inference.infer_mimetype_charset_confidence(
+            content,
+            behaviors = behaviors,
+            http_content_type = 'text/plain; charset=utf-8' )
+        assert charset_result.charset == expected
 
 
 def test_210_location_based_mimetype_inference( ):
@@ -357,7 +375,7 @@ def test_340_http_validation_mimetype_present( ):
             content,
             http_content_type = 'application/json; charset=utf-8' ) )
     assert mimetype_result.mimetype == 'application/json'
-    assert charset_result.charset == 'utf-8-sig'
+    assert charset_result.charset == 'utf-8'
 
 
 def test_350_http_validation_mimetype_not_absent( ):
@@ -369,4 +387,4 @@ def test_350_http_validation_mimetype_not_absent( ):
             http_content_type = 'application/json; charset=utf-8' ) )
     assert mimetype_result.mimetype == 'application/json'
     assert mimetype_result.confidence == 0.9
-    assert charset_result.charset == 'utf-8-sig'
+    assert charset_result.charset == 'utf-8'

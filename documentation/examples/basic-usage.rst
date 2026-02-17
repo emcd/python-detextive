@@ -203,7 +203,7 @@ The ``decode_inform`` function returns decoded text with charset/MIME metadata:
     >>> result.mimetype.mimetype
     'text/plain'
     >>> result.charset.charset
-    'utf-8-sig'
+    'utf-8'
     >>> result.linesep
     <LineSeparators.LF: '\n'>
 

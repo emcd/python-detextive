@@ -133,7 +133,7 @@ Let HTTP header inform detection:
     >>> mimetype
     'application/json'
     >>> charset
-    'utf-8-sig'
+    'utf-8'
 
 Location-Based Inference
 ===============================================================================

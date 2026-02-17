@@ -29,6 +29,7 @@ import detextive.detectors as _detectors
 
 from .patterns import (
     EMPTY_CONTENT,
+    UTF8_WITH_BOM,
 )
 
 
@@ -87,8 +88,26 @@ def test_130_decode_inform_honors_http_content_type( ):
         content,
         http_content_type = 'application/json; charset=utf-8' )
     assert result.text == '{"message": "hello"}'
-    assert result.charset.charset == 'utf-8-sig'
+    assert result.charset.charset == 'utf-8'
     assert result.mimetype.mimetype == 'application/json'
+
+
+def test_132_decode_inform_utf8_header_reports_bom_provenance( ):
+    ''' UTF-8 reporting follows BOM provenance, independent of remove_bom. '''
+    cases = (
+        ( True, b'hello', 'hello', 'utf-8' ),
+        ( True, UTF8_WITH_BOM, 'Hello, world!', 'utf-8-sig' ),
+        ( False, b'hello', 'hello', 'utf-8' ),
+        ( False, UTF8_WITH_BOM, '\ufeffHello, world!', 'utf-8-sig' ),
+    )
+    for remove_bom, content, expected_text, expected_charset in cases:
+        behaviors = detextive.Behaviors( remove_bom = remove_bom )
+        result = _decoders.decode_inform(
+            content,
+            behaviors = behaviors,
+            http_content_type = 'text/plain; charset=utf-8' )
+        assert result.text == expected_text
+        assert result.charset.charset == expected_charset
 
 
 def test_140_decode_inform_empty_content( ):

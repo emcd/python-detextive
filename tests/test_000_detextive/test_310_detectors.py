@@ -30,6 +30,8 @@ from .patterns import (
     EMPTY_CONTENT,
     UNDETECTABLE_CHARSET,
     UNDETECTABLE_MIMETYPE,
+    UTF8_BASIC,
+    UTF8_WITH_BOM,
 )
 
 
@@ -170,6 +172,24 @@ def test_200_empty_content_charset_handling( ):
     result = detextive.detect_charset_confidence( EMPTY_CONTENT )
     assert result.charset == 'utf-8'
     assert result.confidence == 1.0
+
+
+def test_205_charset_normalization_tracks_utf8_bom_provenance( ):
+    ''' UTF-8 charset labels track source BOM bytes. '''
+    detector_name = 'test-utf8-detector-for-bom-provenance'
+    def detector_utf8( content, behaviors ):
+        return detextive.core.CharsetResult(
+            charset = 'utf-8', confidence = 0.9 )
+    _detectors.charset_detectors[ detector_name ] = detector_utf8
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( detector_name, ),
+        trial_decode = detextive.BehaviorTristate.Never )
+    result_no_bom = detextive.detect_charset_confidence(
+        UTF8_BASIC, behaviors = behaviors )
+    result_with_bom = detextive.detect_charset_confidence(
+        UTF8_WITH_BOM, behaviors = behaviors )
+    assert result_no_bom.charset == 'utf-8'
+    assert result_with_bom.charset == 'utf-8-sig'
 
 
 def test_210_charset_detection_with_mimetype_absent( ):
