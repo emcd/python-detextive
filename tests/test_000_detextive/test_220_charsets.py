@@ -20,7 +20,6 @@
 
 ''' Charset codec edge cases and fallback mechanisms. '''
 
-
 import pytest
 
 import detextive
@@ -100,7 +99,7 @@ def test_220_codec_specifiers_user_supplement( ):
     text, result = _charsets.attempt_decodes(
         _patterns.UTF8_BASIC, behaviors = behaviors, supplement = 'utf-8' )
     assert text == 'Hello, world!'
-    assert result.charset == 'utf-8-sig'
+    assert result.charset == 'utf-8'
 
 
 def test_230_codec_specifiers_string_codec( ):
@@ -121,7 +120,30 @@ def test_240_invalid_codec_type_handling( ):
     text, result = _charsets.attempt_decodes(
         content, behaviors = behaviors )
     assert text == 'test content'
-    assert result.charset == 'utf-8-sig'
+    assert result.charset == 'utf-8'
+
+
+def test_245_normalize_charset_bom_cognizant_utf8( ):
+    ''' Charset normalization maps UTF-8 to UTF-8-SIG when BOM-cognizant. '''
+    assert _charsets.normalize_charset(
+        'utf-8', bom_cognizant = True ) == 'utf-8-sig'
+
+
+def test_250_normalize_charset_for_content_utf_families( ):
+    ''' UTF family reporting follows BOM provenance semantics. '''
+    utf16_be_with_bom = b'\xfe\xff' + _patterns.UTF16_BE_NO_BOM
+    utf32_be_with_bom = b'\x00\x00\xfe\xff' + _patterns.UTF32_BE_NO_BOM
+    cases = (
+        ( _patterns.UTF16_WITH_BOM, 'utf-16-le', 'utf-16' ),
+        ( utf16_be_with_bom, 'utf-16-be', 'utf-16' ),
+        ( _patterns.UTF16_LE_NO_BOM, 'utf-16', 'utf-16' ),
+        ( _patterns.UTF32_WITH_BOM, 'utf-32-be', 'utf-32' ),
+        ( utf32_be_with_bom, 'utf-32-be', 'utf-32' ),
+        ( _patterns.UTF32_LE_NO_BOM, 'utf-32', 'utf-32' ),
+    )
+    for content, charset, expected in cases:
+        result = _charsets.normalize_charset_for_content( content, charset )
+        assert result == expected
 
 
 #============================================================================#
@@ -149,3 +171,80 @@ def test_310_from_inference_codec_skipped_when_absent( ):
     text, result = _charsets.attempt_decodes( content, behaviors = behaviors )
     assert text == 'Hello, world!'
     assert result.charset is not None
+
+
+def test_320_bomless_generic_utf_trials_remain_permissive_by_default( ):
+    ''' Default mode still attempts BOM-less generic UTF-16/32 decode trials.
+    '''
+    cases = (
+        ( b'\x00', 'utf-16', "'utf-16'" ),
+        ( b'\x00\x00\x00', 'utf-32', "'utf-32'" ),
+    )
+    for content, codec, expected in cases:
+        behaviors = detextive.Behaviors( trial_codecs = ( codec, ) )
+        with pytest.raises( detextive.exceptions.ContentDecodeFailure ) as exc:
+            _charsets.attempt_decodes( content, behaviors = behaviors )
+        assert expected in str( exc.value )
+
+
+def test_330_strict_mode_rejects_bomless_generic_utf_trials( ):
+    ''' Strict mode skips BOM-less generic UTF-16/32 decode trials. '''
+    cases = (
+        ( b'\x00', 'utf-16', "'utf-16'" ),
+        ( b'\x00\x00\x00', 'utf-32', "'utf-32'" ),
+    )
+    for content, codec, expected in cases:
+        behaviors = detextive.Behaviors(
+            trial_codecs = ( codec, ),
+            utf_16_32_requires_byte_order = True )
+        with pytest.raises( detextive.exceptions.ContentDecodeFailure ) as exc:
+            _charsets.attempt_decodes( content, behaviors = behaviors )
+        assert expected not in str( exc.value )
+
+
+def test_340_strict_mode_allows_explicit_endianness_utf_trials( ):
+    ''' Strict mode allows BOM-less UTF-16/32 with explicit endianness codec.
+    '''
+    cases = (
+        ( _patterns.UTF16_LE_NO_BOM, 'utf-16-le', 'utf-16-le' ),
+        ( _patterns.UTF32_LE_NO_BOM, 'utf-32-le', 'utf-32-le' ),
+    )
+    for content, codec, expected in cases:
+        behaviors = detextive.Behaviors(
+            trial_codecs = ( codec, ),
+            utf_16_32_requires_byte_order = True )
+        text, result = _charsets.attempt_decodes(
+            content, behaviors = behaviors )
+        assert text == 'Hello, world!'
+        assert result.charset == expected
+
+
+def test_350_collect_trial_codecs_preserves_order_and_deduplicates( ):
+    ''' Trial codec collection preserves order and deduplicates candidates. '''
+    behaviors = detextive.Behaviors(
+        remove_bom = True,
+        trial_codecs = (
+            detextive.CodecSpecifiers.UserSupplement,
+            'utf-8',
+            detextive.CodecSpecifiers.FromInference,
+            'utf-8-sig',
+        ) )
+    trial_codecs = _charsets._collect_trial_codecs(
+        b'hello',
+        behaviors = behaviors,
+        inference = 'utf-8',
+        supplement = 'iso-8859-1' )
+    assert trial_codecs == ( 'iso8859-1', 'utf-8-sig' )
+
+
+def test_360_collect_trial_codecs_filters_ambiguous_utf_families( ):
+    ''' Strict mode codec collection rejects ambiguous UTF-16/32 families. '''
+    behaviors = detextive.Behaviors(
+        utf_16_32_requires_byte_order = True,
+        trial_codecs = ( 'utf-16', 'utf-16-le', 'utf-32', 'utf-32-le' ) )
+    trial_codecs = _charsets._collect_trial_codecs(
+        _patterns.UTF16_LE_NO_BOM,
+        behaviors = behaviors,
+        inference = 'utf-8',
+        supplement = 'utf-8' )
+    assert trial_codecs == ( 'utf-16-le', 'utf-32-le' )

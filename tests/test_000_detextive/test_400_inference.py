@@ -30,6 +30,11 @@ import detextive.inference as _inference
 from .patterns import (
     EMPTY_CONTENT,
     UTF8_BASIC,
+    UTF8_WITH_BOM,
+    UTF16_LE_NO_BOM,
+    UTF16_WITH_BOM,
+    UTF32_LE_NO_BOM,
+    UTF32_WITH_BOM,
 )
 
 
@@ -145,7 +150,7 @@ def test_200_http_content_type_parsing_success( ):
             utf8_content, behaviors = behaviors,
             http_content_type = 'text/plain; charset=utf-8' ) )
     assert mimetype_result.mimetype == 'text/plain'
-    assert charset_result.charset == 'utf-8-sig'
+    assert charset_result.charset == 'utf-8'
 
 
 def test_205_httpct_honored_with_both_detect_enabled( ):
@@ -164,7 +169,38 @@ def test_205_httpct_honored_with_both_detect_enabled( ):
             behaviors = behaviors,
             http_content_type = 'text/plain; charset=utf-8' ) )
     assert mimetype_result.mimetype == 'text/plain'
-    assert charset_result.charset == 'utf-8-sig'
+    assert charset_result.charset == 'utf-8'
+
+
+def test_206_httpct_utf8_charset_reports_bom_provenance( ):
+    ''' HTTP charset validation reports UTF-8 BOM provenance. '''
+    cases = (
+        ( True, UTF8_BASIC, 'utf-8' ),
+        ( True, UTF8_WITH_BOM, 'utf-8-sig' ),
+        ( False, UTF8_BASIC, 'utf-8' ),
+        ( False, UTF8_WITH_BOM, 'utf-8-sig' ),
+    )
+    for remove_bom, content, expected in cases:
+        behaviors = detextive.Behaviors( remove_bom = remove_bom )
+        _, charset_result = _inference.infer_mimetype_charset_confidence(
+            content,
+            behaviors = behaviors,
+            http_content_type = 'text/plain; charset=utf-8' )
+        assert charset_result.charset == expected
+
+
+def test_207_httpct_utf16_utf32_report_bom_provenance( ):
+    ''' HTTP charset validation reports UTF-16/32 BOM provenance. '''
+    cases = (
+        ( UTF16_LE_NO_BOM, 'text/plain; charset=utf-16-le', 'utf-16-le' ),
+        ( UTF16_WITH_BOM, 'text/plain; charset=utf-16-le', 'utf-16' ),
+        ( UTF32_LE_NO_BOM, 'text/plain; charset=utf-32-le', 'utf-32-le' ),
+        ( UTF32_WITH_BOM, 'text/plain; charset=utf-32-le', 'utf-32' ),
+    )
+    for content, header, expected in cases:
+        _, charset_result = _inference.infer_mimetype_charset_confidence(
+            content, http_content_type = header )
+        assert charset_result.charset == expected
 
 
 def test_210_location_based_mimetype_inference( ):
@@ -338,6 +374,14 @@ def test_332_http_content_type_malformed_charset_param( ):
     assert _internals.is_absent( charset )
 
 
+def test_333_http_content_type_empty_charset_value( ):
+    ''' Empty charset parameter value is treated as absent. '''
+    mimetype, charset = _inference.parse_http_content_type(
+        'text/plain; charset=' )
+    assert mimetype == 'text/plain'
+    assert _internals.is_absent( charset )
+
+
 def test_334_http_validation_malformed_charset_param( ):
     ''' Malformed charset parameter falls back to standard inference. '''
     content = b'test content'
@@ -357,7 +401,7 @@ def test_340_http_validation_mimetype_present( ):
             content,
             http_content_type = 'application/json; charset=utf-8' ) )
     assert mimetype_result.mimetype == 'application/json'
-    assert charset_result.charset == 'utf-8-sig'
+    assert charset_result.charset == 'utf-8'
 
 
 def test_350_http_validation_mimetype_not_absent( ):
@@ -369,4 +413,4 @@ def test_350_http_validation_mimetype_not_absent( ):
             http_content_type = 'application/json; charset=utf-8' ) )
     assert mimetype_result.mimetype == 'application/json'
     assert mimetype_result.confidence == 0.9
-    assert charset_result.charset == 'utf-8-sig'
+    assert charset_result.charset == 'utf-8'

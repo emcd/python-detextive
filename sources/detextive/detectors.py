@@ -340,11 +340,9 @@ mimetype_detectors[ 'puremagic' ] = _detect_via_puremagic
 
 
 def _normalize_charset_detection(
-    content: _nomina.Content, behaviors: _Behaviors, result: _CharsetResult
+    content: _nomina.Content, _behaviors: _Behaviors, result: _CharsetResult
 ) -> _CharsetResult:
     if result.charset is None: return result  # pragma: no cover
-    charset = _charsets.normalize_charset( result.charset )
-    # TODO? Consider endianness variations for BOM.
-    if charset == 'utf-8-sig' and not content.startswith( __.codecs.BOM ):
-        charset = 'utf-8'
+    charset = _charsets.normalize_charset_for_content(
+        content, result.charset )
     return _CharsetResult( charset = charset, confidence = result.confidence )

@@ -29,6 +29,14 @@ UTF8_EMOJI = b'Hello \xf0\x9f\x91\x8b world!'
 UTF8_MULTIBYTE = b'Caf\xc3\xa9 na\xc3\xafve r\xc3\xa9sum\xc3\xa9'
 UTF8_ACCENTED = b'\xc3\xa9\xc3\xa8\xc3\xa0\xc3\xa7'
 
+# UTF-16 and UTF-32 Samples
+UTF16_WITH_BOM = 'Hello, world!'.encode( 'utf-16' )
+UTF16_LE_NO_BOM = 'Hello, world!'.encode( 'utf-16-le' )
+UTF16_BE_NO_BOM = 'Hello, world!'.encode( 'utf-16-be' )
+UTF32_WITH_BOM = 'Hello, world!'.encode( 'utf-32' )
+UTF32_LE_NO_BOM = 'Hello, world!'.encode( 'utf-32-le' )
+UTF32_BE_NO_BOM = 'Hello, world!'.encode( 'utf-32-be' )
+
 # ASCII-Compatible Samples
 ASCII_BASIC = b'Simple ASCII text without special characters'
 ASCII_PRINTABLE = (

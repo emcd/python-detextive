@@ -29,8 +29,12 @@ import detextive.detectors as _detectors
 
 from .patterns import (
     EMPTY_CONTENT,
+    UTF8_WITH_BOM,
+    UTF16_LE_NO_BOM,
+    UTF16_WITH_BOM,
+    UTF32_LE_NO_BOM,
+    UTF32_WITH_BOM,
 )
-
 
 # Basic Tests (000-099): Module import and function accessibility
 
@@ -87,8 +91,76 @@ def test_130_decode_inform_honors_http_content_type( ):
         content,
         http_content_type = 'application/json; charset=utf-8' )
     assert result.text == '{"message": "hello"}'
-    assert result.charset.charset == 'utf-8-sig'
+    assert result.charset.charset == 'utf-8'
     assert result.mimetype.mimetype == 'application/json'
+
+
+def test_132_decode_inform_utf8_header_reports_bom_provenance( ):
+    ''' UTF-8 reporting follows BOM provenance, independent of remove_bom. '''
+    cases = (
+        ( True, b'hello', 'hello', 'utf-8' ),
+        ( True, UTF8_WITH_BOM, 'Hello, world!', 'utf-8-sig' ),
+        ( False, b'hello', 'hello', 'utf-8' ),
+        ( False, UTF8_WITH_BOM, '\ufeffHello, world!', 'utf-8-sig' ),
+    )
+    for remove_bom, content, expected_text, expected_charset in cases:
+        behaviors = detextive.Behaviors( remove_bom = remove_bom )
+        result = _decoders.decode_inform(
+            content,
+            behaviors = behaviors,
+            http_content_type = 'text/plain; charset=utf-8' )
+        assert result.text == expected_text
+        assert result.charset.charset == expected_charset
+
+
+def test_134_decode_inform_utf16_utf32_header_reports_bom_provenance( ):
+    ''' UTF-16/32 reporting follows BOM provenance for header-guided decode.
+    '''
+    cases = (
+        ( UTF16_LE_NO_BOM, 'text/plain; charset=utf-16-le', 'utf-16-le' ),
+        ( UTF16_WITH_BOM, 'text/plain; charset=utf-16-le', 'utf-16' ),
+        ( UTF32_LE_NO_BOM, 'text/plain; charset=utf-32-le', 'utf-32-le' ),
+        ( UTF32_WITH_BOM, 'text/plain; charset=utf-32-le', 'utf-32' ),
+    )
+    for content, header, expected in cases:
+        result = _decoders.decode_inform(
+            content, http_content_type = header )
+        assert result.charset.charset == expected
+
+
+def test_136_decode_inform_strict_mode_rejects_bomless_generic_utf_header( ):
+    ''' Strict mode rejects BOM-less generic UTF-16/32 from HTTP charset. '''
+    cases = (
+        ( UTF16_LE_NO_BOM, 'text/plain; charset=utf-16' ),
+        ( UTF32_LE_NO_BOM, 'text/plain; charset=utf-32' ),
+    )
+    for content, header in cases:
+        behaviors = detextive.Behaviors(
+            charset_detect = False,
+            trial_codecs = ( detextive.CodecSpecifiers.FromInference, ),
+            utf_16_32_requires_byte_order = True )
+        with pytest.raises( detextive.exceptions.ContentDecodeFailure ):
+            _decoders.decode_inform(
+                content, behaviors = behaviors, http_content_type = header )
+
+
+def test_138_decode_inform_strict_mode_allows_explicit_utf_endianness_header(
+):
+    ''' Strict mode accepts BOM-less UTF-16/32 with explicit header charset.
+    '''
+    cases = (
+        ( UTF16_LE_NO_BOM, 'text/plain; charset=utf-16-le', 'utf-16-le' ),
+        ( UTF32_LE_NO_BOM, 'text/plain; charset=utf-32-le', 'utf-32-le' ),
+    )
+    for content, header, expected in cases:
+        behaviors = detextive.Behaviors(
+            charset_detect = False,
+            trial_codecs = ( detextive.CodecSpecifiers.FromInference, ),
+            utf_16_32_requires_byte_order = True )
+        result = _decoders.decode_inform(
+            content, behaviors = behaviors, http_content_type = header )
+        assert result.text == 'Hello, world!'
+        assert result.charset.charset == expected
 
 
 def test_140_decode_inform_empty_content( ):

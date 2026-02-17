@@ -23,6 +23,26 @@ Release Notes
 
 .. towncrier release notes start
 
+detextive 3.1 (2026-02-16)
+==========================
+
+Enhancements
+------------
+
+- API: Add ``Behaviors.utf_16_32_requires_byte_order`` to optionally reject
+  BOM-less trial decodes for generic ``utf-16`` and ``utf-32`` while keeping
+  permissive behavior as the default.
+
+
+Repairs
+-------
+
+- API: Report UTF charset results from BOM provenance rather than decode codec
+  choice so ``utf-8-sig`` is returned only when a UTF-8 BOM is present, and
+  apply the same provenance normalization to UTF-16/UTF-32 reporting across
+  decode, detection, and inference surfaces.
+
+
 detextive 3.0 (2026-02-13)
 ==========================
 

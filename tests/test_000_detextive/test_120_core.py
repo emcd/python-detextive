@@ -43,11 +43,16 @@ def test_100_behaviors_detect_flags_require_boolean( ):
         _core.Behaviors( charset_detect = _core.BehaviorTristate.Never )
     with pytest.raises( _exceptions.BehaviorsInvalidity ):
         _core.Behaviors( mimetype_detect = _core.BehaviorTristate.Never )
+    with pytest.raises( _exceptions.BehaviorsInvalidity ):
+        _core.Behaviors( utf_16_32_requires_byte_order = 'yes' )
 
 
 def test_110_behaviors_detect_flags_accept_boolean( ):
     ''' Detect flags accept explicit boolean values. '''
     behaviors = _core.Behaviors(
-        charset_detect = False, mimetype_detect = True )
+        charset_detect = False,
+        mimetype_detect = True,
+        utf_16_32_requires_byte_order = True )
     assert behaviors.charset_detect is False
     assert behaviors.mimetype_detect is True
+    assert behaviors.utf_16_32_requires_byte_order is True

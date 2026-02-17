@@ -20,7 +20,6 @@
 
 ''' Core detection functions default return behavior is correct. '''
 
-
 import pytest
 
 import detextive
@@ -30,6 +29,12 @@ from .patterns import (
     EMPTY_CONTENT,
     UNDETECTABLE_CHARSET,
     UNDETECTABLE_MIMETYPE,
+    UTF8_BASIC,
+    UTF8_WITH_BOM,
+    UTF16_LE_NO_BOM,
+    UTF16_WITH_BOM,
+    UTF32_LE_NO_BOM,
+    UTF32_WITH_BOM,
 )
 
 
@@ -170,6 +175,57 @@ def test_200_empty_content_charset_handling( ):
     result = detextive.detect_charset_confidence( EMPTY_CONTENT )
     assert result.charset == 'utf-8'
     assert result.confidence == 1.0
+
+
+def test_205_charset_normalization_tracks_utf8_bom_provenance( ):
+    ''' UTF-8 charset labels track source BOM bytes. '''
+    detector_name = 'test-utf8-detector-for-bom-provenance'
+    def detector_utf8( content, behaviors ):
+        return detextive.core.CharsetResult(
+            charset = 'utf-8', confidence = 0.9 )
+    _detectors.charset_detectors[ detector_name ] = detector_utf8
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( detector_name, ),
+        trial_decode = detextive.BehaviorTristate.Never )
+    result_no_bom = detextive.detect_charset_confidence(
+        UTF8_BASIC, behaviors = behaviors )
+    result_with_bom = detextive.detect_charset_confidence(
+        UTF8_WITH_BOM, behaviors = behaviors )
+    assert result_no_bom.charset == 'utf-8'
+    assert result_with_bom.charset == 'utf-8-sig'
+
+
+def test_206_charset_normalization_tracks_utf16_utf32_bom_provenance( ):
+    ''' UTF-16/32 charset labels track source BOM bytes. '''
+    detector_name_utf16 = 'test-utf16-detector-for-bom-provenance'
+    detector_name_utf32 = 'test-utf32-detector-for-bom-provenance'
+    def detector_utf16( content, behaviors ):
+        return detextive.core.CharsetResult(
+            charset = 'utf-16', confidence = 0.9 )
+    _detectors.charset_detectors[ detector_name_utf16 ] = detector_utf16
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( detector_name_utf16, ),
+        trial_decode = detextive.BehaviorTristate.Never )
+    result_utf16_no_bom = detextive.detect_charset_confidence(
+        UTF16_LE_NO_BOM, behaviors = behaviors )
+    result_utf16_with_bom = detextive.detect_charset_confidence(
+        UTF16_WITH_BOM, behaviors = behaviors )
+    assert result_utf16_no_bom.charset == 'utf-16'
+    assert result_utf16_with_bom.charset == 'utf-16'
+
+    def detector_utf32( content, behaviors ):
+        return detextive.core.CharsetResult(
+            charset = 'utf-32', confidence = 0.9 )
+    _detectors.charset_detectors[ detector_name_utf32 ] = detector_utf32
+    behaviors_utf32 = detextive.Behaviors(
+        charset_detectors_order = ( detector_name_utf32, ),
+        trial_decode = detextive.BehaviorTristate.Never )
+    result_utf32_no_bom = detextive.detect_charset_confidence(
+        UTF32_LE_NO_BOM, behaviors = behaviors_utf32 )
+    result_utf32_with_bom = detextive.detect_charset_confidence(
+        UTF32_WITH_BOM, behaviors = behaviors_utf32 )
+    assert result_utf32_no_bom.charset == 'utf-32'
+    assert result_utf32_with_bom.charset == 'utf-32'
 
 
 def test_210_charset_detection_with_mimetype_absent( ):

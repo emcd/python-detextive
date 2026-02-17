@@ -35,7 +35,7 @@ from .core import ( # isort: skip
 )
 
 
-def attempt_decodes(  # noqa: C901,PLR0912,PLR0913,PLR0915
+def attempt_decodes( # noqa: PLR0913
     content: _nomina.Content, /, *,
     behaviors: _Behaviors = _BEHAVIORS_DEFAULT,
     inference: __.Absential[ str ] = __.absent,
@@ -52,29 +52,20 @@ def attempt_decodes(  # noqa: C901,PLR0912,PLR0913,PLR0915
     '''
     confidence = _core.confidence_from_bytes_quantity(
         content, behaviors = behaviors )
-    on_decode_error = behaviors.on_decode_error
+    trial_codecs = _collect_trial_codecs(
+        content,
+        behaviors = behaviors,
+        inference = inference,
+        supplement = supplement )
     trials: set[ str ] = set( )
-    for codec in behaviors.trial_codecs:
-        match codec:
-            case _CodecSpecifiers.FromInference:
-                if __.is_absent( inference ): continue
-                charset = inference
-            case _CodecSpecifiers.OsDefault:
-                charset = discover_os_charset_default( )
-            case _CodecSpecifiers.PythonDefault:
-                charset = __.locale.getpreferredencoding( )
-            case _CodecSpecifiers.UserSupplement:
-                if __.is_absent( supplement ): continue
-                charset = supplement
-            case str( ): charset = codec
-            case _: continue
-        charset = normalize_charset(
-            charset, bom_cognizant = behaviors.remove_bom )
-        if charset in trials: continue
-        try: text = content.decode( charset, errors = on_decode_error )
+    for trial_codec in trial_codecs:
+        try: text = content.decode(
+            trial_codec, errors = behaviors.on_decode_error )
         except UnicodeDecodeError: continue
-        finally: trials.add( charset )
-        result = _CharsetResult( charset = charset, confidence = confidence )
+        finally: trials.add( trial_codec )
+        result = _CharsetResult(
+            charset = normalize_charset_for_content( content, trial_codec ),
+            confidence = confidence )
         if not __.is_absent( validator ):
             try: validator( text, result )
             except _exceptions.TextInvalidity: continue
@@ -94,6 +85,23 @@ def normalize_charset( charset: str, bom_cognizant: bool = False ) -> str:
     ''' Normalizes character set encoding names. '''
     charset_ = __.codecs.lookup( charset ).name
     if bom_cognizant and charset_ == 'utf-8': return 'utf-8-sig'
+    return charset_
+
+
+def normalize_charset_for_content(
+    content: _nomina.Content, charset: str
+) -> str:
+    ''' Normalizes charset reporting based on byte-order mark provenance. '''
+    charset_ = normalize_charset( charset )
+    bom_charset = _discover_utf_bom_charset( content )
+    if charset_ in ( 'utf-8', 'utf-8-sig' ):
+        if bom_charset == 'utf-8-sig': return 'utf-8-sig'
+        return 'utf-8'
+    for family in ( 'utf-16', 'utf-32' ):
+        if not charset_.startswith( family ): continue
+        if bom_charset in ( f"{family}-le", f"{family}-be" ):
+            return family
+        return charset_
     return charset_
 
 
@@ -126,3 +134,68 @@ def trial_decode_as_confident( # noqa: PLR0913
     if __.is_absent( inference ):
         raise _exceptions.CharsetDetectFailure( location = location )
     return _CharsetResult( charset = inference, confidence = confidence )
+
+
+def _collect_trial_codecs(
+    content: _nomina.Content, /, *,
+    behaviors: _Behaviors,
+    inference: __.Absential[ str ],
+    supplement: __.Absential[ str ],
+) -> tuple[ str, ... ]:
+    codecs: list[ str ] = [ ]  # No set needed; this candidate list is tiny.
+    for codec in behaviors.trial_codecs:
+        charset = _resolve_trial_codec(
+            codec, inference = inference, supplement = supplement )
+        if __.is_absent( charset ): continue
+        charset = normalize_charset( charset )
+        if _is_ambiguous_utf_trial( content, charset, behaviors ): continue
+        if behaviors.remove_bom and charset == 'utf-8': charset = 'utf-8-sig'
+        if charset in codecs: continue
+        codecs.append( charset )
+    return tuple( codecs )
+
+
+def _discover_utf_bom_charset(
+    content: _nomina.Content
+) -> __.typx.Optional[ str ]:
+    # Must check UTF-32 markers first, since they prefix-match UTF-16 markers.
+    if content.startswith( __.codecs.BOM_UTF32_LE ): return 'utf-32-le'
+    if content.startswith( __.codecs.BOM_UTF32_BE ): return 'utf-32-be'
+    if content.startswith( __.codecs.BOM_UTF8 ): return 'utf-8-sig'
+    if content.startswith( __.codecs.BOM_UTF16_LE ): return 'utf-16-le'
+    if content.startswith( __.codecs.BOM_UTF16_BE ): return 'utf-16-be'
+    return None
+
+
+def _is_ambiguous_utf_trial(
+    content: _nomina.Content, charset: str, behaviors: _Behaviors
+) -> bool:
+    if not behaviors.utf_16_32_requires_byte_order: return False
+    match charset:
+        case 'utf-16':
+            bom_charset = _discover_utf_bom_charset( content )
+            return bom_charset not in ( 'utf-16-le', 'utf-16-be' )
+        case 'utf-32':
+            bom_charset = _discover_utf_bom_charset( content )
+            return bom_charset not in ( 'utf-32-le', 'utf-32-be' )
+        case _: return False
+
+
+def _resolve_trial_codec(
+    codec: __.typx.Any, /, *,
+    inference: __.Absential[ str ],
+    supplement: __.Absential[ str ],
+) -> __.Absential[ str ]:
+    charset: __.Absential[ str ] = __.absent
+    match codec:
+        case _CodecSpecifiers.FromInference:
+            if not __.is_absent( inference ): charset = inference
+        case _CodecSpecifiers.OsDefault:
+            charset = discover_os_charset_default( )
+        case _CodecSpecifiers.PythonDefault:
+            charset = __.locale.getpreferredencoding( )
+        case _CodecSpecifiers.UserSupplement:
+            if not __.is_absent( supplement ): charset = supplement
+        case str( ): charset = codec
+        case _: pass
+    return charset
