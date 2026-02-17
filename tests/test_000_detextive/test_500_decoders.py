@@ -29,13 +29,12 @@ import detextive.detectors as _detectors
 
 from .patterns import (
     EMPTY_CONTENT,
+    UTF8_WITH_BOM,
     UTF16_LE_NO_BOM,
     UTF16_WITH_BOM,
     UTF32_LE_NO_BOM,
     UTF32_WITH_BOM,
-    UTF8_WITH_BOM,
 )
-
 
 # Basic Tests (000-099): Module import and function accessibility
 
@@ -126,6 +125,41 @@ def test_134_decode_inform_utf16_utf32_header_reports_bom_provenance( ):
     for content, header, expected in cases:
         result = _decoders.decode_inform(
             content, http_content_type = header )
+        assert result.charset.charset == expected
+
+
+def test_136_decode_inform_strict_mode_rejects_bomless_generic_utf_header( ):
+    ''' Strict mode rejects BOM-less generic UTF-16/32 from HTTP charset. '''
+    cases = (
+        ( UTF16_LE_NO_BOM, 'text/plain; charset=utf-16' ),
+        ( UTF32_LE_NO_BOM, 'text/plain; charset=utf-32' ),
+    )
+    for content, header in cases:
+        behaviors = detextive.Behaviors(
+            charset_detect = False,
+            trial_codecs = ( detextive.CodecSpecifiers.FromInference, ),
+            utf_16_32_requires_byte_order = True )
+        with pytest.raises( detextive.exceptions.ContentDecodeFailure ):
+            _decoders.decode_inform(
+                content, behaviors = behaviors, http_content_type = header )
+
+
+def test_138_decode_inform_strict_mode_allows_explicit_utf_endianness_header(
+):
+    ''' Strict mode accepts BOM-less UTF-16/32 with explicit header charset.
+    '''
+    cases = (
+        ( UTF16_LE_NO_BOM, 'text/plain; charset=utf-16-le', 'utf-16-le' ),
+        ( UTF32_LE_NO_BOM, 'text/plain; charset=utf-32-le', 'utf-32-le' ),
+    )
+    for content, header, expected in cases:
+        behaviors = detextive.Behaviors(
+            charset_detect = False,
+            trial_codecs = ( detextive.CodecSpecifiers.FromInference, ),
+            utf_16_32_requires_byte_order = True )
+        result = _decoders.decode_inform(
+            content, behaviors = behaviors, http_content_type = header )
+        assert result.text == 'Hello, world!'
         assert result.charset.charset == expected
 
 

@@ -34,3 +34,19 @@ Priority: Medium
   decoded text
 - **THEN** the API can expose explicit BOM metadata without breaking existing
   callers
+
+### Requirement: Configurable UTF BOM-Less Decode Strictness
+The API SHALL expose configurable strictness for BOM-less generic UTF-16/32
+decoding through `Behaviors.utf_16_32_requires_byte_order`.
+
+Priority: High
+
+#### Scenario: Default API behavior remains permissive
+- **WHEN** callers use default behaviors
+- **THEN** BOM-less generic UTF-16/32 decoding remains permissive for
+  compatibility
+
+#### Scenario: Strict behavior is opt-in
+- **WHEN** callers set `Behaviors.utf_16_32_requires_byte_order` to `True`
+- **THEN** BOM-less generic UTF-16/32 decode attempts are treated as ambiguous
+- **AND** explicit-endianness codecs or BOM-bearing inputs are required

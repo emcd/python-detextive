@@ -31,3 +31,24 @@ Priority: High
   MIME/charset inference APIs
 - **THEN** reported charset names are semantically consistent for BOM
   provenance
+
+### Requirement: Configurable UTF-16/32 Byte-Order Strictness
+The system SHALL provide a behavior flag,
+`Behaviors.utf_16_32_requires_byte_order`, that controls whether BOM-less
+generic `utf-16` and `utf-32` trials are allowed.
+
+Priority: High
+
+#### Scenario: Default compatibility mode remains permissive
+- **WHEN** callers do not set `utf_16_32_requires_byte_order`
+- **THEN** the default behavior remains permissive for BOM-less generic
+  `utf-16` and `utf-32` trials
+- **AND** UTF BOM provenance reporting semantics remain unchanged
+
+#### Scenario: Strict mode requires explicit byte order
+- **WHEN** `utf_16_32_requires_byte_order` is `True`
+- **AND** input bytes are BOM-less
+- **AND** the trial codec is generic `utf-16` or generic `utf-32`
+- **THEN** that trial is rejected as ambiguous
+- **AND** callers must provide BOM-bearing content or explicit-endianness
+  codec names (`utf-16-le`, `utf-16-be`, `utf-32-le`, `utf-32-be`)

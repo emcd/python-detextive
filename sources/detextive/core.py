@@ -128,6 +128,12 @@ class Behaviors( __.immut.DataclassObject ):
     trial_decode_confidence: __.typx.Annotated[
         float, __.ddoc.Doc( ''' Minimum confidence to skip trial decode. ''')
     ] = 0.80
+    utf_16_32_requires_byte_order: __.typx.Annotated[
+        bool,
+        __.ddoc.Doc(
+            ''' Require explicit byte order for BOM-less generic UTF-16/32? '''
+        ),
+    ] = False
 
     def __post_init__( self ) -> None:
         if not isinstance( self.charset_detect, bool ):
@@ -136,6 +142,9 @@ class Behaviors( __.immut.DataclassObject ):
         if not isinstance( self.mimetype_detect, bool ):
             raise _exceptions.BehaviorsInvalidity(
                 'mimetype_detect', 'a boolean' )
+        if not isinstance( self.utf_16_32_requires_byte_order, bool ):
+            raise _exceptions.BehaviorsInvalidity(
+                'utf_16_32_requires_byte_order', 'a boolean' )
 
 
 BehaviorsArgument: __.typx.TypeAlias = __.typx.Annotated[

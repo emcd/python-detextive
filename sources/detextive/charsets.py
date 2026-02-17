@@ -69,6 +69,7 @@ def attempt_decodes(  # noqa: C901,PLR0912,PLR0913,PLR0915
             case str( ): charset = codec
             case _: continue
         charset = normalize_charset( charset )
+        if _is_ambiguous_utf_trial( content, charset, behaviors ): continue
         charset_decode = charset
         if behaviors.remove_bom and charset == 'utf-8':
             charset_decode = 'utf-8-sig'
@@ -159,3 +160,17 @@ def _discover_utf_bom_charset(
     if content.startswith( __.codecs.BOM_UTF16_LE ): return 'utf-16-le'
     if content.startswith( __.codecs.BOM_UTF16_BE ): return 'utf-16-be'
     return None
+
+
+def _is_ambiguous_utf_trial(
+    content: _nomina.Content, charset: str, behaviors: _Behaviors
+) -> bool:
+    if not behaviors.utf_16_32_requires_byte_order: return False
+    match charset:
+        case 'utf-16':
+            bom_charset = _discover_utf_bom_charset( content )
+            return bom_charset not in ( 'utf-16-le', 'utf-16-be' )
+        case 'utf-32':
+            bom_charset = _discover_utf_bom_charset( content )
+            return bom_charset not in ( 'utf-32-le', 'utf-32-be' )
+        case _: return False

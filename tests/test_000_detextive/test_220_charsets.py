@@ -161,3 +161,49 @@ def test_310_from_inference_codec_skipped_when_absent( ):
     text, result = _charsets.attempt_decodes( content, behaviors = behaviors )
     assert text == 'Hello, world!'
     assert result.charset is not None
+
+
+def test_320_bomless_generic_utf_trials_remain_permissive_by_default( ):
+    ''' Default mode still attempts BOM-less generic UTF-16/32 decode trials.
+    '''
+    cases = (
+        ( b'\x00', 'utf-16', "'utf-16'" ),
+        ( b'\x00\x00\x00', 'utf-32', "'utf-32'" ),
+    )
+    for content, codec, expected in cases:
+        behaviors = detextive.Behaviors( trial_codecs = ( codec, ) )
+        with pytest.raises( detextive.exceptions.ContentDecodeFailure ) as exc:
+            _charsets.attempt_decodes( content, behaviors = behaviors )
+        assert expected in str( exc.value )
+
+
+def test_330_strict_mode_rejects_bomless_generic_utf_trials( ):
+    ''' Strict mode skips BOM-less generic UTF-16/32 decode trials. '''
+    cases = (
+        ( b'\x00', 'utf-16', "'utf-16'" ),
+        ( b'\x00\x00\x00', 'utf-32', "'utf-32'" ),
+    )
+    for content, codec, expected in cases:
+        behaviors = detextive.Behaviors(
+            trial_codecs = ( codec, ),
+            utf_16_32_requires_byte_order = True )
+        with pytest.raises( detextive.exceptions.ContentDecodeFailure ) as exc:
+            _charsets.attempt_decodes( content, behaviors = behaviors )
+        assert expected not in str( exc.value )
+
+
+def test_340_strict_mode_allows_explicit_endianness_utf_trials( ):
+    ''' Strict mode allows BOM-less UTF-16/32 with explicit endianness codec.
+    '''
+    cases = (
+        ( _patterns.UTF16_LE_NO_BOM, 'utf-16-le', 'utf-16-le' ),
+        ( _patterns.UTF32_LE_NO_BOM, 'utf-32-le', 'utf-32-le' ),
+    )
+    for content, codec, expected in cases:
+        behaviors = detextive.Behaviors(
+            trial_codecs = ( codec, ),
+            utf_16_32_requires_byte_order = True )
+        text, result = _charsets.attempt_decodes(
+            content, behaviors = behaviors )
+        assert text == 'Hello, world!'
+        assert result.charset == expected
