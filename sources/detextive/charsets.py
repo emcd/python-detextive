@@ -106,9 +106,16 @@ def normalize_charset_for_content(
 ) -> str:
     ''' Normalizes charset reporting based on byte-order mark provenance. '''
     charset_ = normalize_charset( charset )
-    if charset_ not in ( 'utf-8', 'utf-8-sig' ): return charset_
-    if content.startswith( __.codecs.BOM_UTF8 ): return 'utf-8-sig'
-    return 'utf-8'
+    bom_charset = _discover_utf_bom_charset( content )
+    if charset_ in ( 'utf-8', 'utf-8-sig' ):
+        if bom_charset == 'utf-8-sig': return 'utf-8-sig'
+        return 'utf-8'
+    for family in ( 'utf-16', 'utf-32' ):
+        if not charset_.startswith( family ): continue
+        if bom_charset in ( f"{family}-le", f"{family}-be" ):
+            return family
+        return charset_
+    return charset_
 
 
 def trial_decode_as_confident( # noqa: PLR0913
@@ -140,3 +147,15 @@ def trial_decode_as_confident( # noqa: PLR0913
     if __.is_absent( inference ):
         raise _exceptions.CharsetDetectFailure( location = location )
     return _CharsetResult( charset = inference, confidence = confidence )
+
+
+def _discover_utf_bom_charset(
+    content: _nomina.Content
+) -> __.typx.Optional[ str ]:
+    # Must check UTF-32 markers first, since they prefix-match UTF-16 markers.
+    if content.startswith( __.codecs.BOM_UTF32_LE ): return 'utf-32-le'
+    if content.startswith( __.codecs.BOM_UTF32_BE ): return 'utf-32-be'
+    if content.startswith( __.codecs.BOM_UTF8 ): return 'utf-8-sig'
+    if content.startswith( __.codecs.BOM_UTF16_LE ): return 'utf-16-le'
+    if content.startswith( __.codecs.BOM_UTF16_BE ): return 'utf-16-be'
+    return None

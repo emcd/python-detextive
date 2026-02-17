@@ -29,6 +29,10 @@ import detextive.detectors as _detectors
 
 from .patterns import (
     EMPTY_CONTENT,
+    UTF16_LE_NO_BOM,
+    UTF16_WITH_BOM,
+    UTF32_LE_NO_BOM,
+    UTF32_WITH_BOM,
     UTF8_WITH_BOM,
 )
 
@@ -108,6 +112,21 @@ def test_132_decode_inform_utf8_header_reports_bom_provenance( ):
             http_content_type = 'text/plain; charset=utf-8' )
         assert result.text == expected_text
         assert result.charset.charset == expected_charset
+
+
+def test_134_decode_inform_utf16_utf32_header_reports_bom_provenance( ):
+    ''' UTF-16/32 reporting follows BOM provenance for header-guided decode.
+    '''
+    cases = (
+        ( UTF16_LE_NO_BOM, 'text/plain; charset=utf-16-le', 'utf-16-le' ),
+        ( UTF16_WITH_BOM, 'text/plain; charset=utf-16-le', 'utf-16' ),
+        ( UTF32_LE_NO_BOM, 'text/plain; charset=utf-32-le', 'utf-32-le' ),
+        ( UTF32_WITH_BOM, 'text/plain; charset=utf-32-le', 'utf-32' ),
+    )
+    for content, header, expected in cases:
+        result = _decoders.decode_inform(
+            content, http_content_type = header )
+        assert result.charset.charset == expected
 
 
 def test_140_decode_inform_empty_content( ):

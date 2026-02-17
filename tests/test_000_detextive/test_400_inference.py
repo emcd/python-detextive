@@ -29,6 +29,10 @@ import detextive.inference as _inference
 
 from .patterns import (
     EMPTY_CONTENT,
+    UTF16_LE_NO_BOM,
+    UTF16_WITH_BOM,
+    UTF32_LE_NO_BOM,
+    UTF32_WITH_BOM,
     UTF8_BASIC,
     UTF8_WITH_BOM,
 )
@@ -182,6 +186,20 @@ def test_206_httpct_utf8_charset_reports_bom_provenance( ):
             content,
             behaviors = behaviors,
             http_content_type = 'text/plain; charset=utf-8' )
+        assert charset_result.charset == expected
+
+
+def test_207_httpct_utf16_utf32_report_bom_provenance( ):
+    ''' HTTP charset validation reports UTF-16/32 BOM provenance. '''
+    cases = (
+        ( UTF16_LE_NO_BOM, 'text/plain; charset=utf-16-le', 'utf-16-le' ),
+        ( UTF16_WITH_BOM, 'text/plain; charset=utf-16-le', 'utf-16' ),
+        ( UTF32_LE_NO_BOM, 'text/plain; charset=utf-32-le', 'utf-32-le' ),
+        ( UTF32_WITH_BOM, 'text/plain; charset=utf-32-le', 'utf-32' ),
+    )
+    for content, header, expected in cases:
+        _, charset_result = _inference.infer_mimetype_charset_confidence(
+            content, http_content_type = header )
         assert charset_result.charset == expected
 
 
