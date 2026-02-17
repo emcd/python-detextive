@@ -29,12 +29,12 @@ import detextive.inference as _inference
 
 from .patterns import (
     EMPTY_CONTENT,
+    UTF8_BASIC,
+    UTF8_WITH_BOM,
     UTF16_LE_NO_BOM,
     UTF16_WITH_BOM,
     UTF32_LE_NO_BOM,
     UTF32_WITH_BOM,
-    UTF8_BASIC,
-    UTF8_WITH_BOM,
 )
 
 
@@ -370,6 +370,14 @@ def test_332_http_content_type_malformed_charset_param( ):
     ''' Malformed charset parameter is treated as absent. '''
     mimetype, charset = _inference.parse_http_content_type(
         'text/plain; charset' )
+    assert mimetype == 'text/plain'
+    assert _internals.is_absent( charset )
+
+
+def test_333_http_content_type_empty_charset_value( ):
+    ''' Empty charset parameter value is treated as absent. '''
+    mimetype, charset = _inference.parse_http_content_type(
+        'text/plain; charset=' )
     assert mimetype == 'text/plain'
     assert _internals.is_absent( charset )
 

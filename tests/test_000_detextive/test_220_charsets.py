@@ -123,12 +123,22 @@ def test_240_invalid_codec_type_handling( ):
     assert result.charset == 'utf-8'
 
 
+def test_245_normalize_charset_bom_cognizant_utf8( ):
+    ''' Charset normalization maps UTF-8 to UTF-8-SIG when BOM-cognizant. '''
+    assert _charsets.normalize_charset(
+        'utf-8', bom_cognizant = True ) == 'utf-8-sig'
+
+
 def test_250_normalize_charset_for_content_utf_families( ):
     ''' UTF family reporting follows BOM provenance semantics. '''
+    utf16_be_with_bom = b'\xfe\xff' + _patterns.UTF16_BE_NO_BOM
+    utf32_be_with_bom = b'\x00\x00\xfe\xff' + _patterns.UTF32_BE_NO_BOM
     cases = (
         ( _patterns.UTF16_WITH_BOM, 'utf-16-le', 'utf-16' ),
+        ( utf16_be_with_bom, 'utf-16-be', 'utf-16' ),
         ( _patterns.UTF16_LE_NO_BOM, 'utf-16', 'utf-16' ),
         ( _patterns.UTF32_WITH_BOM, 'utf-32-be', 'utf-32' ),
+        ( utf32_be_with_bom, 'utf-32-be', 'utf-32' ),
         ( _patterns.UTF32_LE_NO_BOM, 'utf-32', 'utf-32' ),
     )
     for content, charset, expected in cases:
