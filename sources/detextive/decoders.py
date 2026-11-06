@@ -160,15 +160,16 @@ def _decode_content_charset_result( # noqa: PLR0913
     if not __.is_absent( httpct_result ): return httpct_result
     behaviors_ = __.dcls.replace(
         behaviors, trial_decode = _BehaviorTristate.Never )
-    with __.ctxl.suppress( _exceptions.CharsetDetectFailure ):
-        result = _detectors.detect_charset_confidence(
-            content,
-            behaviors = behaviors_,
-            supplement = charset_supplement,
-            location = location )
-        if (    result.charset
-            and result.confidence >= behaviors.trial_decode_confidence
-        ): charset = result.charset
+    if behaviors.charset_detect:
+        with __.ctxl.suppress( _exceptions.CharsetDetectFailure ):
+            result = _detectors.detect_charset_confidence(
+                content,
+                behaviors = behaviors_,
+                supplement = charset_supplement,
+                location = location )
+            if (    result.charset
+                and result.confidence >= behaviors.trial_decode_confidence
+            ): charset = result.charset
     validator = __.funct.partial(
         _validate_text_in_decode_attempt,
         behaviors = behaviors,
