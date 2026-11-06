@@ -14,7 +14,7 @@ files and byte buffers.
 
 ## Tech Stack
 
-Python >= 3.10 (CPython and PyPy); Hatch build and envs; runtime deps
+Python >= 3.12 (CPython 3.12 through 3.15); Hatch build and envs; runtime deps
 accretive, chardet, puremagic, typing-extensions, absence, dynadoc, frigid
 with optional charset-normalizer and python-magic extras; QA via pytest,
 pyright, ruff, isort, sphinx, towncrier, vulture.

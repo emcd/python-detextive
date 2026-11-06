@@ -69,6 +69,8 @@ Key Features ⭐
   using control character and printability heuristics.
 
 
+
+
 Installation 📦
 ===============================================================================
 
@@ -185,12 +187,14 @@ For complete bytes-to-text processing with automatic charset detection and valid
     print( f"Decoded text: {text}" )
 
 
+
+
 Contribution 🤝
 ===============================================================================
 
 Contribution to this project is welcome! However, it must follow the `code of
 conduct
-<https://emcd.github.io/python-project-common/stable/sphinx-html/common/conduct.html>`_
+<https://emcd.github.io/documentation-common/v1/sphinx-html/common/conduct.html>`_
 for the project.
 
 Please file bug reports and feature requests in the `issue tracker
@@ -242,9 +246,15 @@ Other Projects by This Author 🌟
 ===============================================================================
 
 
-* `python-absence <https://github.com/emcd/python-absence>`_ (`absence <https://pypi.org/project/absence/>`_ on PyPI)
+* `agentmux <https://github.com/emcd/agentmux>`_  (`agentmux <https://crates.io/crates/agentmux/>`_ on Crates.io)
 
-  🕳️ A Python library package which provides a **sentinel for absent values** - a falsey, immutable singleton that represents the absence of a value in contexts where ``None`` or ``False`` may be valid values.
+  📡 Provides **relays for inter-agent communication** and a single pane of glass for managing multiple agent harness sessions.
+* `cistella <https://github.com/emcd/cistella>`_  (`cistella <https://crates.io/crates/cistella/>`_ on Crates.io)
+
+  🧱 A **sandboxing application** which **isolates agent sessions** via various technologies.
+* `nb-mcp-server <https://github.com/emcd/nb-mcp-server>`_  (`nb-mcp-server <https://crates.io/crates/nb-mcp-server/>`_ on Crates.io)
+
+  🗒️ An MCP server wrapping the ``nb`` CLI for **LLM-friendly note-taking**.
 * `python-accretive <https://github.com/emcd/python-accretive>`_ (`accretive <https://pypi.org/project/accretive/>`_ on PyPI)
 
   🌌 A Python library package which provides **accretive data structures** - collections which can grow but never shrink.
@@ -260,12 +270,6 @@ Other Projects by This Author 🌟
 * `python-frigid <https://github.com/emcd/python-frigid>`_ (`frigid <https://pypi.org/project/frigid/>`_ on PyPI)
 
   🔒 A Python library package which provides **immutable data structures** - collections which cannot be modified after creation.
-* `python-icecream-truck <https://github.com/emcd/python-icecream-truck>`_ (`icecream-truck <https://pypi.org/project/icecream-truck/>`_ on PyPI)
+* `python-ictr <https://github.com/emcd/python-ictr>`_ (`ictr <https://pypi.org/project/ictr/>`_ on PyPI)
 
-  🍦 **Flavorful Debugging** - A Python library which enhances the powerful and well-known ``icecream`` package with flavored traces, configuration hierarchies, customized outputs, ready-made recipes, and more.
-* `python-librovore <https://github.com/emcd/python-librovore>`_ (`librovore <https://pypi.org/project/librovore/>`_ on PyPI)
-
-  🐲 **Documentation Search Engine** - An intelligent documentation search and extraction tool that provides both a command-line interface for humans and an MCP (Model Context Protocol) server for AI agents. Search across Sphinx and MkDocs sites with fuzzy matching, extract clean markdown content, and integrate seamlessly with AI development workflows.
-* `python-mimeogram <https://github.com/emcd/python-mimeogram>`_ (`mimeogram <https://pypi.org/project/mimeogram/>`_ on PyPI)
-
-  📨 A command-line tool for **exchanging collections of files with Large Language Models** - bundle multiple files into a single clipboard-ready document while preserving directory structure and metadata... good for code reviews, project sharing, and LLM interactions.
+  🍦 **Non-Intrusive Debugging** - A Python library which provides flavored traces, configuration hierarchies, customized outputs, and ready-made recipes for logging and debug printing.
