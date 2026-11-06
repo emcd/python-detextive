@@ -1,10 +1,9 @@
 {
   "mcpServers": {
-    "pyright": {
-      "command": "mcp-language-server",
+    "agentmux": {
+      "command": "agentmux",
       "args": [
-        "--lsp", "pyright-langserver", "--workspace", ".",
-        "--", "--stdio"
+        "host", "mcp"
       ]
     },
     "context7": {
@@ -14,6 +13,13 @@
     "librovore": {
       "command": "uvx",
       "args": [ "librovore", "serve" ]
+    },
+    "pyright": {
+      "command": "mcp-language-server",
+      "args": [
+        "--lsp", "pyright-langserver", "--workspace", ".",
+        "--", "--stdio"
+      ]
     },
     "nb": {
       "command": "nb-mcp",
