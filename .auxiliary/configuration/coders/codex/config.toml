@@ -44,10 +44,6 @@ approval_mode = "approve"
 [mcp_servers.context7.tools.resolve_library_id]
 approval_mode = "approve"
 
-[mcp_servers.librovore]
-command = "uvx"
-args = ["librovore", "serve"]
-
 [mcp_servers.nb]
 command = "nb-mcp"
 args = ["--notebook", "python-detextive", "--no-commit-signing"]

@@ -65,16 +65,9 @@
       "enabled": true,
       "timeout": 900000
     },
-    // PROJECT-OWNED MCP additions (restored after agents-common v1.0a18
-    // update re-rendered this file; back up before updating).
     "context7": {
       "type": "local",
       "command": ["npx", "-y", "@upstash/context7-mcp"],
-      "enabled": true
-    },
-    "librovore": {
-      "type": "local",
-      "command": ["uvx", "librovore", "serve"],
       "enabled": true
     },
     "nb": {
