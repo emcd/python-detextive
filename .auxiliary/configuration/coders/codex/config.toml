@@ -34,12 +34,6 @@ approval_mode = "approve"
 
 # PROJECT-OWNED MCP additions (restored after agents-common v1.0a18
 # update re-rendered this file; back up before updating).
-[mcp_servers.pyright]
-command = "/bin/bash"
-args = ["-lc", "mcp-language-server --lsp pyright-langserver --workspace . -- --stdio 2>/dev/null"]
-startup_timeout_sec = 30
-tool_timeout_sec = 90
-
 [mcp_servers.context7]
 command = "npx"
 args = ["-y", "@upstash/context7-mcp"]

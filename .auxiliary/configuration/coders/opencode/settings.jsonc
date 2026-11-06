@@ -67,11 +67,6 @@
     },
     // PROJECT-OWNED MCP additions (restored after agents-common v1.0a18
     // update re-rendered this file; back up before updating).
-    "pyright": {
-      "type": "local",
-      "command": ["mcp-language-server", "--lsp", "pyright-langserver", "--workspace", ".", "--", "--stdio"],
-      "enabled": true
-    },
     "context7": {
       "type": "local",
       "command": ["npx", "-y", "@upstash/context7-mcp"],

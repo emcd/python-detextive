@@ -14,13 +14,6 @@
       "command": "uvx",
       "args": [ "librovore", "serve" ]
     },
-    "pyright": {
-      "command": "mcp-language-server",
-      "args": [
-        "--lsp", "pyright-langserver", "--workspace", ".",
-        "--", "--stdio"
-      ]
-    },
     "nb": {
       "command": "nb-mcp",
       "args": [
