@@ -47,9 +47,9 @@ consumer requires byte-exact BOM/order write-back metadata.
       semantics.
 
 ## 6. Threshold regression assurance
-- [ ] 6.1 Add deterministic threshold tests (stubbed detectors, no live
+- [x] 6.1 Add deterministic threshold tests (stubbed detectors, no live
       backends): trial-decode admission below/at/above confidence.
-- [ ] 6.2 Cover text-validation boundaries (AsNeeded below/above threshold,
+- [x] 6.2 Cover text-validation boundaries (AsNeeded below/above threshold,
       Always, Never).
-- [ ] 6.3 Cover strict/permissive BOM-less generic handling, explicit
+- [x] 6.3 Cover strict/permissive BOM-less generic handling, explicit
       endianness, BOM-bearing paths, and the BOM-stripped text invariant.
