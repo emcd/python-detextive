@@ -25,14 +25,31 @@
       - strict mode BOM-less generic UTF-16/32 handling
       - explicit-endianness codec reporting in strict mode
 
-## 4. Phase 3 optional API enhancement
+## 4. Phase 3 optional API enhancement (DEFERRED)
+Decision (2026-11-07): defer explicit BOM metadata. Charset labels already
+encode BOM presence (`utf-8-sig`, generic-vs-explicit UTF-16/32 families),
+which the consulted downstream consumer (mimeogram, via owner consult)
+confirmed sufficient for label-driven write-back (`content.encode(charset)`
+of new content, never byte-verbatim restore). Labels do NOT preserve
+byte-exact round-trip fidelity: BOM-bearing UTF-16LE and UTF-16BE both
+normalize to generic `utf-16`, losing original byte order. Reopen if a
+consumer requires byte-exact BOM/order write-back metadata.
 - [ ] 4.1 If required by round-trip clients, add explicit BOM metadata to
       `DecodeInformResult` (and related documentation) in an additive manner.
+      (Deferred — see decision above.)
 - [ ] 4.2 Add tests demonstrating round-trip preservation behavior for BOM
-      write-back workflows.
+      write-back workflows. (Not applicable while deferred.)
 
 ## 5. Validation and documentation
 - [x] 5.1 Run linters and targeted pytest suites for charset, detector,
       inference, and decoder modules.
-- [ ] 5.2 Run documentation doctests and update examples to match final
+- [x] 5.2 Run documentation doctests and update examples to match final
       semantics.
+
+## 6. Threshold regression assurance
+- [ ] 6.1 Add deterministic threshold tests (stubbed detectors, no live
+      backends): trial-decode admission below/at/above confidence.
+- [ ] 6.2 Cover text-validation boundaries (AsNeeded below/above threshold,
+      Always, Never).
+- [ ] 6.3 Cover strict/permissive BOM-less generic handling, explicit
+      endianness, BOM-bearing paths, and the BOM-stripped text invariant.
