@@ -5,3 +5,5 @@ __pycache__/
 bugs/
 build/
 dist/
+
+uv.lock

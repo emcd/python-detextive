@@ -135,6 +135,55 @@ Let HTTP header inform detection:
     >>> charset
     'utf-8'
 
+
+UTF BOM Provenance
+===============================================================================
+
+Byte-order marks determine reported charset labels independently of the
+decoding codec:
+
+.. doctest:: AdvancedConfiguration
+
+    >>> utf8_bom = 'Hello, world!'.encode( 'utf-8-sig' )
+    >>> result = detextive.decode_inform(
+    ...     utf8_bom, http_content_type = 'text/plain; charset=utf-8' )
+    >>> result.text
+    'Hello, world!'
+    >>> result.charset.charset
+    'utf-8-sig'
+
+UTF-16 content with a BOM reports the generic family label:
+
+.. doctest:: AdvancedConfiguration
+
+    >>> utf16_bom = 'Hello, world!'.encode( 'utf-16' )
+    >>> result = detextive.decode_inform(
+    ...     utf16_bom, http_content_type = 'text/plain; charset=utf-16' )
+    >>> result.charset.charset
+    'utf-16'
+
+Strict byte-order mode rejects ambiguous generic decodes while accepting
+BOM-bearing content:
+
+.. doctest:: AdvancedConfiguration
+
+    >>> import detextive.exceptions
+    >>> strict = Behaviors(
+    ...     utf_16_32_requires_byte_order = True,
+    ...     charset_detect = False,
+    ...     trial_codecs = (
+    ...         detextive.CodecSpecifiers.FromInference, ) )
+    >>> bomless = 'Hello, world!'.encode( 'utf-16-le' )
+    >>> try:
+    ...     detextive.decode_inform(
+    ...         bomless,
+    ...         behaviors = strict,
+    ...         http_content_type = 'text/plain; charset=utf-16' )
+    ... except detextive.exceptions.ContentDecodeFailure:
+    ...     print( 'Strict mode rejected ambiguous decode.' )
+    Strict mode rejected ambiguous decode.
+
+
 Location-Based Inference
 ===============================================================================
 

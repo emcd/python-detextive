@@ -288,3 +288,112 @@ def test_430_decode_ignores_mimetype_context( ):
         mimetype_detectors_order = ( 'test-decode-mimetype-png', ) )
     text = _decoders.decode( content, behaviors = behaviors )
     assert text == 'some binary data'
+
+
+# Threshold Tests (440-449): Deterministic confidence and policy boundaries
+
+
+def _register_threshold_detector( name, charset, confidence ):
+    ''' Registers a stub detector returning a fixed charset and confidence. '''
+    def threshold_detector( content, behaviors ):
+        return detextive.core.CharsetResult(
+            charset = charset, confidence = confidence )
+    _detectors.charset_detectors[ name ] = threshold_detector
+
+
+def test_440_inferred_charset_below_trial_threshold_not_admitted( ):
+    ''' Charset below trial threshold is not admitted as decode inference. '''
+    _register_threshold_detector( 'test-threshold-below', 'latin-1', 0.79 )
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( 'test-threshold-below', ),
+        trial_codecs = ( 'utf-8', detextive.CodecSpecifiers.FromInference ),
+        mimetype_detect = False )
+    content = 'Café'.encode( 'latin-1' )
+    with pytest.raises( detextive.exceptions.ContentDecodeFailure ):
+        _decoders.decode_inform( content, behaviors = behaviors )
+
+
+def test_441_inferred_charset_at_trial_threshold_admitted( ):
+    ''' Charset at exactly the trial threshold is admitted as inference. '''
+    _register_threshold_detector( 'test-threshold-at', 'latin-1', 0.80 )
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( 'test-threshold-at', ),
+        trial_codecs = ( 'utf-8', detextive.CodecSpecifiers.FromInference ),
+        mimetype_detect = False )
+    content = 'Café'.encode( 'latin-1' )
+    result = _decoders.decode_inform( content, behaviors = behaviors )
+    assert result.text == 'Café'
+    assert result.charset.charset == 'iso8859-1'
+
+
+def test_442_inferred_charset_above_trial_threshold_admitted( ):
+    ''' Charset above the trial threshold is admitted as inference. '''
+    _register_threshold_detector( 'test-threshold-above', 'latin-1', 0.81 )
+    behaviors = detextive.Behaviors(
+        charset_detectors_order = ( 'test-threshold-above', ),
+        trial_codecs = ( 'utf-8', detextive.CodecSpecifiers.FromInference ),
+        mimetype_detect = False )
+    content = 'Café'.encode( 'latin-1' )
+    result = _decoders.decode_inform( content, behaviors = behaviors )
+    assert result.text == 'Café'
+    assert result.charset.charset == 'iso8859-1'
+
+
+def test_443_text_validation_applies_below_confidence_threshold( ):
+    ''' As-needed validation applies below the confidence threshold. '''
+    content = b'A' * 818 + b'\x00'  # Confidence below 0.8.
+    with pytest.raises( detextive.exceptions.TextInvalidity ):
+        _decoders.decode(
+            content, http_content_type = 'text/plain; charset=utf-8' )
+
+
+def test_444_text_validation_skipped_at_confidence_threshold( ):
+    ''' As-needed validation is skipped at or above the threshold. '''
+    content = b'A' * 819 + b'\x00'  # Confidence at or above 0.8.
+    assert _decoders.decode(
+        content, http_content_type = 'text/plain; charset=utf-8'
+    ).endswith( '\x00' )
+
+
+def test_445_text_validation_always_applies( ):
+    ''' Forced validation applies regardless of confidence. '''
+    content = b'A' * 819 + b'\x00'  # Confidence at or above 0.8.
+    behaviors = detextive.Behaviors(
+        text_validate = detextive.BehaviorTristate.Always )
+    with pytest.raises( detextive.exceptions.TextInvalidity ):
+        _decoders.decode(
+            content, behaviors = behaviors,
+            http_content_type = 'text/plain; charset=utf-8' )
+
+
+def test_446_text_validation_never_skips( ):
+    ''' Disabled validation never applies regardless of confidence. '''
+    content = b'A' * 818 + b'\x00'  # Confidence below 0.8.
+    behaviors = detextive.Behaviors(
+        text_validate = detextive.BehaviorTristate.Never )
+    assert _decoders.decode(
+        content, behaviors = behaviors,
+        http_content_type = 'text/plain; charset=utf-8'
+    ).endswith( '\x00' )
+
+
+def test_447_strict_mode_accepts_bom_bearing_generic_charset( ):
+    ''' Strict mode accepts generic charsets with BOM-supplied order. '''
+    for remove_bom in ( True, False ):
+        behaviors = detextive.Behaviors(
+            utf_16_32_requires_byte_order = True, remove_bom = remove_bom )
+        result = _decoders.decode_inform(
+            UTF16_WITH_BOM,
+            behaviors = behaviors,
+            http_content_type = 'text/plain; charset=utf-16' )
+        assert result.text == 'Hello, world!'
+        assert not result.text.startswith( '\ufeff' )
+        assert result.charset.charset == 'utf-16'
+
+
+def test_448_permissive_mode_accepts_bomless_generic_charset( ):
+    ''' Default mode decodes BOM-less generic charsets without byte order. '''
+    result = _decoders.decode_inform(
+        UTF16_LE_NO_BOM, http_content_type = 'text/plain; charset=utf-16' )
+    assert result.text == 'Hello, world!'
+    assert result.charset.charset == 'utf-16'

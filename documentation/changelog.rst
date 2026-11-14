@@ -23,6 +23,24 @@ Release Notes
 
 .. towncrier release notes start
 
+detextive 3.2 (2026-11-14)
+==========================
+
+Removals
+--------
+
+- Platform: Drop support for Python 3.10 and 3.11 and for PyPy;
+  requires-python is now ``>= 3.12`` with CPython 3.12 through 3.15 tested.
+
+
+Repairs
+-------
+
+- API: Honor ``Behaviors.charset_detect`` in the decode path so disabled
+  detection is not silently bypassed, restoring strict-mode rejection of
+  BOM-less generic UTF-16 and UTF-32 content from HTTP charset hints.
+
+
 detextive 3.1 (2026-02-16)
 ==========================
 
