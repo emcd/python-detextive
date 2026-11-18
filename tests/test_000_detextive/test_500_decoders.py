@@ -290,7 +290,7 @@ def test_430_decode_ignores_mimetype_context( ):
     assert text == 'some binary data'
 
 
-# Threshold Tests (440-449): Deterministic confidence and policy boundaries
+# Threshold Tests (440-448): Deterministic confidence and policy boundaries
 
 
 def _register_threshold_detector( name, charset, confidence ):
@@ -397,3 +397,44 @@ def test_448_permissive_mode_accepts_bomless_generic_charset( ):
         UTF16_LE_NO_BOM, http_content_type = 'text/plain; charset=utf-16' )
     assert result.text == 'Hello, world!'
     assert result.charset.charset == 'utf-16'
+
+
+# Hint and Supplement Fallback Tests (449-459)
+
+
+def test_449_decode_ignores_unknown_header_charset( ):
+    ''' Unknown header charset falls back to standard trials. '''
+    result = _decoders.decode_inform(
+        b'hello', http_content_type = 'text/plain; charset=foobar' )
+    assert result.text == 'hello'
+    assert result.charset.charset == 'utf-8'
+
+
+def test_450_decode_ignores_unusable_header_charset( ):
+    ''' Unusable header charset falls back to standard trials. '''
+    result = _decoders.decode_inform(
+        b'hello', http_content_type = 'text/plain; charset=undefined' )
+    assert result.text == 'hello'
+    assert result.charset.charset == 'utf-8'
+
+
+def test_451_decode_ignores_unknown_charset_supplement( ):
+    ''' Unknown charset supplement falls back to standard trials. '''
+    result = _decoders.decode_inform( b'hello', charset_supplement = 'foobar' )
+    assert result.text == 'hello'
+    assert result.charset.charset == 'utf-8'
+
+
+def test_452_decode_ignores_unusable_charset_supplement( ):
+    ''' Unusable charset supplement falls back to standard trials. '''
+    result = _decoders.decode_inform(
+        b'hello', charset_supplement = 'undefined' )
+    assert result.text == 'hello'
+    assert result.charset.charset == 'utf-8'
+
+
+def test_453_decode_ignores_nontext_charset_supplement( ):
+    ''' Non-text charset supplement falls back to standard trials. '''
+    result = _decoders.decode_inform( b'hello', charset_supplement = 'base64' )
+    assert result.text == 'hello'
+    assert result.charset.charset == 'utf-8'
