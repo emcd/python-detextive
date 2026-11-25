@@ -61,7 +61,7 @@ def attempt_decodes( # noqa: PLR0913
     for trial_codec in trial_codecs:
         try: text = content.decode(
             trial_codec, errors = behaviors.on_decode_error )
-        except UnicodeDecodeError: continue
+        except UnicodeError: continue  # Failed trial; try the next codec.
         finally: trials.add( trial_codec )
         result = _CharsetResult(
             charset = normalize_charset_for_content( content, trial_codec ),
@@ -147,7 +147,12 @@ def _collect_trial_codecs(
         charset = _resolve_trial_codec(
             codec, inference = inference, supplement = supplement )
         if __.is_absent( charset ): continue
-        charset = normalize_charset( charset )
+        try: codec_info = __.codecs.lookup( charset )
+        except ( LookupError, ValueError ):
+            continue  # Ignore unusable codec names.
+        # Skip codecs which cannot decode text, such as 'base64'.
+        if not getattr( codec_info, '_is_text_encoding', True ): continue
+        charset = codec_info.name
         if _is_ambiguous_utf_trial( content, charset, behaviors ): continue
         if behaviors.remove_bom and charset == 'utf-8': charset = 'utf-8-sig'
         if charset in codecs: continue
